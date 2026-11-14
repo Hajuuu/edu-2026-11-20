@@ -1,0 +1,21 @@
+{
+  "name": "edu-2026-11-20",
+  "version": "1.0.0",
+  "description": "표준프레임워크 기술 심화교육 MCP 과목 실습 저장소",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "edu": {
+    "upstream": "swanpark8538/edu-2026-11-20",
+    "base": "main"
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "setup": "node scripts/setup.mjs",
+    "submit": "node scripts/submit.mjs",
+    "cleanup": "node scripts/cleanup.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}
