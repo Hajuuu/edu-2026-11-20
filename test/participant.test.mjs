@@ -90,6 +90,30 @@ test('lastSetupTest picks latest setupAt', () => {
   assert.equal(lastSetupTest(p), 'nomcp');
 });
 
+test('recordSetup marks the run it prepared as current', () => {
+  let p = recordSetup(null, base());
+  assert.equal(p.current, 'nomcp');
+  p = recordSetup(p, base({ test: 'mcp', now: min(40) }));
+  assert.equal(p.current, 'mcp');
+});
+
+test('lastSetupTest follows the latest setup even when a submitted run keeps its setupAt', () => {
+  let p = recordSetup(null, base());
+  p = recordSubmit(p, { test: 'nomcp', now: min(25) });
+  p = recordSetup(p, base({ test: 'mcp', now: min(40) }));
+  assert.equal(lastSetupTest(p), 'mcp');
+  p = recordSetup(p, base({ test: 'nomcp', now: min(50) }));
+  assert.equal(p.runs.nomcp.setupAt, min(0).toISOString());
+  assert.equal(lastSetupTest(p), 'nomcp');
+});
+
+test('lastSetupTest without a usable current falls back to the latest setupAt', () => {
+  const runs = { nomcp: { setupAt: min(0).toISOString() }, mcp: { setupAt: min(40).toISOString() } };
+  assert.equal(lastSetupTest({ runs }), 'mcp');
+  assert.equal(lastSetupTest({ runs, current: 'other' }), 'mcp');
+  assert.equal(lastSetupTest({ runs: { nomcp: runs.nomcp }, current: 'mcp' }), 'nomcp');
+});
+
 test('save and load round trip in a temp repo', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'part-'));
   assert.equal(loadParticipant('hong', root), null);

@@ -1,18 +1,7 @@
 // 실행 준비(npm run setup): 브랜치, 실행 폴더(TASK.md·작업 범위 지침 파일), 도구별 MCP 연결, 참가자 기록, 다음 할 일 안내.
 import fs from 'node:fs';
 import path from 'node:path';
-import {
-  REPO_ROOT,
-  IS_WIN,
-  homeDir,
-  appDataDir,
-  platformKey,
-  log,
-  fail,
-  readJson,
-  writeJson,
-  upstreamConfig,
-} from './lib/env.mjs';
+import { REPO_ROOT, homeDir, appDataDir, platformKey, log, fail, upstreamConfig } from './lib/env.mjs';
 import { parseArgs } from './lib/cli.mjs';
 import { TOOLS } from './lib/tools.mjs';
 import {
@@ -22,11 +11,12 @@ import {
   instructionFile,
   clineSettingsPath,
   toggleCline,
+  recordGlobalChange,
 } from './lib/mcp-config.mjs';
 import { installBundle } from './lib/bundle.mjs';
 import { LIMIT_MINUTES, participantPath, loadParticipant, saveParticipant, recordSetup } from './lib/participant.mjs';
 import { scanGlobalMcp, findInstructionLeaks, removalHint } from './lib/guard.mjs';
-import { git, currentBranch, ensureBranch } from './lib/git.mjs';
+import { requireRepoRoot, currentBranch, ensureBranch } from './lib/git.mjs';
 import {
   NODE_MIN_MAJOR,
   NODE_RECOMMENDED_MAJOR,
@@ -59,27 +49,6 @@ function readArgs() {
   // npm 은 --force 를 자기 옵션으로 가져가고 npm_config_force=true 로만 넘긴다.
   const force = args.flags.has('force') || process.env.npm_config_force === 'true';
   return { test: args.test, id: args.id, tool: args.tool, force };
-}
-
-function canonical(p) {
-  let r;
-  try {
-    r = fs.realpathSync.native(p);
-  } catch {
-    r = path.resolve(p);
-  }
-  return IS_WIN ? r.toLowerCase() : r;
-}
-
-// 이 스크립트가 들어 있는 폴더가 git 저장소의 루트인지 확인한다 (ZIP 으로 받은 폴더, 다른 저장소 안의 복사본 방지).
-function checkRepo() {
-  const top = git(['rev-parse', '--show-toplevel']);
-  if (top.error) fail('Git 을 찾지 못했습니다. Git 을 설치하고 터미널을 다시 연 뒤 실행해 주세요.');
-  if (top.status === 0 && canonical(top.stdout.trim()) === canonical(REPO_ROOT)) return;
-  log.err(`이 폴더(${REPO_ROOT})는 git 으로 clone 한 저장소의 루트가 아닙니다. 본인의 Fork 를 git clone 한 폴더에서 실행해 주세요.`);
-  const why = top.status === 0 ? '' : (top.stderr || '').trim();
-  if (why) console.error(`  git 메시지: ${why}`);
-  process.exit(1);
 }
 
 function readTaskTemplate() {
@@ -205,29 +174,26 @@ function prepareCodegen() {
   }
 }
 
-// setup 이 바꾼 전역 설정을 기록한다. npm run cleanup 이 이 기록만 보고 되돌린다.
-function recordGlobalChange(change) {
-  const file = path.join(REPO_ROOT, '.edu', 'global-changes.json');
-  const doc = readJson(file, null);
-  const changes = doc && Array.isArray(doc.changes) ? doc.changes : [];
-  const i = changes.findIndex((c) => c && c.tool === change.tool && c.file === change.file && c.server === change.server);
-  if (i === -1) changes.push(change);
-  else changes[i] = change;
-  writeJson(file, { changes });
-}
-
 function toggleClineGlobal(test, entry) {
   const settingsPath = clineSettingsPath(process.env);
   const enable = test === 'mcp';
   const backupDir = path.join(REPO_ROOT, '.edu', 'backup');
   const r = toggleCline(enable, { command: process.execPath, args: [entry] }, { settingsPath, backupDir });
   if (r.aborted) fail(`${r.aborted} 파일(${settingsPath})을 고치거나 다른 이름으로 옮긴 뒤 다시 실행해 주세요.`);
-  const change = { tool: 'Cline', file: settingsPath, server: MCP_SERVER_NAME, enabled: enable, at: new Date().toISOString() };
+  // previousEntry 는 이번에 바꾸기 전의 항목이다. 이미 기록이 있으면 처음 바꾸기 전의 값이 그대로 남는다.
+  const change = {
+    tool: 'Cline',
+    file: settingsPath,
+    server: MCP_SERVER_NAME,
+    enabled: enable,
+    at: new Date().toISOString(),
+    previousEntry: r.previousEntry,
+  };
   const backup = path.join(backupDir, path.basename(settingsPath));
   if (fs.existsSync(backup)) change.backup = backup;
   recordGlobalChange(change);
   log.ok(`Cline 전역 설정에서 ${MCP_SERVER_NAME} 서버를 ${enable ? '켰습니다' : '껐습니다'}. (${settingsPath})`);
-  log.info('  Cline 을 이미 열어 두었다면 MCP Servers 화면에서 바뀐 상태를 확인해 주세요. 실습이 끝나면 npm run cleanup 으로 이 항목을 지울 수 있습니다.');
+  log.info('  Cline 을 이미 열어 두었다면 MCP Servers 화면에서 바뀐 상태를 확인해 주세요. 실습이 끝나면 npm run cleanup 으로 이 항목을 setup 이전 상태로 되돌릴 수 있습니다.');
 }
 
 function writeRel(dir, rel, content) {
@@ -325,7 +291,7 @@ function main() {
   const ctx = readArgs();
   const { test, id, tool } = ctx;
   log.step(`실습 실행을 준비합니다. (참가자 ${id}, 실행 ${test}, 도구 ${tool})`);
-  checkRepo();
+  requireRepoRoot();
   const template = readTaskTemplate();
   const versions = checkEnvironment();
   prepareBranch(id);

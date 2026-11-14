@@ -1,8 +1,32 @@
 // git 과 GitHub CLI(gh) 호출 도우미. Node 내장 모듈만 사용한다.
-import { REPO_ROOT, run } from './env.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import { REPO_ROOT, IS_WIN, run, log, fail } from './env.mjs';
 
 export function git(args, opts = {}) {
   return run('git', ['-C', REPO_ROOT, ...args], opts);
+}
+
+function canonical(p) {
+  let r;
+  try {
+    r = fs.realpathSync.native(p);
+  } catch {
+    r = path.resolve(p);
+  }
+  return IS_WIN ? r.toLowerCase() : r;
+}
+
+// 이 스크립트가 들어 있는 폴더가 git 저장소의 루트인지 확인하고, 아니면 이유를 알리고 끝낸다
+// (ZIP 으로 받은 폴더, 다른 저장소 안의 복사본에서 git 명령이 바깥 저장소에 적용되는 것을 막는다).
+export function requireRepoRoot() {
+  const top = git(['rev-parse', '--show-toplevel']);
+  if (top.error) fail('Git 을 찾지 못했습니다. Git 을 설치하고 터미널을 다시 연 뒤 실행해 주세요.');
+  if (top.status === 0 && canonical(top.stdout.trim()) === canonical(REPO_ROOT)) return;
+  log.err(`이 폴더(${REPO_ROOT})는 git 으로 clone 한 저장소의 루트가 아닙니다. 본인의 Fork 를 git clone 한 폴더에서 실행해 주세요.`);
+  const why = top.status === 0 ? '' : (top.stderr || '').trim();
+  if (why) console.error(`  git 메시지: ${why}`);
+  process.exit(1);
 }
 
 // 원격 URL 을 owner/repo 로 바꾼다. GitHub 형식이 아니면 null.

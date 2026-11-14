@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -10,13 +10,24 @@ import {
   instructionFile,
   clineSettingsPath,
   toggleCline,
+  readGlobalChanges,
+  recordGlobalChange,
+  undoClineChange,
 } from '../scripts/lib/mcp-config.mjs';
 
 const SERVER = {
   command: 'C:\\Program Files\\nodejs\\node.exe',
   args: ['C:\\Users\\홍 길동\\edu\\.mcp-servers\\egovframe-mcp-codegen\\package\\build\\index.js'],
 };
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'mcpcfg-'));
+const temps = [];
+after(() => {
+  for (const d of temps) fs.rmSync(d, { recursive: true, force: true });
+});
+const tmp = () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'mcpcfg-'));
+  temps.push(d);
+  return d;
+};
 
 test('json files parse and keep windows paths', () => {
   const cases = [
@@ -115,4 +126,84 @@ test('cline path from env', () => {
   assert.equal(clineSettingsPath({ CLINE_DATA_DIR: '/x' }), path.join('/x', 'settings', 'cline_mcp_settings.json'));
   assert.equal(clineSettingsPath({ CLINE_MCP_SETTINGS_PATH: '/y.json', CLINE_DATA_DIR: '/x' }), '/y.json');
   assert.equal(clineSettingsPath({ CLINE_DIR: '/c' }), path.join('/c', 'data', 'settings', 'cline_mcp_settings.json'));
+});
+
+test('cline toggle reports the entry it replaced', () => {
+  const dir = tmp();
+  const settingsPath = path.join(dir, 'settings', 'cline_mcp_settings.json');
+  const opts = { settingsPath, backupDir: path.join(dir, 'backup') };
+  assert.equal(toggleCline(false, SERVER, opts).previousEntry, null);
+
+  const theirs = { command: 'old-node', args: ['/old/egovframe-mcp-codegen/build/index.js'], disabled: true };
+  fs.writeFileSync(settingsPath, JSON.stringify({ mcpServers: { [MCP_SERVER_NAME]: theirs, foo: { command: 'x' } } }));
+  let r = toggleCline(true, SERVER, opts);
+  assert.equal(r.changed, true);
+  assert.deepEqual(r.previousEntry, theirs);
+  r = toggleCline(true, SERVER, opts);
+  assert.equal(r.changed, false);
+  assert.equal(r.previousEntry.command, SERVER.command);
+
+  fs.writeFileSync(settingsPath, JSON.stringify({ other: 1 }));
+  assert.equal(toggleCline(true, SERVER, opts).previousEntry, null);
+});
+
+test('global change records keep the entry from before the first change', () => {
+  const root = tmp();
+  const file = path.join(root, '.edu', 'global-changes.json');
+  assert.deepEqual(readGlobalChanges(root), []);
+  const key = { tool: 'Cline', file: path.join(root, 'cline_mcp_settings.json'), server: MCP_SERVER_NAME };
+  const theirs = { command: 'old-node', args: [] };
+  const ours = { command: SERVER.command, args: SERVER.args };
+
+  recordGlobalChange({ ...key, enabled: false, at: 't1', previousEntry: theirs }, root);
+  recordGlobalChange({ ...key, enabled: true, at: 't2', previousEntry: ours }, root);
+  assert.deepEqual(readGlobalChanges(root), [{ ...key, enabled: true, at: 't2', previousEntry: theirs }]);
+
+  recordGlobalChange({ ...key, file: path.join(root, 'other.json'), enabled: true, at: 't3', previousEntry: null }, root);
+  assert.equal(readGlobalChanges(root).length, 2);
+
+  // previousEntry 를 남기기 전의 기록은 처음 값을 알 수 없으므로 null(지우기)로 둔다.
+  fs.writeFileSync(file, JSON.stringify({ changes: [{ ...key, enabled: false, at: 't0' }] }));
+  recordGlobalChange({ ...key, enabled: true, at: 't4', previousEntry: ours }, root);
+  assert.deepEqual(readGlobalChanges(root), [{ ...key, enabled: true, at: 't4', previousEntry: null }]);
+
+  // 읽을 수 없는 기록 파일은 null 로 알리고, 다음 기록은 처음 값을 알 수 없는 것으로 남긴다.
+  fs.writeFileSync(file, '{ broken');
+  assert.equal(readGlobalChanges(root), null);
+  recordGlobalChange({ ...key, enabled: true, at: 't5', previousEntry: ours }, root);
+  assert.deepEqual(readGlobalChanges(root), [{ ...key, enabled: true, at: 't5', previousEntry: null }]);
+});
+
+test('undo cline change touches only the managed entry', () => {
+  const dir = tmp();
+  const file = path.join(dir, 'cline_mcp_settings.json');
+  const ours = { command: SERVER.command, args: SERVER.args, disabled: false, autoApprove: [] };
+  const theirs = { command: 'old-node', args: ['/old/index.js'], disabled: true };
+  const write = (doc) => fs.writeFileSync(file, JSON.stringify(doc));
+  const read = () => JSON.parse(fs.readFileSync(file, 'utf8'));
+  const change = (extra) => ({ tool: 'Cline', file, server: MCP_SERVER_NAME, ...extra });
+
+  write({ mcpServers: { foo: { command: 'x' }, [MCP_SERVER_NAME]: ours }, other: 1 });
+  assert.equal(undoClineChange(change({ previousEntry: null })).result, 'removed');
+  assert.deepEqual(read(), { mcpServers: { foo: { command: 'x' } }, other: 1 });
+  assert.equal(undoClineChange(change({ previousEntry: null })).result, 'absent');
+
+  write({ mcpServers: { [MCP_SERVER_NAME]: ours, foo: { command: 'x' } } });
+  assert.equal(undoClineChange(change({ previousEntry: theirs })).result, 'restored');
+  assert.deepEqual(read(), { mcpServers: { [MCP_SERVER_NAME]: theirs, foo: { command: 'x' } } });
+
+  // previousEntry 가 없는 예전 기록은 지우기로 처리한다.
+  write({ mcpServers: { [MCP_SERVER_NAME]: ours } });
+  assert.equal(undoClineChange(change()).result, 'removed');
+  assert.deepEqual(read(), { mcpServers: {} });
+
+  for (const broken of ['{"mcpServers": {,}', '[]', '{"mcpServers": []}']) {
+    fs.writeFileSync(file, broken);
+    assert.equal(undoClineChange(change({ previousEntry: null })).result, 'invalid', broken);
+    assert.equal(fs.readFileSync(file, 'utf8'), broken);
+  }
+
+  fs.rmSync(file);
+  assert.equal(undoClineChange(change({ previousEntry: theirs })).result, 'no-file');
+  assert.equal(fs.existsSync(file), false);
 });

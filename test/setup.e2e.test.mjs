@@ -2,84 +2,22 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
+import { SRC, removeTemps, tempDir, git, gitRun, commitAll, workRepo, runScript, put, readParticipant } from './helpers.mjs';
 
-const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const COPY = ['package.json', 'scripts', 'task', path.join('mcp', 'egovframe-mcp-codegen')];
 const NOMCP_HEADER = '> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.';
 const MCP_HEADER = '> 이 폴더의 AI 도구에는 eGovFrame 코드 생성 MCP(`egovframe-codegen`)가 연결되어 있습니다.';
 const FIRST_PROMPT = 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.';
-const STRIP_ENV = [
-  'CODEX_HOME',
-  'COPILOT_HOME',
-  'CLINE_MCP_SETTINGS_PATH',
-  'CLINE_DATA_DIR',
-  'CLINE_DIR',
-  'APPDATA',
-  'XDG_CONFIG_HOME',
-  'npm_config_test',
-  'npm_config_id',
-  'npm_config_tool',
-  'npm_config_force',
-];
 
-const temps = [];
-after(() => {
-  for (const d of temps) fs.rmSync(d, { recursive: true, force: true });
-});
+after(removeTemps);
 
-function tempDir(prefix) {
-  const d = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), prefix)));
-  temps.push(d);
-  return d;
-}
-
-function git(cwd, ...args) {
-  const r = spawnSync('git', args, { cwd, encoding: 'utf8' });
-  assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
-  return r.stdout.trim();
-}
-
-function commitAll(cwd, message) {
-  git(cwd, 'add', '-A');
-  git(cwd, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', message);
-}
-
-// 교육생 clone 과 같은 모양의 작업 저장소(main 브랜치 커밋 하나)와 비어 있는 임시 홈
-function workRepo() {
-  const repo = tempDir('setup-repo-');
-  for (const rel of COPY) fs.cpSync(path.join(SRC, rel), path.join(repo, rel), { recursive: true });
-  git(repo, 'init', '-q', '-b', 'main');
-  commitAll(repo, 'init');
-  return { repo, home: tempDir('setup-home-') };
-}
-
-function runSetup(ctx, nodeArgs, args) {
-  const env = { ...process.env, EDU_HOME: ctx.home, EDU_GH: 'edu-no-such-gh' };
-  for (const k of STRIP_ENV) delete env[k];
-  const r = spawnSync(process.execPath, [...nodeArgs, path.join('scripts', 'setup.mjs'), ...args], {
-    cwd: ctx.repo,
-    env,
-    encoding: 'utf8',
-  });
-  return { code: r.status, out: `${r.stdout}\n${r.stderr}` };
-}
-
+const runSetup = (ctx, nodeArgs, args) => runScript(ctx, 'setup.mjs', args, { nodeArgs });
 const setup = (ctx, ...args) => runSetup(ctx, [], args);
 const runDir = (ctx, id, t) => path.join(ctx.repo, 'submissions', id, t);
 const codegenEntryOf = (ctx) => path.join(ctx.repo, '.mcp-servers', 'egovframe-mcp-codegen', 'package', 'build', 'index.js');
 const branch = (ctx) => git(ctx.repo, 'symbolic-ref', '--short', 'HEAD');
-const readParticipant = (ctx, id) =>
-  JSON.parse(fs.readFileSync(path.join(ctx.repo, 'submissions', id, 'participant.json'), 'utf8'));
 const firstLine = (file) => fs.readFileSync(file, 'utf8').split(/\r?\n/)[0];
-
-function put(file, text) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, text);
-}
 
 test('nomcp codex', () => {
   const ctx = workRepo();
@@ -209,6 +147,7 @@ test('cline toggles global', () => {
   assert.equal(c.file, settings);
   assert.equal(c.server, 'egovframe-codegen');
   assert.equal(c.enabled, true);
+  assert.equal(c.previousEntry, null);
   assert.ok(!Number.isNaN(Date.parse(c.at)));
   assert.equal(fs.readFileSync(path.join(ctx.repo, '.edu', 'backup', 'cline_mcp_settings.json'), 'utf8'), original);
 
@@ -287,7 +226,7 @@ test('branch from origin main without upstream', () => {
   assert.equal(r.code, 0, r.out);
   assert.equal(branch(ctx), 'submit/T07');
   assert.ok(r.out.includes('origin/main'), r.out);
-  const upstream = spawnSync('git', ['rev-parse', '--abbrev-ref', 'submit/T07@{upstream}'], { cwd: clone, encoding: 'utf8' });
+  const upstream = gitRun(clone, 'rev-parse', '--abbrev-ref', 'submit/T07@{upstream}');
   assert.notEqual(upstream.status, 0, upstream.stdout);
 });
 

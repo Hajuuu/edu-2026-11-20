@@ -36,6 +36,8 @@ export function recordSetup(p, s) {
     model: s.model,
     platform: s.platform,
     versions: { ...(s.versions || {}) },
+    // 마지막으로 준비한 실행. 제출한 실행은 setupAt 을 바꾸지 않으므로 setupAt 만으로는 알 수 없다.
+    current: s.test,
     runs,
   };
 }
@@ -52,10 +54,13 @@ export function recordSubmit(p, s) {
   return { ...p, runs };
 }
 
+// 제출할 실행: current 가 있으면 그것, 없으면(예전 기록) setupAt 이 가장 늦은 실행.
 export function lastSetupTest(p) {
+  const runs = (p && p.runs) || {};
+  if (p && typeof p.current === 'string' && Object.hasOwn(runs, p.current) && runs[p.current]) return p.current;
   let best = null;
   let bestAt = -Infinity;
-  for (const [test, run] of Object.entries((p && p.runs) || {})) {
+  for (const [test, run] of Object.entries(runs)) {
     const at = run && run.setupAt ? Date.parse(run.setupAt) : NaN;
     if (!Number.isNaN(at) && at > bestAt) {
       best = test;
