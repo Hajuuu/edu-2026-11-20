@@ -35,6 +35,7 @@ export function run(cmd, args = [], opts = {}) {
     shell: Boolean(opts.shell),
     windowsHide: true,
     encoding: 'utf8',
+    ...(opts.stdio ? { stdio: opts.stdio } : {}),
   });
   const out = { status: r.status ?? null, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
   if (r.error) out.error = r.error;
