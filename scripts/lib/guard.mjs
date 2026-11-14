@@ -149,6 +149,13 @@ export function findInstructionLeaks(runDir, home, env = process.env) {
   return [...found].sort();
 }
 
+// VS Code 의 사용자 프로필 mcp.json(<AppData>/Code/User/mcp.json). Copilot 의 파일(mcp-config.json)과 구분한다.
+const isVsCodeUserMcp = (source) =>
+  path.basename(source) === 'mcp.json' && path.basename(path.dirname(source)) === 'User';
+
+// 화면에서 끈 상태는 setup 이 읽는 파일에 남지 않을 수 있어(VS Code, Cursor), 파일에서 항목을 지우게 안내한다.
+const KEEP_COPY = '실습 후 되돌릴 수 있도록 지우기 전에 파일을 복사해 두세요.';
+
 export function removalHint(tool, h) {
   const n = h.name;
   switch (tool) {
@@ -159,9 +166,12 @@ export function removalHint(tool, h) {
     case 'Antigravity':
       return `터미널에서 \`agy mcp remove ${n}\` 명령으로 제거하거나 ${h.source} 파일에서 "disabled": true 로 꺼 주세요.`;
     case 'Cursor':
-      return `Cursor Settings 의 MCP 화면에서 끄거나 ${h.source} 파일에서 삭제해 주세요.`;
+      return `${h.source} 파일에서 ${n} 항목을 지워 주세요. Cursor 화면에서 끈 상태는 이 파일에 남지 않을 수 있습니다. ${KEEP_COPY}`;
     case 'GitHub-Copilot':
-      return `터미널에서 \`copilot mcp remove ${n}\` 명령으로 제거하거나 VS Code 의 MCP 서버 목록(${h.source})에서 꺼 주세요.`;
+      if (isVsCodeUserMcp(h.source)) {
+        return `VS Code 사용자 설정 파일(${h.source})에서 ${n} 항목을 지워 주세요. 명령 팔레트의 MCP: Open User Configuration 으로 이 파일을 열 수 있으며, VS Code 화면에서 끈 상태는 이 파일에 남지 않습니다. ${KEEP_COPY}`;
+      }
+      return `터미널에서 \`copilot mcp remove ${n}\` 명령으로 제거하거나 ${h.source} 파일에서 ${n} 항목을 지워 주세요. ${KEEP_COPY}`;
     case 'Cline':
       return 'Cline 의 MCP Servers 화면에서 해당 서버를 꺼 주세요.';
     default:

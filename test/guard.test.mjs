@@ -126,3 +126,38 @@ test('removalHint', () => {
   assert.match(removalHint('GitHub-Copilot', top), /copilot mcp remove/);
   assert.match(removalHint('Cline', top), /Cline/);
 });
+
+// 화면에서 끄기만 하면 파일에 남아 setup 이 계속 막으므로, 파일에서 지우는 방법과 그 파일을 알려 줘야 한다.
+test('removalHint names the file to edit for Cursor and both Copilot files', () => {
+  const home = tmp();
+  const appData = path.join(home, 'AD');
+  const vscodeFile = path.join(appData, 'Code', 'User', 'mcp.json');
+  const copilotFile = path.join(home, '.copilot', 'mcp-config.json');
+  const cursorFile = path.join(home, '.cursor', 'mcp.json');
+  put(vscodeFile, { servers: { 'egovframe-codegen': { command: 'node' } } });
+  put(copilotFile, { mcpServers: { 'egovframe-codegen': { command: 'node' } } });
+  put(cursorFile, { mcpServers: { 'egovframe-codegen': { command: 'node' } } });
+
+  const hits = scanGlobalMcp('GitHub-Copilot', { home, appData, env: {}, runDir: home });
+  const fromVsCode = hits.find((h) => h.source === vscodeFile);
+  const fromCopilot = hits.find((h) => h.source === copilotFile);
+  assert.ok(fromVsCode && fromCopilot, '두 파일의 서버를 모두 찾아야 합니다');
+
+  const vs = removalHint('GitHub-Copilot', fromVsCode);
+  assert.ok(vs.includes(vscodeFile), vs);
+  assert.match(vs, /egovframe-codegen 항목을 지워/);
+  assert.match(vs, /MCP: Open User Configuration/);
+  assert.match(vs, /복사해 두세요/);
+  assert.doesNotMatch(vs, /copilot mcp remove/);
+
+  const cli = removalHint('GitHub-Copilot', fromCopilot);
+  assert.match(cli, /copilot mcp remove egovframe-codegen/);
+  assert.ok(cli.includes(copilotFile), cli);
+
+  const [cursorHit] = scanGlobalMcp('Cursor', { home, appData, env: {}, runDir: home });
+  const cur = removalHint('Cursor', cursorHit);
+  assert.ok(cur.includes(cursorFile), cur);
+  assert.match(cur, /egovframe-codegen 항목을 지워/);
+  assert.match(cur, /복사해 두세요/);
+  assert.doesNotMatch(cur, /화면에서 끄거나/);
+});
