@@ -53,9 +53,15 @@ export function extractTar(buf, dest) {
   let files = 0;
   let nextName = null;
   fs.mkdirSync(dest, { recursive: true });
-  while (pos + BLOCK <= buf.length) {
+  let ended = false;
+  while (pos < buf.length) {
+    if (pos + BLOCK > buf.length) throw new Error('tar 가 손상되었습니다: 헤더 도중에 끝났습니다.');
     const h = buf.subarray(pos, pos + BLOCK);
-    if (h.every((b) => b === 0)) break;
+    if (h.every((b) => b === 0)) {
+      ended = true;
+      break;
+    }
+    checkHeader(h);
     const type = String.fromCharCode(h[156] || 0x30);
     let size = octal(h, 124, 136);
     const mode = octal(h, 100, 108);
@@ -63,6 +69,9 @@ export function extractTar(buf, dest) {
     const prefix = cstr(h, 345, 500);
     if (prefix) name = `${prefix}/${name}`;
     pos += BLOCK;
+    if (!Number.isInteger(size) || size < 0 || pos + size > buf.length) {
+      throw new Error('tar 가 손상되었습니다: 항목 크기가 올바르지 않거나 데이터가 모자랍니다.');
+    }
     const data = buf.subarray(pos, pos + size);
     pos += Math.ceil(size / BLOCK) * BLOCK;
 
@@ -91,7 +100,22 @@ export function extractTar(buf, dest) {
     if (!IS_WIN) fs.chmodSync(target, mode & 0o777);
     files += 1;
   }
+  if (!ended) throw new Error('tar 가 손상되었습니다: 종료 블록 없이 끝났습니다.');
   return { files };
+}
+
+function checkHeader(h) {
+  let unsigned = 0;
+  let signed = 0;
+  for (let i = 0; i < BLOCK; i += 1) {
+    const b = i >= 148 && i < 156 ? 0x20 : h[i];
+    unsigned += b;
+    signed += b > 127 ? b - 256 : b;
+  }
+  const stored = octal(h, 148, 156);
+  if (stored !== unsigned && stored !== signed) {
+    throw new Error('tar 가 손상되었습니다: 헤더 체크섬이 맞지 않습니다.');
+  }
 }
 
 export function extractTgz(file, dest) {

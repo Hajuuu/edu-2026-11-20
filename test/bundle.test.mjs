@@ -6,6 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { REPO_ROOT, IS_WIN } from '../scripts/lib/env.mjs';
+import zlib from 'node:zlib';
 import { extractTar, extractTgz, installBundle, codegenEntry } from '../scripts/lib/bundle.mjs';
 
 const CODEGEN_TGZ = path.join(REPO_ROOT, 'mcp', 'egovframe-mcp-codegen', 'egovframe-mcp-codegen-1.0.0.tgz');
@@ -134,4 +135,96 @@ test('install idempotent', { skip: !fs.existsSync(CODEGEN_TGZ) }, () => {
 test('missing bundle throws a Korean error', () => {
   const repoRoot = tmp();
   assert.throws(() => installBundle('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
+});
+
+test('corrupt or truncated tar throws', () => {
+  const good = tar(entry({ name: 'a.txt', body: 'abc' }));
+  const cases = {
+    'data past end': good.subarray(0, 512 + 2),
+    'no end blocks': good.subarray(0, 1024),
+    'ends inside header': good.subarray(0, 1024 + 100),
+    'empty': Buffer.alloc(0),
+    'not a tar': Buffer.from('x'.repeat(2048)),
+  };
+  const bad = Buffer.from(good);
+  bad.write('zzzzzzzzzzz\0', 124);
+  cases['garbage size'] = bad;
+  const sumBad = Buffer.from(good);
+  sumBad.write('0000001\0 ', 148);
+  cases['bad checksum'] = sumBad;
+  const big = tar(entry({ name: 'a.txt', body: 'abc' }));
+  big.write(octal(1000, 12), 124); // 크기만 바꾸면 체크섬도 어긋남
+  cases['size mismatch'] = big;
+  for (const [label, buf] of Object.entries(cases)) {
+    const dest = tmp();
+    assert.throws(() => extractTar(buf, dest), /tar/, label);
+  }
+});
+
+test('pax path and GNU L name are checked for traversal', () => {
+  for (const type of ['x', 'L']) {
+    const root = tmp();
+    const dest = path.join(root, 'dest');
+    const body = type === 'x' ? paxRecord('path', 'package/../../evil') : 'package/../../evil\0';
+    const buf = tar(entry({ name: 'meta', type, body }), entry({ name: 'ok.txt', body: 'x' }));
+    assert.throws(() => extractTar(buf, dest), /경로/, type);
+    assert.deepEqual(fs.readdirSync(root).filter((n) => n !== 'dest'), []);
+  }
+  const dest = tmp();
+  const buf = tar(entry({ name: 'meta', type: 'L', body: 'long/name.txt\0' }), entry({ name: 'short', body: 'v' }));
+  extractTar(buf, dest);
+  assert.equal(fs.readFileSync(path.join(dest, 'long', 'name.txt'), 'utf8'), 'v');
+});
+
+function fakeCheckRepo(files) {
+  const repoRoot = tmp();
+  const dir = path.join(repoRoot, 'mcp', 'egovframe-mcp-check');
+  fs.mkdirSync(dir, { recursive: true });
+  const buf = tar(
+    entry({ name: 'package/build/index.js', body: 'console.log(1)' }),
+    ...files,
+  );
+  const file = path.join(dir, 'egovframe-mcp-check-1.0.0-win32-x64.tgz');
+  fs.writeFileSync(file, zlib.gzipSync(buf));
+  return { repoRoot, file };
+}
+
+test('win32-arm64 falls back to the win32-x64 bundle', () => {
+  const { repoRoot, file } = fakeCheckRepo([]);
+  const r = installBundle('check', { repoRoot, platform: 'win32-arm64' });
+  assert.equal(r.bundle, file);
+  assert.ok(fs.existsSync(r.entry));
+  assert.throws(() => installBundle('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
+});
+
+test('re-extracts when the bundle changes or the entry is missing', () => {
+  const { repoRoot, file } = fakeCheckRepo([]);
+  const opts = { repoRoot, platform: 'win32-x64' };
+  const first = installBundle('check', opts);
+  assert.equal(first.installed, true);
+  assert.equal(installBundle('check', opts).installed, false);
+  fs.rmSync(first.entry);
+  assert.equal(installBundle('check', opts).installed, true);
+  assert.ok(fs.existsSync(first.entry));
+  const stale = path.join(path.dirname(path.dirname(path.dirname(first.entry))), 'stale.txt');
+  fs.writeFileSync(stale, 'old');
+  fs.writeFileSync(
+    file,
+    zlib.gzipSync(tar(entry({ name: 'package/build/index.js', body: 'v2' }))),
+  );
+  assert.equal(installBundle('check', opts).installed, true);
+  assert.equal(fs.readFileSync(first.entry, 'utf8'), 'v2');
+  assert.ok(!fs.existsSync(stale));
+});
+
+test('failed extraction leaves no marker and retries next time', () => {
+  const { repoRoot, file } = fakeCheckRepo([]);
+  const good = fs.readFileSync(file);
+  fs.writeFileSync(file, zlib.gzipSync(tar(entry({ name: '../evil', body: 'x' }))));
+  const opts = { repoRoot, platform: 'win32-x64' };
+  assert.throws(() => installBundle('check', opts));
+  const dir = path.join(repoRoot, '.mcp-servers', 'egovframe-mcp-check');
+  assert.ok(!fs.existsSync(path.join(dir, '.bundle-sha256')));
+  fs.writeFileSync(file, good);
+  assert.equal(installBundle('check', opts).installed, true);
 });
