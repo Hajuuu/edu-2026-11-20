@@ -46,7 +46,18 @@ export function parseArgs(argv, env = {}, opts = {}) {
 
   // 남은 위치 인자를 값의 모양으로 분류한다.
   const idCandidates = [];
+  // 도구 이름처럼 보이는 값이 둘 이상이면 (예: ID 가 agy 인 경우) 순서로 추측하지 않는다.
+  let toolAmbiguous = false;
+  if (raw.tool === undefined && !raw['tool:bad']) {
+    const shaped = positional.filter((p) => normalizeTool(p));
+    if (shaped.length >= 2) {
+      toolAmbiguous = true;
+      raw['tool:bad'] = true;
+      errors.push(`도구와 ID 를 구분할 수 없습니다: ${shaped.join(', ')}. --id 값 --tool 값 형태로 명시해 주세요.`);
+    }
+  }
   for (const p of positional) {
+    if (toolAmbiguous && normalizeTool(p)) continue;
     if (raw.test === undefined && !raw['test:bad'] && TESTS.includes(p.toLowerCase())) raw.test = p;
     else if (raw.tool === undefined && !raw['tool:bad'] && normalizeTool(p)) raw.tool = p;
     else idCandidates.push(p);

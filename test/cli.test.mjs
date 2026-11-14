@@ -129,3 +129,20 @@ test('mvnInvocation shape', () => {
   assert.equal(m.cmd, IS_WIN ? 'mvn.cmd' : 'mvn');
   assert.equal(m.shell, IS_WIN);
 });
+
+test('ambiguous: two tool-shaped positionals', () => {
+  for (const argv of [['mcp', 'agy', 'Codex'], ['mcp', 'cursor', 'Codex']]) {
+    const r = parseArgs(argv, {});
+    assert.equal(r.tool, undefined);
+    assert.ok(r.errors.some((e) => e.includes('--id') && e.includes('--tool')));
+  }
+});
+
+test('resolved tool is never reassigned by positionals', () => {
+  const r = parseArgs(['mcp', '--tool', 'Codex', 'cursor'], {});
+  assert.deepEqual(pick(r), { test: 'mcp', id: 'cursor', tool: 'Codex' });
+  assert.deepEqual(r.errors, []);
+  const e = parseArgs(['mcp', 'agy'], { npm_config_tool: 'Cline' });
+  assert.deepEqual(pick(e), { test: 'mcp', id: 'agy', tool: 'Cline' });
+  assert.deepEqual(e.errors, []);
+});
