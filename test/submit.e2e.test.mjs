@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { removeTemps, tempDir, git, gitRun, workRepo, runScript, put, readParticipant } from './helpers.mjs';
+import { removeTemps, tempDir, git, gitRun, workRepo, runScript, put, readParticipant, globalGitConfig } from './helpers.mjs';
 
 after(removeTemps);
 
@@ -23,6 +23,11 @@ const commitCount = (ctx) => Number(git(ctx.repo, 'rev-list', '--count', 'HEAD')
 const remoteHas = (bare, branch) => gitRun(bare, 'rev-parse', '--verify', '--quiet', `refs/heads/${branch}`).status === 0;
 const remoteFiles = (bare, branch) => git(bare, 'ls-tree', '-r', '--name-only', branch).split('\n');
 const readJsonFile = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const headFiles = (ctx) => git(ctx.repo, 'show', '--name-only', '--format=', 'HEAD').split('\n').sort();
+// git() 이 출력 앞뒤 공백을 지우므로 작업 폴더에서만 바뀐 파일은 'M 경로', 스테이징한 파일은 'M  경로' 로 보인다.
+const statusOf = (ctx, rel) => git(ctx.repo, 'status', '--porcelain', '--', rel);
+const removeGitDirCommand = (dir) =>
+  process.platform === 'win32' ? `Remove-Item -Recurse -Force "${path.join(dir, '.git')}"` : `rm -rf "${path.join(dir, '.git')}"`;
 
 function bare(prefix) {
   const dir = path.join(tempDir(prefix), 'repo.git');
@@ -67,7 +72,15 @@ test('dry run', () => {
 
   for (const r of [submit(ctx, ['--dry-run']), submit(ctx, [], { npm_config_dry_run: 'true' })]) {
     assert.equal(r.code, 0, r.out);
-    for (const s of ['git add', 'git commit', 'git push', 'gh pr create', 'big.bin']) assert.ok(r.out.includes(s), `${s}\n${r.out}`);
+    for (const s of [
+      'git add -A -- submissions/T01/nomcp submissions/T01/participant.json',
+      'git -c commit.gpgsign=false commit --no-verify -q -m "submit: T01 nomcp"',
+      'git push',
+      'gh pr create',
+      'big.bin',
+    ]) {
+      assert.ok(r.out.includes(s), `${s}\n${r.out}`);
+    }
     assert.equal(commitCount(ctx), before);
     assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
     assert.equal(fs.readFileSync(excludeFile, 'utf8'), exclude);
@@ -127,28 +140,38 @@ test('resubmit unchanged', () => {
   assert.equal(submit(ctx, ['--no-pr']).code, 0);
   const count = commitCount(ctx);
   const record = fs.readFileSync(participantFile(ctx, 'T01'), 'utf8');
-  // 저장소의 다른 곳에서 바뀐 파일은 제출되지 않는다고 알린다.
-  fs.appendFileSync(path.join(ctx.repo, 'package.json'), '\n');
+  // 저장소의 다른 곳에서 바뀐 파일은 제출되지 않는다고 알리고, 커밋하지 않을 때는 스테이징도 건드리지 않는다.
+  const pkg = path.join(ctx.repo, 'package.json');
+  fs.appendFileSync(pkg, '\n');
+  git(ctx.repo, 'add', 'package.json');
 
-  const r = submit(ctx, ['--no-pr']);
+  let r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, new RegExp(`\\[주의\\][^\\n]*${NO_CHANGE}`));
   assert.match(r.out, /\[주의\][^\n]*제출되지 않습니다[^\n]*package\.json/);
   assert.equal(commitCount(ctx), count);
   assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
   assert.equal(git(ctx.remote, 'rev-parse', 'submit/T01'), git(ctx.repo, 'rev-parse', 'HEAD'));
+  assert.equal(statusOf(ctx, 'package.json'), 'M  package.json');
 
-  // 스테이징해 둔 바깥 변경은 다음 제출 커밋에 섞이지 않고, 파일 내용은 그대로 남는다.
-  git(ctx.repo, 'add', 'package.json');
+  // 스테이징한 내용과 작업 폴더의 내용이 다른 바깥 파일은 대신 풀지 않고 멈춘다 (기록도 바꾸지 않는다).
+  fs.appendFileSync(pkg, '\n');
   put(path.join(runDir(ctx, 'T01', 'nomcp'), 'board-app', 'README.md'), '고친 내용\n');
-  const again = submit(ctx, ['--no-pr']);
-  assert.equal(again.code, 0, again.out);
+  r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /\[오류\][^\n]*스테이징/);
+  assert.ok(r.out.includes(pkg), r.out);
+  assert.equal(commitCount(ctx), count);
+  assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
+  assert.equal(statusOf(ctx, 'package.json'), 'MM package.json');
+
+  // 스테이징한 내용이 작업 폴더와 같으면 커밋 직전에 스테이징만 풀고, 파일 내용은 그대로 둔다.
+  git(ctx.repo, 'add', 'package.json');
+  r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
   assert.equal(commitCount(ctx), count + 1);
-  assert.deepEqual(git(ctx.repo, 'show', '--name-only', '--format=', 'HEAD').split('\n').sort(), [
-    'submissions/T01/nomcp/board-app/README.md',
-    'submissions/T01/participant.json',
-  ]);
-  assert.equal(git(ctx.repo, 'status', '--porcelain', '--', 'package.json'), 'M package.json');
+  assert.deepEqual(headFiles(ctx), ['submissions/T01/nomcp/board-app/README.md', 'submissions/T01/participant.json']);
+  assert.equal(statusOf(ctx, 'package.json'), 'M package.json');
 });
 
 test('a failed push keeps the commit and the next submit pushes it', () => {
@@ -248,10 +271,150 @@ test('a nested git repository stops before committing', () => {
   const record = fs.readFileSync(participantFile(ctx, 'T01'), 'utf8');
   const r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 1, r.out);
-  assert.match(r.out, /\[오류\][^\n]*\.git/);
-  assert.ok(r.out.includes(path.join('submissions', 'T01', 'nomcp', 'board-app', '.git')), r.out);
+  assert.match(r.out, /\[오류\][^\n]*git 저장소/);
+  assert.ok(r.out.includes(removeGitDirCommand(path.join(runDir(ctx, 'T01', 'nomcp'), 'board-app'))), r.out);
+  assert.ok(!r.out.includes('git rm --cached'), r.out);
   assert.equal(commitCount(ctx), before);
   assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
+});
+
+// AI 가 board-app 안에서 git init 과 커밋을 하고, 교육생이 저장소 전체를 스테이징한 경우
+function nestedCommit(ctx, id) {
+  const app = path.join(runDir(ctx, id, 'nomcp'), 'board-app');
+  git(app, 'init', '-q');
+  git(app, 'add', '-A');
+  git(app, '-c', 'user.name=ai', '-c', 'user.email=ai@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'init');
+  git(ctx.repo, 'add', '-A');
+  return app;
+}
+
+const gitlinksIn = (ctx, branch) =>
+  git(ctx.remote, 'ls-tree', '-r', branch).split('\n').filter((l) => l.startsWith('160000'));
+
+test('a staged git link stops submit until it is removed', () => {
+  const ctx = prepared('T01');
+  const app = nestedCommit(ctx, 'T01');
+  assert.match(statusOf(ctx, 'submissions/T01/nomcp/board-app'), /^A {2}submissions\/T01\/nomcp\/board-app$/);
+  const before = commitCount(ctx);
+  const record = fs.readFileSync(participantFile(ctx, 'T01'), 'utf8');
+  const unlink = `git rm --cached -f -q -- "${app}"`;
+
+  for (const args of [['--dry-run'], ['--no-pr']]) {
+    const r = submit(ctx, args);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /\[오류\][^\n]*git 저장소/);
+    assert.ok(r.out.includes(unlink), r.out);
+    assert.ok(r.out.includes(removeGitDirCommand(app)), r.out);
+    assert.equal(commitCount(ctx), before);
+    assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
+  }
+  assert.ok(!remoteHas(ctx.remote, 'submit/T01'));
+
+  // 안내한 두 명령을 실행 폴더의 터미널에서 실행한 것과 같게 한다.
+  git(runDir(ctx, 'T01', 'nomcp'), 'rm', '--cached', '-f', '-q', '--', app);
+  fs.rmSync(path.join(app, '.git'), { recursive: true, force: true });
+  const r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
+  assert.match(git(ctx.remote, 'ls-tree', 'submit/T01', '--', 'submissions/T01/nomcp/board-app/pom.xml'), /^100644 blob /);
+  assert.deepEqual(gitlinksIn(ctx, 'submit/T01'), []);
+});
+
+test('a committed git link is caught even after its .git folder was deleted', () => {
+  const ctx = prepared('T02');
+  const app = nestedCommit(ctx, 'T02');
+  git(ctx.repo, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', 'stage all');
+  fs.rmSync(path.join(app, '.git'), { recursive: true, force: true });
+
+  let r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes(`git rm --cached -f -q -- "${app}"`), r.out);
+  assert.match(r.out, /이미 커밋한 내용에도/);
+  assert.ok(!r.out.includes(removeGitDirCommand(app)), r.out);
+  assert.ok(!remoteHas(ctx.remote, 'submit/T02'));
+
+  git(runDir(ctx, 'T02', 'nomcp'), 'rm', '--cached', '-f', '-q', '--', app);
+  r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
+  assert.match(git(ctx.remote, 'ls-tree', 'submit/T02', '--', 'submissions/T02/nomcp/board-app/pom.xml'), /^100644 blob /);
+  assert.deepEqual(gitlinksIn(ctx, 'submit/T02'), []);
+});
+
+test('changes in an already submitted run folder are not submitted', () => {
+  const ctx = prepared('T01');
+  assert.equal(submit(ctx, ['--no-pr']).code, 0);
+  assert.equal(setup(ctx, '--test', 'mcp', '--id', 'T01', '--tool', 'codex').code, 0);
+  const nomcpPom = path.join(runDir(ctx, 'T01', 'nomcp'), 'board-app', 'pom.xml');
+  fs.appendFileSync(nomcpPom, '<!-- 나중에 고침 -->\n');
+  put(path.join(runDir(ctx, 'T01', 'mcp'), 'board-app', 'pom.xml'), '<project/>\n');
+
+  const r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /\[주의\] 이미 제출한 다른 실행 폴더의 변경은 제출하지 않습니다[^\n]*submissions\/T01\/nomcp\/board-app\/pom\.xml/);
+  assert.equal(git(ctx.repo, 'log', '-1', '--format=%s'), 'submit: T01 mcp');
+  assert.ok(headFiles(ctx).every((f) => f === 'submissions/T01/participant.json' || f.startsWith('submissions/T01/mcp/')), headFiles(ctx).join('\n'));
+  assert.equal(statusOf(ctx, 'submissions/T01/nomcp'), 'M submissions/T01/nomcp/board-app/pom.xml');
+  const pushed = git(ctx.remote, 'show', 'submit/T01:submissions/T01/nomcp/board-app/pom.xml');
+  assert.equal(pushed, '<project/>');
+});
+
+test('a participant.json-only change is not a new submission', () => {
+  const ctx = prepared('T03');
+  assert.equal(submit(ctx, ['--no-pr']).code, 0);
+  const count = commitCount(ctx);
+  const submittedAt = readParticipant(ctx, 'T03').runs.nomcp.submittedAt;
+  // mcp 를 준비했다가 nomcp 를 다시 준비하면 participant.json 만 바뀐다 (current, runs.mcp).
+  assert.equal(setup(ctx, '--test', 'mcp', '--id', 'T03', '--tool', 'codex').code, 0);
+  assert.equal(setup(ctx, '--test', 'nomcp', '--id', 'T03', '--tool', 'codex').code, 0);
+  assert.equal(statusOf(ctx, 'submissions/T03/nomcp'), '');
+  assert.equal(statusOf(ctx, 'submissions/T03/participant.json'), 'M submissions/T03/participant.json');
+
+  const r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(r.out.includes(NO_CHANGE), r.out);
+  assert.equal(commitCount(ctx), count);
+  const p = readParticipant(ctx, 'T03');
+  assert.equal(p.current, 'nomcp');
+  assert.equal(p.runs.nomcp.submittedAt, submittedAt);
+});
+
+test('commit ignores signing and hooks set in the global git config', () => {
+  const ctx = prepared('T04');
+  const hooks = tempDir('edu-hooks-');
+  for (const name of ['pre-commit', 'commit-msg']) {
+    fs.writeFileSync(path.join(hooks, name), '#!/bin/sh\necho hook-blocked >&2\nexit 1\n');
+    fs.chmodSync(path.join(hooks, name), 0o755);
+  }
+  const slash = (p) => p.split(path.sep).join('/');
+  const config = globalGitConfig(
+    `\thooksPath = ${slash(hooks)}\n[commit]\n\tgpgsign = true\n[gpg]\n\tprogram = ${slash(path.join(hooks, 'no-such-gpg'))}\n`,
+  );
+  const r = submit(ctx, ['--no-pr'], { GIT_CONFIG_GLOBAL: config });
+  assert.equal(r.code, 0, r.out);
+  assert.equal(git(ctx.repo, 'log', '-1', '--format=%s'), 'submit: T04 nomcp');
+  assert.ok(remoteHas(ctx.remote, 'submit/T04'));
+});
+
+test('a failed commit puts the record back so the next run stays blocked', () => {
+  const ctx = prepared('T05');
+  const record = fs.readFileSync(participantFile(ctx, 'T05'), 'utf8');
+  // --no-verify 로도 건너뛰지 않는 prepare-commit-msg 훅으로 커밋을 실패시킨다.
+  const hooks = tempDir('edu-hooks-');
+  fs.writeFileSync(path.join(hooks, 'prepare-commit-msg'), '#!/bin/sh\necho commit-blocked >&2\nexit 1\n');
+  fs.chmodSync(path.join(hooks, 'prepare-commit-msg'), 0o755);
+  const config = globalGitConfig(`\thooksPath = ${hooks.split(path.sep).join('/')}\n`);
+
+  let r = submit(ctx, ['--no-pr'], { GIT_CONFIG_GLOBAL: config });
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /\[오류\][^\n]*커밋하지 못했습니다/);
+  assert.ok(r.out.includes('commit-blocked'), r.out);
+  assert.equal(fs.readFileSync(participantFile(ctx, 'T05'), 'utf8'), record);
+  // 제출 기록이 남지 않았으므로 mcp 실행 준비는 여전히 막힌다.
+  r = setup(ctx, '--test', 'mcp', '--id', 'T05', '--tool', 'codex');
+  assert.equal(r.code, 1, r.out);
+
+  r = submit(ctx, ['--no-pr']);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(readParticipant(ctx, 'T05').runs.nomcp.submittedAt);
 });
 
 // 인자와 표준 입력을 기록하고 정해진 응답을 돌려주는 가짜 gh (셸 없이 실행되도록 shebang 사용)
@@ -330,7 +493,7 @@ test('origin is the upstream: fork first without push permission', { skip: !canF
   const gh = fakeGh({ FAKE_GH_PUSH: '0' });
   const r = submit(ctx, [], gh.env);
   assert.equal(r.code, 0, r.out);
-  assert.ok(gh.calls().some((c) => c.args[0] === 'repo' && c.args[1] === 'fork'));
+  assert.deepEqual(gh.calls().find((c) => c.args[0] === 'repo').args, ['repo', 'fork', '--remote', '--default-branch-only']);
   assert.equal(git(ctx.repo, 'remote', 'get-url', 'origin'), 'https://github.com/kim/edu-2026-11-20.git');
   assert.equal(git(ctx.repo, 'remote', 'get-url', 'upstream'), `https://github.com/${UPSTREAM}.git`);
   assert.ok(remoteHas(forkRemote, 'submit/T05'));

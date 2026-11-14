@@ -25,19 +25,21 @@ export function tempDir(prefix) {
   return d;
 }
 
-let gitConfigDir = null;
+let gitConfigFile = null;
 
-// git 전역 설정은 비어 있는 파일로 바꾸고, 기본 위치(~/.config/git)의 무시·속성 파일도 읽지 않게 한다.
+// git 전역 설정 파일을 임시로 만든다. 기본 위치(~/.config/git)의 무시·속성 파일은 읽지 않게 하고, extra 를 덧붙인다.
+export function globalGitConfig(extra = '') {
+  const dir = tempDir('edu-gitcfg-');
+  const slash = dir.split(path.sep).join('/');
+  const file = path.join(dir, 'gitconfig');
+  fs.writeFileSync(file, `[core]\n\texcludesFile = ${slash}/no-ignore\n\tattributesFile = ${slash}/no-attributes\n${extra}`);
+  return file;
+}
+
+// 기본 전역 설정은 비어 있는 것과 같다.
 function hermeticGitConfig() {
-  if (!gitConfigDir) {
-    gitConfigDir = tempDir('edu-gitcfg-');
-    const slash = gitConfigDir.split(path.sep).join('/');
-    fs.writeFileSync(
-      path.join(gitConfigDir, 'gitconfig'),
-      `[core]\n\texcludesFile = ${slash}/no-ignore\n\tattributesFile = ${slash}/no-attributes\n`,
-    );
-  }
-  return path.join(gitConfigDir, 'gitconfig');
+  if (!gitConfigFile) gitConfigFile = globalGitConfig();
+  return gitConfigFile;
 }
 
 export function cleanEnv(extra = {}) {

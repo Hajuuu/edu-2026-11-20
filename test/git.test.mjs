@@ -126,6 +126,7 @@ test('gh helpers read gh output', { skip: !canFake }, () => {
     const fork = forkWithRemote();
     assert.equal(fork.ok, false);
     assert.match(fork.message, /unsupported: repo fork/);
+    assert.deepEqual(calls(fake.log).find((a) => a[0] === 'repo'), ['repo', 'fork', '--remote', '--default-branch-only']);
   });
 });
 

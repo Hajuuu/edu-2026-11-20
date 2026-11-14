@@ -14,6 +14,7 @@ import {
   findOpenPr,
   createPr,
   forkWithRemote,
+  FORK_ARGS,
   compareUrl,
 } from './lib/git.mjs';
 import { LIMIT_MINUTES, participantPath, loadParticipant, saveParticipant, recordSubmit, lastSetupTest } from './lib/participant.mjs';
@@ -46,12 +47,13 @@ function gitMessage(r) {
   return (r.stderr || r.stdout || '').trim() || `git 이 종료 코드 ${r.status} 로 끝났습니다.`;
 }
 
-// git 명령이 실패하면 git 의 메시지를 그대로 보여 주고 끝낸다.
-function gitOrFail(args, what) {
+// git 명령이 실패하면 git 의 메시지를 그대로 보여 주고 끝낸다. onFail 은 끝내기 전에 되돌릴 것이 있을 때 쓴다.
+function gitOrFail(args, what, onFail) {
   const r = git(args);
   if (r.status === 0) return r;
   log.err(`${what} git 이 알려 준 내용은 다음과 같습니다.`);
   for (const l of lines(gitMessage(r))) console.error(`    ${l}`);
+  if (onFail) onFail();
   console.error('  문제를 해결한 뒤 npm run submit 을 다시 실행해 주세요. 해결하기 어려우면 진행자에게 알려 주세요.');
   process.exit(1);
 }
@@ -170,15 +172,50 @@ function statusEntries(pathspecs, untracked) {
   return out;
 }
 
-// 실행 폴더 안에서 git init 을 하면 그 폴더는 파일 대신 빈 참조로만 커밋된다. 제출이 비지 않게 미리 막는다.
-function stopOnNestedRepos(entries) {
-  const nested = entries.filter((e) => e.x === '?' && e.path.endsWith('/'));
-  if (!nested.length) return;
-  log.err('제출 폴더 안에 별도의 git 저장소(.git 폴더)가 있어 그 안의 파일이 제출되지 않습니다. 아래 .git 폴더를 지운 뒤 npm run submit 을 다시 실행해 주세요. 작업한 파일은 그대로 남습니다.');
-  for (const e of nested) {
-    const dotGit = path.join(...e.path.replace(/\/+$/, '').split('/'), '.git');
-    console.error(`  - ${dotGit}`);
-    console.error(`    지우는 명령: ${IS_WIN ? `Remove-Item -Recurse -Force "${dotGit}"` : `rm -rf "${dotGit}"`}`);
+// 이번 제출 범위: 지금 실행 폴더와 참가자 기록. 다른 실행 폴더의 변경(제출을 마친 실행을 나중에 고친 것 등)은 넣지 않는다.
+function submitScope(id, test) {
+  const runRel = `submissions/${id}/${test}`;
+  const record = `submissions/${id}/participant.json`;
+  return { runRel, record, inScope: (p) => p === record || p.startsWith(`${runRel}/`) };
+}
+
+const affectedPaths = (e) => (e.from ? [e.path, e.from] : [e.path]);
+const isStaged = (e) => e.x !== ' ' && e.x !== '?' && e.x !== '!';
+
+// mode 160000 항목(다른 git 저장소를 가리키는 링크)의 경로. ls-files -s 와 ls-tree -r 의 출력 모두 "모드 …<TAB>경로" 형식이다.
+function gitlinkPaths(args) {
+  const r = git(args);
+  const out = new Set();
+  if (r.status !== 0) return out;
+  for (const rec of r.stdout.split('\0')) {
+    const tab = rec.indexOf('\t');
+    if (tab !== -1 && rec.slice(0, tab).split(' ')[0] === '160000') out.add(rec.slice(tab + 1));
+  }
+  return out;
+}
+
+const removeGitDirCommand = (dir) => {
+  const gitDir = path.join(dir, '.git');
+  return IS_WIN ? `Remove-Item -Recurse -Force "${gitDir}"` : `rm -rf "${gitDir}"`;
+};
+
+// 실행 폴더 안의 별도 git 저장소는 파일 대신 빈 링크(mode 160000)로만 커밋된다. 아직 추가하지 않은 것(?? 폴더/)과
+// 인덱스에 있는 링크(스테이징했거나 이미 커밋한 것)를 모두 막는다. HEAD 에만 있고 인덱스에서 빠진 링크는 이번 커밋이 지우므로 막지 않는다.
+// 안내 명령은 실행 폴더의 터미널에서 실행해도 되도록 절대 경로로 보여 준다 (화면에만 쓰고 파일에는 남기지 않는다).
+function stopOnNestedRepos(scoped, runRel) {
+  const indexed = gitlinkPaths(['ls-files', '-s', '-z', '--', runRel]);
+  const committed = gitlinkPaths(['ls-tree', '-r', '-z', 'HEAD', '--', runRel]);
+  const untracked = scoped.filter((e) => e.x === '?' && e.path.endsWith('/')).map((e) => e.path.replace(/\/+$/, ''));
+  const found = [...new Set([...indexed, ...untracked])].sort();
+  if (!found.length) return;
+  log.err('제출할 실행 폴더 안에 별도의 git 저장소가 있어, 그 폴더는 파일 없이 빈 링크로만 제출됩니다. 폴더마다 아래 명령을 실행한 뒤 npm run submit 을 다시 실행해 주세요. 그 폴더 안의 git 기록(.git)만 지워지고 작업한 파일은 그대로 남습니다.');
+  for (const rel of found) {
+    const abs = fromRepo(rel);
+    console.error(`  - ${rel}`);
+    if (committed.has(rel)) console.error('    이미 커밋한 내용에도 이 폴더가 파일 없이 링크로만 들어 있습니다. 아래 명령으로 고친 뒤 제출하면 파일이 들어갑니다.');
+    // 링크만 스테이징한 경우 git 은 -f 없이는 빼지 않는다. --cached 이므로 -f 를 줘도 작업 폴더의 파일은 지우지 않는다.
+    if (indexed.has(rel)) console.error(`    git rm --cached -f -q -- "${abs}"`);
+    if (fs.existsSync(path.join(abs, '.git'))) console.error(`    ${removeGitDirCommand(abs)}`);
   }
   process.exit(1);
 }
@@ -232,32 +269,57 @@ function excludeBigFiles(big, dryRun) {
   if (tracked.length) gitOrFail(rmArgs, '20MB 를 넘는 파일을 제출에서 빼지 못했습니다.');
 }
 
-// 제출 폴더 밖의 변경은 제출하지 않는다. 스테이징해 둔 것은 이번 커밋에 섞이지 않게 스테이징만 푼다.
-function reportOutside(id, dryRun) {
-  const outside = statusEntries(['.', `:(exclude)submissions/${id}`], 'normal');
-  if (!outside.length) return;
-  log.warn(`submissions/${id} 밖에서 바뀐 파일은 제출되지 않습니다: ${listed(outside.map((e) => e.path))}`);
-  const staged = outside.filter((e) => e.x !== ' ' && e.x !== '?' && e.x !== '!');
-  if (!staged.length) return;
-  const resetArgs = ['reset', '-q', '--', '.', `:(exclude)submissions/${id}`];
-  if (dryRun) log.info(`  실행할 명령: ${showCmd('git', resetArgs)}`);
-  else {
-    gitOrFail(resetArgs, '제출 폴더 밖의 스테이징을 풀지 못했습니다.');
-    log.info('  이 가운데 스테이징해 둔 변경은 이번 커밋에 섞이지 않도록 스테이징만 풀었습니다. 파일 내용은 그대로입니다.');
+// 제출 범위 밖의 변경을 알린다. 같은 참가자의 다른 실행 폴더와 그 밖의 파일을 나눠 보여 준다.
+function reportUnsubmitted(others, outside, { id, test, p }) {
+  const byRun = new Map();
+  const rest = [];
+  for (const e of others) {
+    const t = e.path.slice(`submissions/${id}/`.length).split('/')[0];
+    if (t !== test && Object.hasOwn(LIMIT_MINUTES, t) && e.path.startsWith(`submissions/${id}/${t}/`)) {
+      if (!byRun.has(t)) byRun.set(t, []);
+      byRun.get(t).push(e.path);
+    } else {
+      rest.push(e.path);
+    }
+  }
+  for (const [t, paths] of byRun) {
+    if (p.runs?.[t]?.submittedAt) log.warn(`이미 제출한 다른 실행 폴더의 변경은 제출하지 않습니다: ${listed(paths)}`);
+    else log.warn(`다른 실행 폴더(${t})의 변경은 이번 제출에 넣지 않습니다: ${listed(paths)}`);
+  }
+  rest.push(...outside.map((e) => e.path));
+  if (rest.length) {
+    log.warn(`제출 범위(submissions/${id}/${test} 폴더와 participant.json) 밖에서 바뀐 파일은 제출되지 않습니다: ${listed(rest)}`);
   }
 }
 
-function collectChanges(id, dryRun) {
+function collectChanges(ctx, dryRun) {
+  const { id, test } = ctx;
+  const scope = submitScope(id, test);
   log.step('제출할 변경을 확인합니다.');
-  const entries = statusEntries([`submissions/${id}`], 'all');
-  stopOnNestedRepos(entries);
-  const big = findBigFiles(entries);
+  const under = statusEntries([`submissions/${id}`], 'all');
+  const scoped = under.filter((e) => scope.inScope(e.path));
+  stopOnNestedRepos(scoped, scope.runRel);
+  const big = findBigFiles(scoped);
   if (big.length) excludeBigFiles(big, dryRun);
-  reportOutside(id, dryRun);
+  const outside = statusEntries(['.', `:(exclude)submissions/${id}`], 'normal');
+  reportUnsubmitted(under.filter((e) => !scope.inScope(e.path)), outside, ctx);
   const skipped = new Set(big.filter((b) => !b.tracked).map((b) => b.path));
-  const changes = entries.filter((e) => !skipped.has(e.path));
-  if (changes.length) log.ok(`submissions/${id} 에서 바뀐 파일 ${changes.length}개를 제출합니다.`);
-  return changes;
+  // 이름 바꾸기로 범위 안의 파일이 빠져나간 것도 범위 안의 변경이다.
+  const changes = under.filter((e) => affectedPaths(e).some(scope.inScope) && !skipped.has(e.path));
+  const work = changes.filter((e) => e.path !== scope.record);
+  // 범위 밖에서 스테이징해 둔 변경: 커밋 직전에 스테이징만 풀거나, 안전하게 풀 수 없으면 멈춘다.
+  const stagedOutside = [...under, ...outside].filter((e) => isStaged(e) && affectedPaths(e).some((q) => !scope.inScope(q)));
+  return { scope, changes, work, stagedOutside };
+}
+
+// 스테이징한 내용과 작업 폴더의 내용이 다르면 스테이징을 풀 때 스테이징한 내용이 사라지므로 대신 풀지 않는다.
+function stopOnPartialStaged(stagedOutside, scope) {
+  const partial = stagedOutside.filter((e) => e.y !== ' ');
+  if (!partial.length) return;
+  log.err('제출 범위 밖에서 스테이징한 파일 가운데 스테이징한 내용과 작업 폴더의 내용이 다른 파일이 있어, 제출 커밋에서 대신 뺄 수 없습니다. 아래 파일을 직접 커밋하거나 스테이징을 푼 뒤 npm run submit 을 다시 실행해 주세요.');
+  const paths = [...new Set(partial.flatMap(affectedPaths).filter((q) => !scope.inScope(q)))].sort();
+  for (const q of paths) console.error(`  - ${fromRepo(q)}`);
+  process.exit(1);
 }
 
 function reportElapsed(test, run, dryRun) {
@@ -276,31 +338,52 @@ function reportElapsed(test, run, dryRun) {
 }
 
 // 바뀐 것이 있을 때만 제출 시각을 기록하고 커밋한다. 소요 시간이 마지막 실제 변경에 묶이게 하기 위해서다.
+// 이미 제출한 실행은 participant.json 만 바뀐 것(setup 을 다시 실행해 current 등이 바뀐 것)을 변경으로 보지 않는다.
 // 아직 제출 기록이 없는 실행은 바뀐 것이 없어도 기록한다 (예: 직접 커밋한 뒤 처음 제출하는 경우).
-function commitRun(ctx, changes, dryRun) {
+function commitRun(ctx, collected, dryRun) {
   const { id, test, p } = ctx;
+  const { scope, changes, work, stagedOutside } = collected;
   const run = p.runs[test] || {};
-  if (!changes.length && run.submittedAt) {
+  if (run.submittedAt && !work.length) {
     log.warn('바뀐 것이 없어 새 커밋을 만들지 않습니다. 앞서 만든 커밋을 다시 push 하고 PR 을 확인합니다.');
+    if (changes.length) log.info('  참가자 기록(participant.json)만 바뀐 것은 새 제출로 보지 않습니다.');
     if (typeof run.elapsedMinutes === 'number') log.info(`  ${test} 실행의 제출 기록(소요 시간 ${run.elapsedMinutes}분)은 그대로 둡니다.`);
     return p;
   }
+  stopOnPartialStaged(stagedOutside, scope);
+  if (work.length) log.ok(`${scope.runRel} 에서 바뀐 파일 ${work.length}개를 제출합니다.`);
   log.step('제출 기록을 남기고 커밋합니다.');
   const updated = recordSubmit(p, { test, now: new Date() });
   reportElapsed(test, updated.runs[test], dryRun);
-  const addArgs = ['add', '-A', '--', `submissions/${id}`];
-  const commitArgs = ['commit', '-q', '-m', `submit: ${id} ${test}`];
+  const unstage = [...new Set(stagedOutside.flatMap(affectedPaths).filter((q) => !scope.inScope(q)))].sort();
+  const restoreArgs = ['--literal-pathspecs', 'restore', '--staged', '--', ...unstage];
+  const addArgs = ['add', '-A', '--', scope.runRel, scope.record];
+  // 교육생의 전역 설정(서명, 훅)에 커밋이 막히지 않게 한다.
+  const commitArgs = ['-c', 'commit.gpgsign=false', 'commit', '--no-verify', '-q', '-m', `submit: ${id} ${test}`];
   if (dryRun) {
+    if (unstage.length) log.info(`  실행할 명령: ${showCmd('git', restoreArgs)}`);
     log.info(`  실행할 명령: ${showCmd('git', addArgs)}`);
     log.info(`  실행할 명령: ${showCmd('git', commitArgs)}`);
     return updated;
   }
+  if (unstage.length) {
+    gitOrFail(restoreArgs, '제출 범위 밖의 스테이징을 풀지 못했습니다.');
+    log.info(`  제출 범위 밖에서 스테이징해 둔 변경(${listed(unstage)})은 이번 커밋에 섞이지 않도록 스테이징만 풀었습니다. 파일 내용은 그대로입니다.`);
+  }
+  // 커밋하지 못하면 참가자 기록을 제출 전 상태로 되돌린다. 커밋되지 않은 제출 기록이 남으면 다음 실행 준비가 진행되어
+  // 이 실행의 작업이 제출 범위 밖으로 밀려날 수 있다.
+  const file = participantPath(id);
+  const before = fs.readFileSync(file, 'utf8');
   saveParticipant(id, updated);
-  gitOrFail(addArgs, '제출할 파일을 git 에 더하지 못했습니다.');
+  const undoRecord = () => {
+    fs.writeFileSync(file, before);
+    console.error('  참가자 기록(participant.json)은 이번 제출 전 상태로 되돌렸습니다.');
+  };
+  gitOrFail(addArgs, '제출할 파일을 git 에 더하지 못했습니다.', undoRecord);
   ensureIdentity();
-  gitOrFail(commitArgs, '커밋하지 못했습니다.');
+  gitOrFail(commitArgs, '커밋하지 못했습니다.', undoRecord);
   const sha = git(['rev-parse', '--short', 'HEAD']).stdout.trim();
-  log.ok(`submissions/${id} 의 변경을 커밋했습니다. (${sha} submit: ${id} ${test})`);
+  log.ok(`${scope.runRel} 와 participant.json 의 변경을 커밋했습니다. (${sha} submit: ${id} ${test})`);
   return updated;
 }
 
@@ -310,7 +393,7 @@ function pushTarget(upstream, dryRun) {
   if (!sameSlug(origin, upstream)) return { slug: origin, forked: false };
   if (dryRun) {
     log.step(`origin 이 원본 저장소(${upstream})입니다. push 권한이 없으면 먼저 본인 계정에 Fork 를 만들고 origin 을 Fork 로 바꿉니다.`);
-    log.info(`  실행할 명령: ${showCmd('gh', ['repo', 'fork', '--remote'])}`);
+    log.info(`  실행할 명령: ${showCmd('gh', FORK_ARGS)}`);
     return { slug: origin, forked: false };
   }
   if (viewerCanPush(upstream) === true) {
@@ -482,8 +565,8 @@ function main() {
   const ctx = { id, test, tool, p, upstream, base, branch };
 
   checkRunFolder(ctx);
-  const changes = collectChanges(id, opts.dryRun);
-  ctx.p = commitRun(ctx, changes, opts.dryRun);
+  const collected = collectChanges(ctx, opts.dryRun);
+  ctx.p = commitRun(ctx, collected, opts.dryRun);
   const target = pushTarget(upstream, opts.dryRun);
   const pushedNew = pushBranch(branch, target, opts.dryRun);
   const link = handlePr(ctx, target, pushedNew, opts);

@@ -166,8 +166,11 @@ export function createPr({ slug, base, head, title, body }) {
 
 // 지금 origin 저장소를 Fork 하고, Fork 를 origin 으로, 원래 origin 을 upstream 으로 바꾼다.
 // --remote-name 을 직접 주면 gh 가 기존 origin 의 이름을 바꾸지 않으므로 기본값에 맡긴다.
+// --default-branch-only: 원본 저장소의 다른 브랜치(진행자 리허설 브랜치 등)가 교육생 Fork 에 복사되지 않게 한다.
+export const FORK_ARGS = ['repo', 'fork', '--remote', '--default-branch-only'];
+
 export function forkWithRemote() {
-  const r = gh(['repo', 'fork', '--remote']);
+  const r = gh(FORK_ARGS);
   const text = `${r.stdout || ''}\n${r.stderr || ''}`.trim();
   if (r.error) return { ok: false, message: `gh 를 실행할 수 없습니다: ${r.error.message}` };
   return { ok: r.status === 0, message: text || (r.status === 0 ? 'Fork 를 만들었습니다.' : `gh 가 종료 코드 ${r.status} 로 끝났습니다.`) };
