@@ -21,9 +21,9 @@ VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/downlo
 
 ## 3. 개인 설정 끄기
 
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 줍니다.
+실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다.
 
-- 개인 규칙(`.clinerules`)과 Custom Instructions 를 실습 동안 비워 둡니다.
+- 개인 규칙(`.clinerules`)과 Custom Instructions 는 내용을 메모 파일 같은 다른 곳에 복사해 둔 뒤 실습 동안 비워 둡니다. 실습이 끝나면 복사해 둔 내용을 다시 넣습니다.
 - `egovframe-codegen` 이 아닌 다른 MCP 서버는 MCP Servers 화면에서 끕니다.
 
 ## 4. setup 이 실행 폴더에 쓰는 파일
@@ -77,6 +77,8 @@ nomcp 실행에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 
 ## 8. 문제 해결
 
+아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
+
 **setup 명령을 실행했는데 MCP Servers 화면이 바뀌지 않습니다.**
 명령 팔레트에서 `Developer: Reload Window` 를 실행합니다. 그래도 바뀌지 않으면 MCP Servers 화면의 Configure 탭에서 `Configure MCP Servers` 를 눌러 열리는 파일이 setup 출력에 나온 파일과 같은지 확인합니다. 다르면 진행자에게 알립니다.
 
@@ -84,7 +86,7 @@ nomcp 실행에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 setup 명령이 전역 설정 파일을 읽지 못해 멈춘 경우입니다. 출력에 나온 파일의 JSON 문법을 고치거나 파일을 다른 이름으로 옮긴 뒤 setup 명령을 다시 실행합니다.
 
 **`egovframe-codegen` 서버가 오류 상태이거나 시작되지 않습니다.**
-Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실행인데 `egovframe-codegen` 서버가 켜져 있습니다.**
 작업을 멈추고 진행자에게 알립니다. MCP Servers 화면에서 서버를 끄거나, 저장소 폴더에서 nomcp setup 명령을 다시 실행해 서버를 끕니다.

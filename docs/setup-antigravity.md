@@ -17,10 +17,10 @@ Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise 요금제 가�
 
 ## 3. 개인 설정 끄기
 
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 줍니다.
+실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다.
 
 - 전역 지침 파일 `~/.gemini/GEMINI.md` 는 이름을 바꿔 둡니다(예: `GEMINI.md.off`).
-- 전역 MCP 설정 `~/.gemini/config/mcp_config.json` 에 등록한 개인 MCP 서버는 끕니다. 파일에서는 서버 항목에 `"disabled": true` 를 넣으면 설정을 지우지 않고 끌 수 있습니다. 앱에서는 Customizations 의 Installed 화면에 있는 MCP Servers 에서 서버의 More actions(⋮) 메뉴를 열고 Disable 을 선택합니다.
+- 전역 MCP 설정 `~/.gemini/config/mcp_config.json` 에 등록한 개인 MCP 서버는 끕니다. 파일에서는 서버 항목에 `"disabled": true` 를 넣으면 설정을 지우지 않고 끌 수 있습니다. 앱에서는 Customizations 의 Installed 화면에 있는 MCP Servers 에서 서버의 More actions(⋮) 메뉴를 열고 Disable 을 선택합니다. setup 명령은 이 파일만 읽으므로, 앱에서 끈 뒤에는 파일의 그 서버 항목에 `"disabled": true` 가 들어갔는지 확인합니다.
 - 특히 전역 설정에 `egovframe-codegen` 서버가 켜져 있으면 setup 명령이 nomcp 실행 준비를 멈춥니다. 이 서버를 끄거나 지운 뒤 setup 명령을 다시 실행합니다.
 - 개인 규칙이나 스킬을 만들어 두었다면 실습 동안 끕니다.
 
@@ -36,7 +36,8 @@ nomcp 실행 폴더에는 MCP 연결 설정을 쓰지 않습니다. `.agents/` �
 
 ## 5. 처음 한 번 확인할 것
 
-공식 문서에는 작업 영역의 MCP 설정을 사용하기 전에 따로 허용하는 절차가 나와 있지 않습니다. 실행 폴더를 작업 영역으로 연 뒤 MCP 화면에서 연결을 확인합니다. 작업 영역을 신뢰할지 또는 MCP 서버를 사용할지 묻는 창이 나오면 허용합니다.
+- 앱에서 프로젝트를 만들고 첫 프롬프트를 입력하면 실행 방식을 묻습니다. 이때 반드시 Local mode 를 선택합니다. New worktree mode 는 별도의 Git worktree 에서 작업하므로 결과물이 실행 폴더에 생기지 않습니다.
+- 공식 문서에는 작업 영역의 MCP 설정을 사용하기 전에 따로 허용하는 절차가 나와 있지 않습니다. 실행 폴더를 작업 영역으로 연 뒤 MCP 화면에서 연결을 확인합니다. 작업 영역을 신뢰할지 또는 MCP 서버를 사용할지 묻는 창이 나오면 허용합니다.
 
 ## 6. 연결 확인
 
@@ -59,8 +60,10 @@ nomcp 실행에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다. 
 
 ## 7. 작업 방법
 
-1. Antigravity 에서 실행 폴더(`submissions/P01/nomcp`)를 작업 영역으로 엽니다. 저장소 폴더 전체를 열지 않습니다.
-2. 에이전트 패널에서 모델이 Claude Opus 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다.
+1. 실행 폴더(`submissions/P01/nomcp`)를 작업 영역으로 엽니다. 저장소 폴더 전체를 열지 않습니다.
+   - 앱: 왼쪽 사이드바의 New Project 아이콘(더하기 표시가 있는 폴더)을 누르고, Add Folder 로 실행 폴더 하나만 선택한 뒤 Create 를 누릅니다.
+   - IDE: 편집기에서 실행 폴더를 엽니다(File 메뉴의 Open Folder, 메뉴 이름은 버전에 따라 다를 수 있습니다). 그다음 제목 표시줄의 Toggle Agent 로 에이전트 패널을 엽니다.
+2. 모델이 Claude Opus 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다. 앱에서 실행 방식을 물으면 Local mode 를 선택합니다.
 
    ```text
    TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.
@@ -68,15 +71,17 @@ nomcp 실행에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다. 
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
 4. 작업을 마치면 저장소 폴더에서 연 터미널(PowerShell 또는 macOS 터미널)에서 `npm run submit` 을 실행합니다.
-5. mcp 실행에서는 nomcp 작업 영역을 닫고, 새 창에서 `submissions/P01/mcp` 를 작업 영역으로 연 뒤 새 대화로 시작합니다. nomcp 실행의 대화를 이어 가지 않습니다.
+5. mcp 실행에서는 nomcp 작업 영역을 닫고, 1번과 같은 방법으로 `submissions/P01/mcp` 를 새 작업 영역(앱에서는 새 프로젝트)으로 연 뒤 새 대화로 시작합니다. nomcp 실행의 대화를 이어 가지 않습니다.
 
 ## 8. 문제 해결
+
+아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **MCP 서버 목록에 `egovframe-codegen` 서버가 없습니다.**
 작업 영역으로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 저장소 폴더나 `submissions` 폴더를 열면 실행 폴더의 설정을 읽지 않습니다. 그 폴더에 `.agents/mcp_config.json` 이 있는지 확인하고 MCP 서버 목록을 새로 고칩니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
+대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
 
 **nomcp 실행인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.gemini/config/mcp_config.json` 에 같은 서버가 켜져 있는 경우이므로, 그 항목에 `"disabled": true` 를 넣거나 항목을 지운 뒤 nomcp setup 명령을 다시 실행합니다.

@@ -2,14 +2,14 @@
 // 공개 파일의 평가 내용 유출, 쓰지 않기로 한 문장 부호를 확인한다.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { TOOLS, TOOL_NAMES } from '../scripts/lib/tools.mjs';
 
-const SELF = fileURLToPath(import.meta.url);
-const ROOT = path.resolve(path.dirname(SELF), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const abs = (rel) => path.join(ROOT, ...rel.split('/'));
 const read = (rel) => fs.readFileSync(abs(rel), 'utf8');
 
@@ -42,14 +42,29 @@ const MCP_TOOLS = ['egov_scaffold_project', 'egov_add_entity', 'egov_add_query_v
 // 도구 문서마다 있어야 하는 절 (제목에 들어갈 말)
 const DOC_SECTIONS = ['모델', '요금제', '개인 설정', '실행 폴더에 쓰는 파일', '처음 한 번', '연결 확인', '작업 방법', '문제 해결'];
 
-// README 와 도구 문서에 쓰지 않는 말: 진행자 전용 자료와 평가 방법
-const PRIVATE_WORDS = ['채점', 'grading', 'rubric', 'README-local', 'superpowers'];
+// 공개 파일에 쓰지 않는 말의 목록은 이 파일이 그 말을 드러내지 않도록 일부러 SHA-256 값으로만 둔다.
+// 모든 공개 파일(README.md, docs/*.md, task/TASK.md, scripts/**, test/**)에 적용한다.
+const LEAK_DIGESTS = new Set([
+  '48720c8a0d8a8389665296431aa16495c2d50dfb5479537e5c57ff7048da27c3',
+  '5b950e77941d01cdf246d00b1ece546bc95234b77d98b44c9187e2733afa696a',
+  '6cd28ed32abf73d0d64218a8ce983fd5e460ac662b660a556b8939d9d6ae37a3',
+  'a791366f6f6201254edcac9ec72017b12d8a69513b5e1e29a29a4048ffb16e27',
+  '8a214cef6d474c9ad7249b3267218f8f0b7a5ad3a0f3ff09c692251fe9b827ca',
+  'f8b11396955efba8f96826d575e809f6968acea1654dd72419d83f1a746c8585',
+  '5a8d9d953da5c01ef1fc6caa41c67cf8eecec39632fa4e77ceb5b1a090ff1c3c',
+  '68c3c99a0f433f5c25286bf20ca45115b062b165627c2c28d0fb19d4a64b4ad2',
+]);
+// README.md 와 docs/*.md 에만 적용한다.
+const DOC_LEAK_DIGESTS = new Set([
+  '6d528a3f0f840164c926b6e1ec2d7fbf35e4064a44fa96af7534da154a873280',
+  '49672f0ef3b3a542b3b86b475936cc9adf1ddf60369e9b120ba33900294c99d8',
+]);
 
-// <forbidden-tokens>
-const FORBIDDEN = [/가중치/, /\bB1\b/, /\bF5\b/, /\bR1\b/, /\bC3\b/, /\begov_check_compliance\b/, /채점\s*기준/];
-// </forbidden-tokens>
-// 이 파일을 검사할 때는 위 목록만 빼고 본다. 아래 정규식의 원문은 표시 줄과 같지 않으므로 자기 자신과 맞지 않는다.
-const TOKEN_BLOCK = /\/\/ <forbidden-tokens>[\s\S]*?\/\/ <\/forbidden-tokens>/;
+// README 와 도구 문서에 쓰지 않는 진행자 전용 경로 이름. 이미 .gitignore 에 공개된 이름이라 그대로 둔다.
+const PRIVATE_PATHS = ['grading', 'README-local', 'superpowers'];
+
+// 한글은 조사가 붙어 낱말 전체로는 비교할 수 없으므로, 공백 하나로 이어진 한글 낱말들 안의 구간을 이 길이까지 본다.
+const HANGUL_WINDOW = 12;
 
 const FIRST_PROMPT = read('scripts/setup.mjs').match(/const FIRST_PROMPT = '([^']+)'/)?.[1];
 const UPSTREAM = JSON.parse(read('package.json')).edu.upstream;
@@ -76,8 +91,45 @@ function walk(rel) {
 
 const lineOf = (text, index) => text.slice(0, index).split('\n').length;
 
-// 코드 블록과 인라인 코드 안의 글자는 링크나 제목이 아니다.
-const withoutFences = (md) => md.replace(/^```[^\n]*\n[\s\S]*?^```[^\n]*$/gm, '');
+const digestCache = new Map();
+function digestOf(word) {
+  let d = digestCache.get(word);
+  if (d === undefined) {
+    d = crypto.createHash('sha256').update(word, 'utf8').digest('hex');
+    digestCache.set(word, d);
+  }
+  return d;
+}
+
+const isHangul = (ch) => ch >= '가' && ch <= '힣';
+
+// 글에서 비교할 낱말 후보와 그 위치를 만든다. 영문·숫자·_ 낱말은 낱말 전체만 보고(대소문자 구분),
+// 한글은 공백 하나로 이어진 한글 낱말들 안에서 한글로 시작하고 끝나는 모든 구간(HANGUL_WINDOW 자까지)을 본다.
+// 그래서 한글 낱말 하나, 조사가 붙은 낱말, 공백 하나로 이어진 두 낱말을 모두 비교한다.
+function* wordCandidates(text) {
+  for (const m of text.matchAll(/[A-Za-z0-9_]+/g)) yield { word: m[0], index: m.index };
+  for (const m of text.matchAll(/[가-힣]+(?: [가-힣]+)*/g)) {
+    const run = m[0];
+    for (let i = 0; i < run.length; i++) {
+      if (!isHangul(run[i])) continue;
+      const end = Math.min(run.length, i + HANGUL_WINDOW);
+      for (let j = i + 1; j <= end; j++) {
+        if (isHangul(run[j - 1])) yield { word: run.slice(i, j), index: m.index + i };
+      }
+    }
+  }
+}
+
+// 공개하지 않는 말이 있으면 첫 위치를 돌려준다.
+function findLeak(text, digests) {
+  for (const c of wordCandidates(text)) {
+    if (digests.some((set) => set.has(digestOf(c.word)))) return c;
+  }
+  return null;
+}
+
+// 코드 블록과 인라인 코드 안의 글자는 링크나 제목이 아니다. 목록 안에서 들여 쓴 코드 블록도 뺀다.
+const withoutFences = (md) => md.replace(/^[ \t]*```[^\n]*\n[\s\S]*?^[ \t]*```[^\n]*$/gm, '');
 const withoutCode = (md) => withoutFences(md).replace(/`[^`\n]*`/g, '');
 
 // GitHub 이 제목에서 만드는 앵커: 소문자로 바꾸고 글자, 숫자, 공백, -, _ 만 남긴 뒤 공백을 - 로 바꾼다.
@@ -173,7 +225,8 @@ test('readme prerequisites and commands', () => {
     );
   }
   for (const s of [
-    `gh repo fork ${UPSTREAM} --clone`,
+    // setup 과 submit 이 쓰는 Fork 처럼 원본 저장소의 기본 브랜치만 복사해야 한다.
+    `gh repo fork ${UPSTREAM} --clone --default-branch-only`,
     'gh auth login',
     'npm run check',
     'npm run setup --test nomcp --id P01 --tool Claude-Code',
@@ -214,31 +267,29 @@ test('tool docs cover each step', () => {
 });
 
 test('no evaluation leak', () => {
-  const files = [...docFiles(), 'task/TASK.md', ...walk('scripts'), ...walk('test')];
+  const docs = new Set(docFiles());
+  const files = [...docs, 'task/TASK.md', ...walk('scripts'), ...walk('test')];
   for (const file of files) {
     const buf = fs.readFileSync(abs(file));
     if (buf.includes(0)) continue;
-    let text = buf.toString('utf8');
-    if (abs(file) === SELF) text = text.replace(TOKEN_BLOCK, '');
-    for (const re of FORBIDDEN) {
-      const m = re.exec(text);
-      assert.equal(m, null, m ? `${file}:${lineOf(text, m.index)} 에 공개하지 않는 말(${m[0]})이 있습니다` : '');
-    }
+    const text = buf.toString('utf8');
+    const leak = findLeak(text, docs.has(file) ? [LEAK_DIGESTS, DOC_LEAK_DIGESTS] : [LEAK_DIGESTS]);
+    if (leak) assert.fail(`${file}:${lineOf(text, leak.index)} 에 공개하지 않는 말(${leak.word})이 있습니다`);
   }
-  // README 는 평가를 한 문장에서만 알리고, 도구 문서와 README 는 진행자 전용 자료를 언급하지 않는다.
+  // README 는 평가를 한 문장에서만 알리고, 도구 문서와 README 는 진행자 전용 경로를 언급하지 않는다.
   const readme = read('README.md');
   assert.equal((readme.match(/평가/g) || []).length, 1, 'README 는 평가를 한 문장에서만 언급해야 합니다');
-  for (const file of docFiles()) {
+  for (const file of docs) {
     const text = read(file);
     if (file !== 'README.md') assert.ok(!text.includes('평가'), `${file} 에 평가 이야기가 있습니다`);
-    for (const w of PRIVATE_WORDS) assert.ok(!text.includes(w), `${file} 에 ${w} 가 있습니다`);
+    for (const w of PRIVATE_PATHS) assert.ok(!text.includes(w), `${file} 에 ${w} 가 있습니다`);
   }
 });
 
 test('no em dash or en dash in docs', () => {
   for (const file of docFiles()) {
     const text = read(file);
-    for (const [ch, name] of [['—', 'em dash'], ['–', 'en dash']]) {
+    for (const [ch, name] of [['\u2014', 'em dash'], ['\u2013', 'en dash']]) {
       const i = text.indexOf(ch);
       assert.equal(i, -1, `${file}:${lineOf(text, i)} 에 ${name} 가 있습니다`);
     }

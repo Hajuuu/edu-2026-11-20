@@ -60,7 +60,7 @@ AI 도구의 설치와 로그인 방법은 도구별 문서의 첫 부분에 있
 
 #### Windows x64 와 Windows on Arm (ARM64)
 
-명령은 PowerShell(Windows 터미널)에서 실행합니다. WSL(Linux 환경)은 지원 대상이 아니므로, 저장소 명령과 AI 도구를 모두 Windows 에서 실행합니다. Windows on Arm PC 에서는 각 프로그램의 ARM64 판을 설치합니다. Claude Code, Cursor, VS Code, Antigravity 는 Windows ARM64 를 지원합니다.
+명령은 PowerShell(Windows 터미널)에서 실행합니다. WSL(Linux 환경)은 지원 대상이 아니므로, 저장소 명령과 AI 도구를 모두 Windows 에서 실행합니다. Windows on Arm PC 에서는 각 프로그램의 ARM64 판을 설치합니다. Claude Code, Cursor, VS Code, Antigravity 는 Windows ARM64 를 지원합니다. Windows on Arm 에서 Codex 를 쓴다면 npm 으로 설치하는 방법(`npm install -g @openai/codex`)을 쓸 수 있으며, 이 패키지에는 Windows ARM64 용 실행 파일이 들어 있습니다. 설치한 뒤에는 PowerShell 에서 `codex --version` 이 실행되는지 미리 확인합니다. PowerShell 이 `codex.ps1` 파일을 로드할 수 없다고 하면 [5. 문제 해결](#5-문제-해결)의 `npm.ps1` 항목과 같은 방법으로 해결합니다.
 
 1. JDK 17 을 설치합니다. winget 을 쓰거나, [Microsoft Build of OpenJDK 다운로드 페이지](https://learn.microsoft.com/ko-kr/java/openjdk/download)에서 OpenJDK 17 의 Windows `msi` 파일을 받습니다. ARM64 PC 는 `windows-aarch64` 파일을, x64 PC 는 `windows-x64` 파일을 받습니다.
 
@@ -136,10 +136,10 @@ echo 'export PATH="$JAVA_HOME/bin:/opt/homebrew/opt/node@22/bin:$PATH"' >> ~/.zs
 gh auth login
 ```
 
-다음 명령은 원본 저장소를 본인 계정으로 Fork 하고 그 Fork 를 내 PC 로 clone 합니다. clone 한 저장소의 `origin` 은 본인의 Fork 를 가리킵니다. 이 문서에서는 clone 한 `edu-2026-11-20` 폴더를 저장소 폴더라고 부릅니다.
+다음 명령은 원본 저장소를 본인 계정으로 Fork 하고 그 Fork 를 본인 PC 로 clone 합니다. clone 한 저장소의 `origin` 은 본인의 Fork 를 가리킵니다. `--default-branch-only` 는 원본 저장소의 기본 브랜치(`main`)만 Fork 에 복사해, 원본 저장소에 있는 다른 브랜치가 Fork 에 섞이지 않게 합니다. 이 문서에서는 clone 한 `edu-2026-11-20` 폴더를 저장소 폴더라고 부릅니다.
 
 ```bash
-gh repo fork swanpark8538/edu-2026-11-20 --clone
+gh repo fork swanpark8538/edu-2026-11-20 --clone --default-branch-only
 cd edu-2026-11-20
 ```
 
@@ -160,11 +160,11 @@ npm run check
 - `egovframe-codegen` MCP 서버를 저장소 폴더 안에 설치합니다.
 - 임시 폴더에 예제 프로젝트를 만들어 한 번 빌드한 뒤 지웁니다. 이때 내려받은 Maven 의존성은 Maven 로컬 저장소(`~/.m2`)에 남으므로 당일 첫 빌드가 빨라집니다.
 
-마지막의 점검 결과에 `[오류]` 항목이 있으면 안내에 따라 해결하고 다시 실행합니다. `[주의]` 항목도 읽고 가능한 한 해결합니다. `[오류]` 항목이 없으면 `모든 점검을 통과했습니다.` 또는 `필수 점검은 통과했습니다.` 가 나옵니다.
+점검하는 동안에는 항목마다 `[완료]`, `[주의]`, `[오류]` 가 붙어 나옵니다. 마지막의 점검 결과에는 `[오류]` 였던 항목이 `해결해야 할 항목` 아래에, `[주의]` 였던 항목이 `확인이 필요한 항목` 아래에 모여 나옵니다. 해결해야 할 항목은 안내에 따라 해결한 뒤 `npm run check` 를 다시 실행하고, 확인이 필요한 항목도 읽고 가능한 한 해결합니다. 해결해야 할 항목이 없으면 마지막 줄에 `모든 점검을 통과했습니다.` 또는 `필수 점검은 통과했습니다. 위 항목을 확인해 주세요.` 가 나옵니다.
 
 ### 1.4 개인 설정 끄기
 
-실습 동안에는 AI 도구의 개인 설정을 꺼 둡니다. 대상은 전역 지침 파일, 개인 MCP 서버, 개인 스킬, 플러그인, 규칙입니다. 도구별 방법은 도구 문서의 '개인 설정 끄기' 절에 있습니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 줍니다.
+실습 동안에는 AI 도구의 개인 설정을 꺼 둡니다. 대상은 전역 지침 파일, 개인 MCP 서버, 계정에 연결한 커넥터, 개인 스킬, 플러그인, 규칙입니다. 도구별 방법은 도구 문서의 '개인 설정 끄기' 절에 있습니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용(서버 이름과 파일 위치)은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 꺼 둡니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄기만 하면 setup 명령이 읽는 설정 파일에 서버가 그대로 남을 수 있으므로, 도구 문서에 따라 파일에서 서버 항목을 지웁니다.
 
 ## 2. 과제
 
@@ -198,6 +198,8 @@ CREATE TABLE BOARD (
    npm run setup -- --test nomcp --id P01 --tool Claude-Code
    ```
 
+   npm 11 이상에서는 `--` 가 없는 형태를 실행할 때 `Unknown cli config` 같은 경고가 나올 수 있습니다. 이 경고는 결과에 영향을 주지 않으며, `--` 를 넣은 형태로 실행하면 나오지 않습니다.
+
    setup 명령은 다음 일을 합니다.
 
    - 제출용 로컬 브랜치 `submit/P01` 을 만들고 그 브랜치로 전환합니다.
@@ -219,7 +221,7 @@ CREATE TABLE BOARD (
    npm run submit
    ```
 
-   submit 명령은 실행 폴더와 참가자 기록을 커밋하고, 본인의 Fork 에 push 한 뒤, 원본 저장소에 PR 을 만듭니다. 출력의 마지막 부분에 PR 주소가 나옵니다. 제출에는 실행 폴더의 파일과 `participant.json` 만 들어갑니다. 빌드 결과(`target/`)와 MCP 연결 설정 파일은 이 PC 의 절대 경로가 들어 있어 제출하지 않으며, 20MB 를 넘는 파일은 자동으로 제출에서 빠집니다.
+   submit 명령은 실행 폴더와 참가자 기록을 커밋하고, 본인의 Fork 에 push 한 뒤, 원본 저장소에 PR 을 만듭니다. 출력의 마지막 부분에 PR 주소가 나옵니다. 제출에는 실행 폴더의 파일과 `participant.json` 만 들어갑니다. 다만 빌드 결과(`target/`)는 빌드하면 다시 생기므로 제출하지 않습니다. 실행 폴더 바로 아래의 도구 설정(`.mcp.json`, `.claude/`, `.codex/`, `.agents/`, `.cursor/`)도 이 PC 에서만 쓰는 설정이고 절대 경로가 들어 있을 수 있어 제출하지 않습니다. 20MB 를 넘는 파일은 자동으로 제출에서 빠집니다.
 
 ### 3.2 두 번째 실행: mcp (20분)
 
@@ -248,12 +250,14 @@ CREATE TABLE BOARD (
 
 ## 5. 문제 해결
 
-명령은 결과를 `[완료]`, `[주의]`, `[오류]` 머리표로 알립니다. `[오류]` 가 나오면 명령이 멈춘 것이므로 안내에 따라 해결한 뒤 같은 명령을 다시 실행합니다. 해결하기 어려우면 진행자에게 알립니다.
+명령은 결과를 `[완료]`, `[주의]`, `[오류]` 머리표로 알립니다. setup 과 submit 명령은 `[오류]` 가 나오면 그 자리에서 멈추므로, 안내에 따라 해결한 뒤 같은 명령을 다시 실행합니다. check 명령은 `[오류]` 가 나와도 끝까지 점검한 뒤, 마지막의 점검 결과에 해결해야 할 항목을 모아 보여 줍니다. 해결하기 어려우면 진행자에게 알립니다.
+
+아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 setup 명령을 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 ### 준비 단계 (check, setup)
 
-**PowerShell 에서 `npm` 을 실행하면 `npm.ps1` 파일을 로드할 수 없다는 오류가 나옵니다.**
-PowerShell 의 실행 정책 때문에 생기는 오류입니다. `npm` 대신 `npm.cmd` 를 입력합니다(예: `npm.cmd run check`).
+**PowerShell 에서 `npm` 이나 `codex` 같은 명령을 실행하면 `npm.ps1`(또는 `codex.ps1`) 파일을 로드할 수 없다는 오류가 나옵니다.**
+PowerShell 의 실행 정책이 npm 으로 설치한 명령의 `.ps1` 파일을 막아서 생기는 오류입니다. 명령 이름 뒤에 `.cmd` 를 붙여 실행합니다(예: `npm.cmd run check`, `codex.cmd`).
 
 **`도구와 ID 를 구분할 수 없습니다` 또는 `어느 값이 --id 인지 알 수 없습니다` 가 나옵니다.**
 참가자 ID 가 도구 이름이나 실행 이름과 비슷할 때 생깁니다. `--` 를 넣은 형태(`npm run setup -- --test nomcp --id P01 --tool Claude-Code`)로 다시 실행합니다.
@@ -268,10 +272,10 @@ ZIP 으로 받은 폴더나 다른 폴더에서 명령을 실행한 경우입니
 mcp 실행은 nomcp 실행을 제출한 뒤에만 준비할 수 있습니다. nomcp 작업을 `npm run submit` 으로 먼저 제출합니다.
 
 **`전역 설정에 eGovFrame 코드 생성 MCP 서버가 켜져 있습니다` 가 나오고 nomcp 준비가 멈춥니다.**
-도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있어 MCP 없이 진행할 수 없는 상태입니다. 출력에 나온 제거 방법(예: `codex mcp remove egovframe-codegen`, `claude mcp remove egovframe-codegen -s user`)을 실행한 뒤 같은 setup 명령을 다시 실행합니다.
+도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있어 MCP 없이 진행할 수 없는 상태입니다. 출력에 나온 제거 방법(예: `codex mcp remove egovframe-codegen`, `claude mcp remove egovframe-codegen -s user`)을 실행한 뒤 같은 setup 명령을 다시 실행합니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄는 것만으로는 풀리지 않을 수 있으므로, 출력에 나온 파일에서 그 항목을 지웁니다.
 
 **`MCP 서버가 켜져 있습니다` 또는 `자동으로 읽을 수 있는 지침 파일이 있습니다` 라는 주의가 나옵니다.**
-개인 MCP 서버나 지침 파일이 실습에 섞일 수 있다는 뜻입니다. 지침 파일은 전역 지침 파일(예: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`)과, 저장소 폴더의 상위 폴더(홈 폴더 포함)에 있는 `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.agents/`, `.claude/rules/` 를 가리킵니다. 실습 동안 이 파일의 이름을 바꾸거나 다른 곳으로 옮기고, 개인 MCP 서버는 도구 문서에 따라 끕니다. 이 주의는 참가자 기록에도 남습니다.
+개인 MCP 서버나 지침 파일이 실습에 섞일 수 있다는 뜻입니다. 지침 파일은 전역 지침 파일(예: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`)과, 저장소 폴더의 상위 폴더(홈 폴더 포함)에 있는 `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.agents/`, `.claude/rules/` 를 가리킵니다. 실습 동안 이 파일의 이름을 바꾸거나 다른 곳으로 옮기고, 개인 MCP 서버는 도구 문서에 따라 끕니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄기만 하면 설정 파일에 서버가 남아 주의가 계속 나올 수 있으므로, 도구 문서에 따라 파일에서 서버 항목을 지웁니다. 이 주의는 참가자 기록에도 남습니다.
 
 **`Node.js ... 에서는 codegen MCP 서버를 실행할 수 없습니다` 가 나옵니다.**
 Node.js 가 18 보다 낮은 경우입니다. Node.js 22 를 설치하고 터미널을 다시 연 뒤 실행합니다.
@@ -285,10 +289,10 @@ Maven 의존성을 아직 내려받지 않아 첫 빌드가 느릴 수 있다는
 ### 작업 단계 (AI 도구)
 
 **mcp 실행인데 AI 도구에 `egovframe-codegen` 서버가 보이지 않습니다.**
-AI 도구로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정에는 setup 명령을 실행한 Node.js 와 저장소 폴더의 절대 경로가 들어 있습니다. 그래서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
+AI 도구로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정에는 setup 명령을 실행한 Node.js 와 저장소 폴더의 절대 경로가 들어 있습니다. 그래서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 작업 중에 다시 실행하면 걸린 시간이 다시 계산되므로, 처음 시작한 시각을 진행자에게 알립니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
 
 **nomcp 실행인데 `egovframe-codegen` 서버가 보입니다.**
-작업을 멈추고 진행자에게 알립니다. 대개 도구의 전역 설정에 서버가 남아 있는 경우이므로, 도구 문서의 '개인 설정 끄기' 절에 따라 전역 설정에서 서버를 끄거나 지운 뒤 nomcp setup 명령을 다시 실행합니다.
+작업을 멈추고 진행자에게 알립니다. 대개 도구의 전역 설정에 서버가 남아 있는 경우이므로, 도구 문서의 '개인 설정 끄기' 절에 따라 전역 설정에서 서버를 끄거나 지운 뒤 nomcp setup 명령을 다시 실행합니다. 이때 걸린 시간이 다시 계산되므로, 처음 시작한 시각도 진행자에게 함께 알립니다.
 
 ### 제출 단계 (submit)
 

@@ -2,7 +2,7 @@
 
 Codex 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Codex` 를 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 Codex 에서 할 일을 설명합니다. 이 문서는 터미널에서 실행하는 Codex CLI 를 기준으로 합니다.
 
-설치와 로그인은 [Codex CLI 공식 안내](https://learn.chatgpt.com/docs/codex/cli)를 따릅니다. Windows 에서는 setup 명령을 실행한 PowerShell 에서 Codex 를 실행합니다. WSL 안에서 Codex 를 실행하면 setup 명령이 적어 둔 Windows 용 Node.js 경로를 쓸 수 없어 MCP 가 연결되지 않습니다.
+설치와 로그인은 [Codex CLI 공식 안내](https://learn.chatgpt.com/docs/codex/cli)를 따릅니다. Windows 에서는 Codex 를 WSL 이 아닌 PowerShell 에서 실행합니다. WSL 안에서 Codex 를 실행하면 setup 명령이 적어 둔 Windows 용 Node.js 경로를 쓸 수 없어 MCP 가 연결되지 않습니다. Windows on Arm 에서는 npm 으로 설치하는 방법(`npm install -g @openai/codex`)을 쓸 수 있으며, 이 패키지에는 Windows ARM64 용 실행 파일이 들어 있습니다. PowerShell 이 `codex.ps1` 파일을 로드할 수 없다고 하면 `codex` 대신 `codex.cmd` 를 입력합니다.
 
 ## 1. 모델과 노력 수준
 
@@ -27,7 +27,7 @@ ChatGPT Plus, Pro, Business, Enterprise, Edu 요금제 가운데 하나가 필�
 
 ## 3. 개인 설정 끄기
 
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 줍니다. 환경 변수 `CODEX_HOME` 을 쓰고 있다면 아래의 `~/.codex` 대신 그 폴더를 봅니다.
+실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다. 환경 변수 `CODEX_HOME` 을 쓰고 있다면 아래의 `~/.codex` 대신 그 폴더를 봅니다.
 
 - 전역 지침 파일 `~/.codex/AGENTS.md` 와 `~/.codex/AGENTS.override.md` 는 이름을 바꿔 둡니다(예: `AGENTS.md.off`).
 - 개인 MCP 서버는 `codex mcp list` 로 확인합니다. 실습 동안 `~/.codex/config.toml` 의 `[mcp_servers.<이름>]` 아래에 `enabled = false` 를 넣어 끄거나, `codex mcp remove <이름>` 으로 지웁니다.
@@ -49,14 +49,7 @@ Codex 는 신뢰한 프로젝트에서만 프로젝트의 `.codex/config.toml` �
 
 ## 6. 연결 확인
 
-mcp 실행에서는 실행 폴더에서 Codex 를 시작한 뒤 `/mcp` 를 입력합니다.
-
-```bash
-cd submissions/P01/mcp
-codex
-```
-
-`egovframe-codegen` 서버와 다음 도구 4개가 보여야 합니다.
+mcp 실행에서는 실행 폴더에서 Codex 를 시작한 뒤(시작 방법은 7절) `/mcp` 를 입력합니다. `egovframe-codegen` 서버와 다음 도구 4개가 보여야 합니다.
 
 - `egov_scaffold_project`
 - `egov_add_entity`
@@ -67,10 +60,10 @@ nomcp 실행에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 
 ## 7. 작업 방법
 
-1. 새 터미널을 열고 저장소 폴더에서 실행 폴더로 이동한 뒤 `codex` 를 실행합니다. 아래 예는 nomcp 실행이며, mcp 실행에서는 `nomcp` 를 `mcp` 로 바꿉니다.
+1. 새 터미널(Windows 는 PowerShell)을 엽니다. setup 명령이 마지막 `다음 할 일` 의 1번 항목에 출력한 실행 폴더의 절대 경로로 이동한 뒤 `codex` 를 실행합니다. 새 터미널은 보통 홈 폴더에서 시작하므로 `submissions/...` 같은 상대 경로로는 이동할 수 없습니다.
 
    ```bash
-   cd submissions/P01/nomcp
+   cd "<setup 이 출력한 실행 폴더의 경로>"
    codex
    ```
 
@@ -81,16 +74,18 @@ nomcp 실행에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
    ```
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
-4. 작업을 마치면 Codex 를 끝냅니다. 그리고 저장소 폴더로 돌아가(`cd ../../..`) `npm run submit` 을 실행합니다.
+4. 작업을 마치면 Codex 를 끝냅니다. 그리고 저장소 폴더로 이동해 `npm run submit` 을 실행합니다. 실행 폴더에서는 `cd ../../..` 로 저장소 폴더에 갈 수 있고, setup 명령이 `다음 할 일` 의 5번 항목에 출력한 저장소 폴더의 경로를 써도 됩니다.
 5. mcp 실행은 새 세션으로 시작합니다. 이전 대화를 이어 가는 기능(`codex resume` 등)으로 nomcp 실행의 대화를 이어 가지 않습니다.
 
 ## 8. 문제 해결
+
+아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **`/mcp` 에 `egovframe-codegen` 서버가 없습니다.**
 `codex` 를 `submissions/<ID>/mcp` 폴더에서 시작했는지, 그 폴더에 `.codex/config.toml` 이 있는지 확인합니다. 폴더를 신뢰하지 않았다면 프로젝트 설정을 읽지 않습니다. `~/.codex/config.toml` 에 저장소 폴더의 항목이 `trust_level = "untrusted"` 로 남아 있으면 `"trusted"` 로 바꾸고 Codex 를 다시 시작합니다. 설정 이름은 버전에 따라 다를 수 있습니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Codex`)을 다시 실행한 뒤 Codex 를 다시 시작합니다.
+대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Codex`)을 다시 실행한 뒤 Codex 를 다시 시작합니다.
 
 **nomcp 실행인데 `/mcp` 에 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.codex/config.toml` 에 같은 서버가 남아 있는 경우이므로 `codex mcp remove egovframe-codegen` 으로 지운 뒤 nomcp setup 명령을 다시 실행합니다.

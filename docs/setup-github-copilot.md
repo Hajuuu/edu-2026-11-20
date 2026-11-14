@@ -18,11 +18,19 @@ Copilot Pro+, Max, Business, Enterprise 요금제 가운데 하나가 필요합�
 
 ## 3. 개인 설정 끄기
 
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 줍니다.
+실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다.
 
-- 개인 MCP 서버를 끕니다. Copilot 사용자 파일 `~/.copilot/mcp-config.json` 과 VS Code 사용자 프로필의 `mcp.json` 에 서버가 등록되어 있을 수 있습니다. 사용자 프로필의 `mcp.json` 은 명령 팔레트의 `MCP: Open User Configuration` 으로 엽니다. 환경 변수 `COPILOT_HOME` 을 쓰고 있다면 `~/.copilot` 대신 그 폴더를 봅니다.
-- 특히 전역 설정에 `egovframe-codegen` 서버가 켜져 있으면 setup 명령이 nomcp 실행 준비를 멈춥니다. setup 명령이 알려 주는 방법으로 이 서버를 지우거나 끈 뒤 setup 명령을 다시 실행합니다.
-- 사용자 설정이나 사용자 프로필에 넣어 둔 개인 지침(instructions)을 실습 동안 끕니다.
+- 개인 MCP 서버는 다음 두 파일에 등록되어 있을 수 있으며, setup 명령은 이 두 파일을 읽습니다. 실습 동안에는 파일에서 개인 서버 항목을 지웁니다. 먼저 파일을 복사해 두고(예: `mcp.json.bak`), 실습이 끝나면 복사해 둔 파일로 되돌립니다. 개인 서버를 모두 빼도 된다면 파일 이름을 바꿔 두는 방법(예: `mcp.json.off`)이 가장 간단합니다.
+
+  | 파일 | macOS | Windows |
+  |---|---|---|
+  | VS Code 사용자 프로필의 `mcp.json` | `~/Library/Application Support/Code/User/mcp.json` | `%APPDATA%\Code\User\mcp.json` |
+  | Copilot 사용자 파일 `mcp-config.json` | `~/.copilot/mcp-config.json` | `%USERPROFILE%\.copilot\mcp-config.json` |
+
+- VS Code 사용자 프로필의 `mcp.json` 은 명령 팔레트의 `MCP: Open User Configuration` 으로 열 수 있으며, 서버는 `"servers"` 아래에 있습니다. Copilot 사용자 파일의 서버는 `copilot mcp remove <이름>` 명령으로도 지울 수 있습니다. 환경 변수 `COPILOT_HOME` 을 쓰고 있다면 `~/.copilot` 대신 그 폴더를 봅니다.
+- VS Code 화면에서 서버를 끈 상태는 이 파일에 남지 않습니다. 그래서 화면에서 끄기만 하면 setup 명령이 여전히 켜진 서버로 보고 `[주의]` 를 내므로, 파일에서 지웁니다.
+- 특히 전역 설정에 `egovframe-codegen` 서버가 있으면 setup 명령이 nomcp 실행 준비를 멈춥니다. setup 명령이 알려 주는 파일에서 이 서버 항목을 지운 뒤 setup 명령을 다시 실행합니다.
+- 사용자 설정이나 사용자 프로필에 넣어 둔 개인 지침(instructions)은 내용을 다른 곳에 복사해 둔 뒤 실습 동안 끕니다.
 
 ## 4. setup 이 실행 폴더에 쓰는 파일
 
@@ -32,7 +40,7 @@ Copilot Pro+, Max, Business, Enterprise 요금제 가운데 하나가 필요합�
 | nomcp, mcp | `.github/copilot-instructions.md` | 작업 범위 지침. Copilot 이 자동으로 읽습니다 |
 | mcp | `.mcp.json` | `egovframe-codegen` 서버 연결 설정. 실행 폴더의 루트에 둡니다 |
 
-기본 Copilot 은 `.vscode/mcp.json` 이 아니라 작업 영역 루트의 `.mcp.json` 을 읽습니다. nomcp 실행 폴더에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정의 명령은 setup 명령을 실행한 Node.js 의 절대 경로이고, 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+기본 Copilot 에이전트(하네스)는 `.vscode/mcp.json` 이 아니라 작업 영역 루트의 `.mcp.json` 을 읽습니다. nomcp 실행 폴더에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정의 명령은 setup 명령을 실행한 Node.js 의 절대 경로이고, 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 5. 처음 한 번 확인할 것
 
@@ -67,14 +75,16 @@ nomcp 실행에서는 `egovframe-codegen` 서버가 없어야 합니다. 두 실
 
 ## 8. 문제 해결
 
+아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
+
 **`MCP: List Servers` 에 `egovframe-codegen` 서버가 없습니다.**
 연 폴더가 `submissions/<ID>/mcp` 인지, 그 폴더의 루트에 `.mcp.json` 이 있는지 확인합니다. 작업 영역을 신뢰했는지도 확인합니다. 그다음 명령 팔레트에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실행인데 `egovframe-codegen` 서버가 보입니다.**
-작업을 멈추고 진행자에게 알립니다. `~/.copilot/mcp-config.json` 이나 VS Code 사용자 프로필의 `mcp.json` 에 같은 서버가 있는 경우이므로, 그 서버를 지우거나 끈 뒤 nomcp setup 명령을 다시 실행합니다.
+작업을 멈추고 진행자에게 알립니다. VS Code 사용자 프로필의 `mcp.json` 이나 Copilot 사용자 파일 `mcp-config.json` 에 같은 서버가 있는 경우입니다. 3절의 방법으로 파일을 복사해 둔 뒤 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. VS Code 화면에서 끄기만 하면 파일에 남아 setup 명령이 계속 멈춥니다.
 
 **모델 목록에 Claude Opus 5.5 가 없습니다.**
 VS Code 와 Copilot 확장이 최신 버전인지 확인합니다. 요금제가 Pro+ 이상인지, Business 나 Enterprise 라면 조직 관리자가 모델을 허용했는지도 확인합니다.
