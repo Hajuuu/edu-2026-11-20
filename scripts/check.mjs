@@ -7,7 +7,18 @@ import { parseArgs } from './lib/cli.mjs';
 import { installBundle } from './lib/bundle.mjs';
 import { scaffoldBoard } from './lib/mcp-client.mjs';
 import { remoteSlug } from './lib/git.mjs';
+import {
+  NODE_RECOMMENDED_MAJOR,
+  JDK_MAJOR,
+  MAVEN_MIN,
+  nodeInfo,
+  javaInfo,
+  mavenInfo,
+  gitInfo,
+  ghInfo,
+} from './lib/versions.mjs';
 
+const MAVEN_MIN_TEXT = MAVEN_MIN.join('.');
 const failures = [];
 const warnings = [];
 const ok = (m) => log.ok(m);
@@ -20,51 +31,42 @@ const err = (m) => {
   log.err(m);
 };
 
-function firstLine(s) {
-  return (s || '').split(/\r?\n/).find((l) => l.trim()) || '';
-}
-
+// 버전 확인과 기준은 lib/versions.mjs 에 모아 setup 과 같은 기준을 쓴다.
 function checkJdk() {
-  const r = run('java', ['-version']);
-  const text = `${r.stderr}\n${r.stdout}`;
-  const m = text.match(/version "(\d+)(?:\.(\d+))?[^"]*"/);
-  if (!m) return err('JDK 를 찾지 못했습니다. JDK 17 을 설치하고 터미널을 다시 열어 주세요.');
-  const major = m[1] === '1' ? Number(m[2]) : Number(m[1]);
-  if (major === 17) ok(`JDK 17 을 확인했습니다. (${firstLine(text)})`);
-  else warn(`JDK ${major} 이(가) 설치되어 있습니다. 교육은 JDK 17 기준이므로 JDK 17 을 설치해 주세요.`);
+  const j = javaInfo();
+  if (!j.found) return err(`JDK 를 찾지 못했습니다. JDK ${JDK_MAJOR} 을 설치하고 터미널을 다시 열어 주세요.`);
+  if (j.ok) ok(`JDK ${JDK_MAJOR} 을 확인했습니다. (${j.line})`);
+  else warn(`JDK ${j.major} 이(가) 설치되어 있습니다. 교육은 JDK ${JDK_MAJOR} 기준이므로 JDK ${JDK_MAJOR} 을 설치해 주세요.`);
 }
 
 function checkMaven() {
-  const { cmd, shell } = mvnInvocation();
-  const r = run(cmd, ['-version'], { shell });
-  const m = r.status === 0 ? r.stdout.match(/Apache Maven (\d+)\.(\d+)/) : null;
-  if (!m) return err('Maven 을 찾지 못했습니다. Maven 3.9 이상을 설치하고 터미널을 다시 열어 주세요.');
-  const [major, minor] = [Number(m[1]), Number(m[2])];
-  if (major === 3 && minor >= 9) ok(`Maven 을 확인했습니다. (${firstLine(r.stdout)})`);
-  else warn(`Maven ${major}.${minor} 이(가) 설치되어 있습니다. Maven 3.9 이상으로 올려 주세요.`);
+  const m = mavenInfo();
+  if (!m.found) return err(`Maven 을 찾지 못했습니다. Maven ${MAVEN_MIN_TEXT} 이상을 설치하고 터미널을 다시 열어 주세요.`);
+  if (m.ok) ok(`Maven 을 확인했습니다. (${m.line})`);
+  else warn(`Maven ${m.major}.${m.minor} 이(가) 설치되어 있습니다. Maven ${MAVEN_MIN_TEXT} 이상으로 올려 주세요.`);
 }
 
 function checkNode() {
-  const major = Number(process.versions.node.split('.')[0]);
-  if (major < 18) {
-    err(`Node.js ${process.versions.node} 은(는) 너무 낮습니다. Node.js 22 이상을 설치해 주세요.`);
+  const n = nodeInfo();
+  if (n.level === 'unsupported') {
+    err(`Node.js ${n.version} 은(는) 너무 낮습니다. Node.js ${NODE_RECOMMENDED_MAJOR} 이상을 설치해 주세요.`);
     return false;
   }
-  if (major < 22) warn(`Node.js ${process.versions.node} 이(가) 설치되어 있습니다. Node.js 22 이상을 권장합니다.`);
-  else ok(`Node.js ${process.versions.node} 을(를) 확인했습니다.`);
+  if (n.level === 'old') warn(`Node.js ${n.version} 이(가) 설치되어 있습니다. Node.js ${NODE_RECOMMENDED_MAJOR} 이상을 권장합니다.`);
+  else ok(`Node.js ${n.version} 을(를) 확인했습니다.`);
   return true;
 }
 
 function checkGit() {
-  const r = run('git', ['--version']);
-  if (r.status === 0) ok(`Git 을 확인했습니다. (${firstLine(r.stdout)})`);
+  const g = gitInfo();
+  if (g.found) ok(`Git 을 확인했습니다. (${g.line})`);
   else err('Git 을 찾지 못했습니다. Git 을 설치하고 터미널을 다시 열어 주세요.');
 }
 
 function checkGh() {
-  const r = run('gh', ['--version']);
-  if (r.status !== 0) return err('GitHub CLI(gh) 를 찾지 못했습니다. gh 를 설치하고 터미널을 다시 열어 주세요.');
-  ok(`GitHub CLI 를 확인했습니다. (${firstLine(r.stdout)})`);
+  const h = ghInfo();
+  if (!h.found) return err('GitHub CLI(gh) 를 찾지 못했습니다. gh 를 설치하고 터미널을 다시 열어 주세요.');
+  ok(`GitHub CLI 를 확인했습니다. (${h.line})`);
   const a = run('gh', ['auth', 'status']);
   if (a.status === 0) ok('GitHub 로그인 상태를 확인했습니다.');
   else warn('GitHub 에 로그인되어 있지 않습니다. gh auth login 을 실행해 로그인해 주세요.');

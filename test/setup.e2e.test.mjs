@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COPY = ['package.json', 'scripts', 'task', path.join('mcp', 'egovframe-mcp-codegen')];
@@ -57,10 +57,10 @@ function workRepo() {
   return { repo, home: tempDir('setup-home-') };
 }
 
-function setup(ctx, ...args) {
+function runSetup(ctx, nodeArgs, args) {
   const env = { ...process.env, EDU_HOME: ctx.home, EDU_GH: 'edu-no-such-gh' };
   for (const k of STRIP_ENV) delete env[k];
-  const r = spawnSync(process.execPath, [path.join('scripts', 'setup.mjs'), ...args], {
+  const r = spawnSync(process.execPath, [...nodeArgs, path.join('scripts', 'setup.mjs'), ...args], {
     cwd: ctx.repo,
     env,
     encoding: 'utf8',
@@ -68,7 +68,9 @@ function setup(ctx, ...args) {
   return { code: r.status, out: `${r.stdout}\n${r.stderr}` };
 }
 
+const setup = (ctx, ...args) => runSetup(ctx, [], args);
 const runDir = (ctx, id, t) => path.join(ctx.repo, 'submissions', id, t);
+const codegenEntryOf = (ctx) => path.join(ctx.repo, '.mcp-servers', 'egovframe-mcp-codegen', 'package', 'build', 'index.js');
 const branch = (ctx) => git(ctx.repo, 'symbolic-ref', '--short', 'HEAD');
 const readParticipant = (ctx, id) =>
   JSON.parse(fs.readFileSync(path.join(ctx.repo, 'submissions', id, 'participant.json'), 'utf8'));
@@ -91,6 +93,8 @@ test('nomcp codex', () => {
   assert.equal(fs.readFileSync(path.join(run, 'TASK.md'), 'utf8'), `${NOMCP_HEADER}${eol}${eol}${original}`);
   assert.ok(fs.existsSync(path.join(run, 'AGENTS.md')));
   assert.ok(!fs.existsSync(path.join(run, '.codex')));
+  // nomcp 에서도 번들이 없으면 설치해 둔다 (깨진 번들을 mcp 실행 전에 발견).
+  assert.ok(fs.statSync(codegenEntryOf(ctx)).isFile());
 
   const p = readParticipant(ctx, 'T01');
   assert.equal(p.id, 'T01');
@@ -178,6 +182,7 @@ test('cline toggles global', () => {
   assert.equal(r.code, 0, r.out);
   let doc = JSON.parse(fs.readFileSync(settings, 'utf8'));
   assert.equal(doc.mcpServers['egovframe-codegen'].disabled, true);
+  assert.ok(fs.statSync(doc.mcpServers['egovframe-codegen'].args[0]).isFile());
   assert.deepEqual(doc.mcpServers.mine, { command: 'x' });
   assert.match(r.out, /\[주의\][^\n]*mine/);
   const p = readParticipant(ctx, 'T04');
@@ -226,6 +231,32 @@ test('broken cline settings stop before writing', () => {
   assert.equal(fs.readFileSync(settings, 'utf8'), '{ broken');
   assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions', 'T08')));
   assert.ok(!fs.existsSync(path.join(ctx.repo, '.edu', 'global-changes.json')));
+});
+
+test('broken bundle stops nomcp before writing', () => {
+  const ctx = workRepo();
+  const dir = path.join(ctx.repo, 'mcp', 'egovframe-mcp-codegen');
+  const tgz = fs.readdirSync(dir).find((f) => f.endsWith('.tgz'));
+  fs.writeFileSync(path.join(dir, tgz), 'not a bundle');
+  const r = setup(ctx, '--test', 'nomcp', '--id', 'T09', '--tool', 'codex');
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /\[오류\][^\n]*codegen/);
+  assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions', 'T09')));
+});
+
+test('node below 18 stops before the branch', () => {
+  const ctx = workRepo();
+  const preload = path.join(tempDir('setup-preload-'), 'old-node.mjs');
+  fs.writeFileSync(
+    preload,
+    "Object.defineProperty(process, 'versions', { value: { ...process.versions, node: '16.20.2' }, configurable: true, enumerable: true });\n",
+  );
+  const r = runSetup(ctx, ['--import', pathToFileURL(preload).href], ['--test', 'nomcp', '--id', 'T10', '--tool', 'codex']);
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /\[오류\][^\n]*Node\.js 16\.20\.2[^\n]*18/);
+  assert.equal(branch(ctx), 'main');
+  assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions')));
+  assert.ok(!fs.existsSync(path.join(ctx.repo, '.mcp-servers')));
 });
 
 test('codex leftover blocks nomcp', () => {

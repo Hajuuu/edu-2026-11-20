@@ -7,8 +7,6 @@ import {
   homeDir,
   appDataDir,
   platformKey,
-  run,
-  mvnInvocation,
   log,
   fail,
   readJson,
@@ -25,10 +23,22 @@ import {
   clineSettingsPath,
   toggleCline,
 } from './lib/mcp-config.mjs';
-import { installBundle, codegenEntry } from './lib/bundle.mjs';
+import { installBundle } from './lib/bundle.mjs';
 import { LIMIT_MINUTES, participantPath, loadParticipant, saveParticipant, recordSetup } from './lib/participant.mjs';
 import { scanGlobalMcp, findInstructionLeaks, removalHint } from './lib/guard.mjs';
-import { git, gh, currentBranch, ensureBranch } from './lib/git.mjs';
+import { git, currentBranch, ensureBranch } from './lib/git.mjs';
+import {
+  NODE_MIN_MAJOR,
+  NODE_RECOMMENDED_MAJOR,
+  JDK_MAJOR,
+  MAVEN_MIN,
+  nodeInfo,
+  javaInfo,
+  mavenInfo,
+  gitInfo,
+  ghInfo,
+} from './lib/versions.mjs';
+import { safePath } from './lib/safe-path.mjs';
 
 const FIRST_PROMPT = 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.';
 const TASK_HEADERS = {
@@ -80,47 +90,38 @@ function readTaskTemplate() {
   }
 }
 
-const pick = (text, re) => (String(text || '').match(re) || [])[1] ?? null;
-
-function probeVersions() {
-  const java = run('java', ['-version']);
-  const { cmd, shell } = mvnInvocation();
-  const mvn = run(cmd, ['-version'], { shell });
-  const g = run('git', ['--version']);
-  const h = gh(['--version']);
-  return {
-    node: process.versions.node,
-    java: pick(`${java.stderr}\n${java.stdout}`, /version "([^"]+)"/),
-    maven: mvn.status === 0 ? pick(mvn.stdout, /Apache Maven (\S+)/) : null,
-    git: g.status === 0 ? pick(g.stdout, /git version (\S+)/) : null,
-    gh: h.status === 0 ? pick(h.stdout, /gh version (\S+)/) : null,
-  };
-}
-
-function javaMajor(version) {
-  const parts = String(version).split(/[._+-]/);
-  return Number(parts[0] === '1' ? parts[1] : parts[0]);
-}
-
-// 빠른 환경 점검. 막지는 않고 주의만 준다 (예열은 npm run check 가 맡는다).
-function checkEnvironment(v) {
+// 빠른 환경 점검(예열은 npm run check 가 맡는다). 기준은 lib/versions.mjs 를 check 와 함께 쓴다.
+// Node 만 막는다: setup 은 자신을 실행한 Node(process.execPath)로 codegen MCP 서버를 띄우게 설정한다.
+function checkEnvironment() {
   log.step('환경을 빠르게 점검합니다.');
+  const node = nodeInfo();
+  if (node.level === 'unsupported') {
+    fail(`Node.js ${node.version} 에서는 codegen MCP 서버를 실행할 수 없습니다(${NODE_MIN_MAJOR} 이상 필요). Node.js ${NODE_RECOMMENDED_MAJOR} 이상을 설치하고 터미널을 다시 연 뒤 실행해 주세요.`);
+  }
+  const java = javaInfo();
+  const maven = mavenInfo();
+  const gitv = gitInfo();
+  const ghv = ghInfo();
+  const versions = { node: node.version, java: java.version, maven: maven.version, git: gitv.version, gh: ghv.version };
   const found = [
-    ['Node.js', v.node],
-    ['JDK', v.java],
-    ['Maven', v.maven],
-    ['Git', v.git],
-    ['GitHub CLI', v.gh],
+    ['Node.js', versions.node],
+    ['JDK', versions.java],
+    ['Maven', versions.maven],
+    ['Git', versions.git],
+    ['GitHub CLI', versions.gh],
   ].filter(([, ver]) => ver);
   log.ok(`${found.map(([name, ver]) => `${name} ${ver}`).join(', ')} 을(를) 확인했습니다.`);
-  if (Number(v.node.split('.')[0]) < 22) log.warn(`지금 쓰는 Node.js 는 ${v.node} 입니다. Node.js 22 이상을 권장합니다.`);
-  if (!v.java) log.warn('JDK 를 찾지 못했습니다. 프로젝트를 빌드하고 실행하려면 JDK 17 이 필요합니다.');
-  else if (javaMajor(v.java) !== 17) log.warn(`지금 쓰는 JDK 는 ${v.java} 입니다. 교육은 JDK 17 기준이니 JDK 17 로 바꿔 주세요.`);
-  if (!v.maven) log.warn('Maven 을 찾지 못했습니다. 프로젝트를 빌드하려면 Maven 3.9 이상이 필요합니다.');
-  if (!v.gh) log.warn('GitHub CLI(gh) 를 찾지 못했습니다. 제출(npm run submit)할 때 필요하니 미리 설치해 두세요.');
+  const mavenMin = MAVEN_MIN.join('.');
+  if (node.level === 'old') log.warn(`지금 쓰는 Node.js 는 ${node.version} 입니다. Node.js ${NODE_RECOMMENDED_MAJOR} 이상을 권장합니다.`);
+  if (!java.found) log.warn(`JDK 를 찾지 못했습니다. 프로젝트를 빌드하고 실행하려면 JDK ${JDK_MAJOR} 이 필요합니다.`);
+  else if (!java.ok) log.warn(`지금 쓰는 JDK 는 ${java.version} 입니다. 교육은 JDK ${JDK_MAJOR} 기준이니 JDK ${JDK_MAJOR} 로 바꿔 주세요.`);
+  if (!maven.found) log.warn(`Maven 을 찾지 못했습니다. 프로젝트를 빌드하려면 Maven ${mavenMin} 이상이 필요합니다.`);
+  else if (!maven.ok) log.warn(`지금 쓰는 Maven 은 ${maven.version} 입니다. Maven ${mavenMin} 이상으로 올려 주세요.`);
+  if (!ghv.found) log.warn('GitHub CLI(gh) 를 찾지 못했습니다. 제출(npm run submit)할 때 필요하니 미리 설치해 두세요.');
   if (!fs.existsSync(path.join(homeDir(), '.m2', 'repository', 'org', 'egovframe', 'boot'))) {
     log.warn('Maven 로컬 저장소(~/.m2)에 eGovFrame Boot 라이브러리가 없어 첫 빌드가 느릴 수 있습니다. 교육 전날 npm run check 를 실행해 두면 미리 받아 둘 수 있습니다.');
   }
+  return versions;
 }
 
 function prepareBranch(id) {
@@ -156,19 +157,8 @@ function checkOrder({ test, id, tool, force }, participant) {
   process.exit(1);
 }
 
-// 참가자 기록은 공개 PR 에 올라가므로 PC 사용자 이름이 드러나지 않게 경로를 줄인다.
-function shortPath(p) {
-  const inside = (base) => {
-    const rel = path.relative(base, p);
-    return rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? toSlash(rel) : null;
-  };
-  const inRepo = inside(REPO_ROOT);
-  if (inRepo) return inRepo;
-  const inHome = inside(homeDir());
-  if (inHome) return `~/${inHome}`;
-  const rel = path.relative(REPO_ROOT, p);
-  return path.isAbsolute(rel) ? p : toSlash(rel);
-}
+// 참가자 기록은 공개 PR 에 올라가므로 절대 경로와 PC 사용자 이름이 남지 않게 줄인다.
+const recordPath = (p) => safePath(p, { repo: REPO_ROOT, home: homeDir(), appData: appDataDir() });
 
 // 전역 설정에 남은 MCP 서버(8.1)와 자동으로 읽히는 지침 파일(8.2)을 확인한다. 파일을 쓰기 전에 실행한다.
 function guard({ test, id, tool }, runDir) {
@@ -184,11 +174,11 @@ function guard({ test, id, tool }, runDir) {
   // 막는 경우에도 나머지 주의 사항을 먼저 보여 줘 한 번에 정리할 수 있게 한다.
   for (const h of hits.filter((x) => !x.codegen)) {
     log.warn(`${h.name} MCP 서버가 켜져 있습니다(${h.source}). 실습 동안 꺼 주세요.`);
-    warnings.push(`켜져 있는 다른 MCP 서버: ${h.name} (${shortPath(h.source)})`);
+    warnings.push(`켜져 있는 다른 MCP 서버: ${h.name} (${recordPath(h.source)})`);
   }
   for (const p of findInstructionLeaks(runDir, home, process.env)) {
     log.warn(`AI 도구가 자동으로 읽을 수 있는 지침 파일이 있습니다(${p}). 실습 동안 이름을 바꾸거나 다른 곳으로 옮겨 두세요.`);
-    warnings.push(`자동으로 읽힐 수 있는 지침 파일: ${shortPath(p)}`);
+    warnings.push(`자동으로 읽힐 수 있는 지침 파일: ${recordPath(p)}`);
   }
   if (blocked) {
     log.err('전역 설정에 eGovFrame 코드 생성 MCP 서버가 켜져 있습니다. nomcp 실행은 MCP 없이 진행해야 하므로 아래 서버를 먼저 제거해 주세요.');
@@ -198,7 +188,7 @@ function guard({ test, id, tool }, runDir) {
   }
   for (const h of codegen) {
     log.warn(`전역 설정(${h.source})에도 ${h.name} 서버가 켜져 있어 이 폴더의 연결과 겹칩니다. 실습 동안에는 전역 설정의 서버를 꺼 두기를 권장합니다. ${removalHint(tool, h)}`);
-    warnings.push(`전역 설정에도 codegen MCP 서버가 켜져 있음: ${h.name} (${shortPath(h.source)})`);
+    warnings.push(`전역 설정에도 codegen MCP 서버가 켜져 있음: ${h.name} (${recordPath(h.source)})`);
   }
   if (!warnings.length) log.ok('실습에 영향을 줄 수 있는 전역 MCP 서버나 지침 파일이 없습니다.');
   return warnings;
@@ -337,8 +327,7 @@ function main() {
   log.step(`실습 실행을 준비합니다. (참가자 ${id}, 실행 ${test}, 도구 ${tool})`);
   checkRepo();
   const template = readTaskTemplate();
-  const versions = probeVersions();
-  checkEnvironment(versions);
+  const versions = checkEnvironment();
   prepareBranch(id);
 
   // 여기부터는 submit/{id} 브랜치의 기록을 본다. 파일을 쓰기 전에 막아야 할 조건을 모두 확인한다.
@@ -346,7 +335,8 @@ function main() {
   checkOrder(ctx, participant);
   const runDir = path.join(REPO_ROOT, 'submissions', id, test);
   const warnings = guard(ctx, runDir);
-  const entry = test === 'mcp' ? prepareCodegen() : codegenEntry();
+  // 두 실행 모두 번들이 없으면 설치한다. 깨진 번들을 시간 제한이 있는 mcp 실행 전에 발견하기 위해서다.
+  const entry = prepareCodegen();
 
   log.step(`실행 폴더를 준비합니다. (submissions/${id}/${test})`);
   if (tool === 'Cline') toggleClineGlobal(test, entry);
