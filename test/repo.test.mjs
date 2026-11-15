@@ -23,7 +23,6 @@ test('ignored paths', () => {
     'docs/superpowers/x.md',
     '.superpowers/x.md',
     '.superpowers/sdd/x/ledger.md',
-    '.mcp-servers/a',
     '.edu/state.json',
     '.claude/settings.local.json',
     'submissions/P01/mcp/.mcp.json',

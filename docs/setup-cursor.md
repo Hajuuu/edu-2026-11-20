@@ -36,7 +36,7 @@ Premium(월 30달러) 이상의 요금제가 필요합니다. 이 문서에서 �
 | nomcp, mcp | `.cursor/rules/workspace-boundary.mdc` | 작업 범위 지침. `alwaysApply: true` 라서 항상 적용됩니다 |
 | mcp | `.cursor/mcp.json` | `egovframe-codegen` 서버 연결 설정 |
 
-nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. 실습 워크스페이스 바로 아래의 `.cursor/` 폴더는 이 PC 에서만 쓰는 도구 설정으로 보아 통째로 제출에서 빠집니다. 그래서 작업 범위 지침 파일도 제출되지 않으며, mcp 실습의 `.cursor/mcp.json` 에는 이 PC 의 절대 경로도 들어 있습니다. MCP 연결 설정의 명령은 setup 명령을 실행한 Node.js 의 절대 경로이고, 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. 실습 워크스페이스 바로 아래의 `.cursor/` 폴더는 이 PC 에서만 쓰는 도구 설정으로 보아 통째로 제출에서 빠집니다. 그래서 작업 범위 지침 파일도 제출되지 않으며, mcp 실습의 `.cursor/mcp.json` 에는 이 PC 의 절대 경로도 들어 있습니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 5. 처음 한 번 확인할 것
 
@@ -78,7 +78,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다. 
 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 저장소 폴더나 `submissions` 폴더를 열면 실습 워크스페이스의 `.cursor/mcp.json` 을 읽지 않습니다. 그 폴더에 `.cursor/mcp.json` 이 있는지 확인한 뒤, 명령 팔레트(Windows 는 Ctrl+Shift+P, macOS 는 Cmd+Shift+P)에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
 
 **`egovframe-codegen` 서버가 오류 상태이거나 시작되지 않습니다.**
-대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cursor`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cursor`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 파일(`~/.cursor/mcp.json`, Windows 는 `%USERPROFILE%\.cursor\mcp.json`)에 같은 서버가 있는 경우입니다. 3절의 방법으로 파일을 복사해 둔 뒤 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. 화면에서 끄기만 하면 파일에 서버가 남아 setup 명령이 계속 멈출 수 있습니다.

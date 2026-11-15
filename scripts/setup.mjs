@@ -14,7 +14,8 @@ import {
   toggleCline,
   recordGlobalChange,
 } from './lib/mcp-config.mjs';
-import { installBundle } from './lib/bundle.mjs';
+import { npxServer, verifyBundle } from './lib/bundle.mjs';
+import { listTools } from './lib/mcp-client.mjs';
 import { LIMIT_MINUTES, participantPath, loadParticipant, saveParticipant, recordSetup } from './lib/participant.mjs';
 import { scanGlobalMcp, findInstructionLeaks, removalHint } from './lib/guard.mjs';
 import { requireRepoRoot, currentBranch, ensureBranch } from './lib/git.mjs';
@@ -33,6 +34,8 @@ import {
 } from './lib/versions.mjs';
 import { safePath } from './lib/safe-path.mjs';
 
+// npx 가 번들을 처음 npm 캐시에 풀 때는 몇 초 더 걸린다.
+const PROBE_TIMEOUT_MS = 120000;
 const FIRST_PROMPT = 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.';
 const TASK_HEADERS = {
   nomcp: '> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.',
@@ -63,7 +66,7 @@ function readTaskTemplate() {
 }
 
 // 빠른 환경 점검(예열은 npm run check 가 맡는다). 기준은 lib/versions.mjs 를 check 와 함께 쓴다.
-// Node 만 막는다: setup 은 자신을 실행한 Node(process.execPath)로 codegen MCP 서버를 띄우게 설정한다.
+// Node 만 막는다: MCP 연결 설정은 npx 로 codegen MCP 서버를 띄우고, 번들의 MCP SDK 는 Node.js 18 이상을 요구한다.
 function checkEnvironment() {
   log.step('환경을 빠르게 점검합니다.');
   const node = nodeInfo();
@@ -168,22 +171,38 @@ function guard({ test, id, tool }, runDir) {
   return warnings;
 }
 
-function prepareCodegen() {
-  log.step('codegen MCP 서버를 준비합니다.');
+const bundleOf = (server) => server.args.find((a) => a.endsWith('.tgz'));
+
+// MCP 연결 설정에 쓸 npx 명령을 만든다. 번들은 저장소에 풀지 않고 npx 가 npm 캐시에 풀어 실행한다.
+// 두 실습 모두 번들이 풀리는지 확인해, 깨진 번들을 시간 제한이 있는 mcp 실습 전에 발견한다.
+// mcp 실습은 그 명령으로 서버를 한 번 띄워 도구 목록을 확인한다. 이때 npm 캐시에 풀려 AI 도구가 띄울 때 빨라진다.
+async function prepareCodegen(test) {
+  log.step('codegen MCP 서버를 확인합니다.');
+  let server;
   try {
-    const r = installBundle('codegen');
-    log.ok(r.installed ? 'codegen MCP 서버를 설치했습니다.' : 'codegen MCP 서버가 이미 설치되어 있습니다.');
-    return r.entry;
+    server = npxServer('codegen');
+    verifyBundle('codegen', bundleOf(server));
   } catch (e) {
-    return fail(`codegen MCP 서버를 설치하지 못했습니다. ${e.message}`);
+    return fail(`codegen MCP 서버 번들에 문제가 있습니다. ${e.message} git status 로 mcp 폴더의 파일이 바뀌거나 지워졌는지 확인해 주세요.`);
   }
+  const bundle = bundleOf(server);
+  log.ok(`codegen MCP 서버 번들을 확인했습니다. (${toSlash(path.relative(REPO_ROOT, bundle))})`);
+  if (test !== 'mcp') return server;
+  try {
+    const tools = await listTools(server, { timeoutMs: PROBE_TIMEOUT_MS });
+    log.ok(`npx 로 codegen MCP 서버를 실행해 도구 ${tools.length}개를 확인했습니다.`);
+  } catch (e) {
+    console.error(`  ${e.message}`);
+    return fail('npx 로 codegen MCP 서버를 실행하지 못했습니다. 터미널에서 npx --version 이 실행되는지 확인하고, 해결되지 않으면 진행자에게 알려 주세요.');
+  }
+  return server;
 }
 
-function toggleClineGlobal(test, entry) {
+function toggleClineGlobal(test, server) {
   const settingsPath = clineSettingsPath(process.env);
   const enable = test === 'mcp';
   const backupDir = path.join(REPO_ROOT, '.edu', 'backup');
-  const r = toggleCline(enable, { command: process.execPath, args: [entry] }, { settingsPath, backupDir });
+  const r = toggleCline(enable, server, { settingsPath, backupDir });
   if (r.aborted) fail(`${r.aborted} 파일(${settingsPath})을 고치거나 다른 이름으로 옮긴 뒤 다시 실행해 주세요.`);
   // previousEntry 는 이번에 바꾸기 전의 항목이다. 이미 기록이 있으면 처음 바꾸기 전의 값이 그대로 남는다.
   const change = {
@@ -218,9 +237,9 @@ function prepareRunFolder({ test, id, tool }, runDir, template) {
   if (fs.existsSync(path.join(runDir, 'board-app'))) log.ok('이미 있는 board-app 폴더는 그대로 두었습니다.');
 }
 
-function wireFolderMcp(test, tool, runDir, entry) {
+function wireFolderMcp(test, tool, runDir, server) {
   if (test === 'mcp') {
-    const files = folderMcpFiles(tool, { command: process.execPath, args: [entry] });
+    const files = folderMcpFiles(tool, server);
     for (const [rel, content] of Object.entries(files)) writeRel(runDir, rel, content);
     const names = Object.keys(files);
     if (names.length) {
@@ -299,7 +318,7 @@ function printNext({ test, id, tool }, runDir, now) {
   }
 }
 
-function main() {
+async function main() {
   const ctx = readArgs();
   const { test, id, tool } = ctx;
   log.step(`실습을 준비합니다. (참가자 ${id}, 실습 ${test}, 도구 ${tool})`);
@@ -313,22 +332,19 @@ function main() {
   checkOrder(ctx, participant);
   const runDir = path.join(REPO_ROOT, 'submissions', id, test);
   const warnings = guard(ctx, runDir);
-  // 두 실습 모두 번들이 없으면 설치한다. 깨진 번들을 시간 제한이 있는 mcp 실습 전에 발견하기 위해서다.
-  const entry = prepareCodegen();
+  const server = await prepareCodegen(test);
 
   log.step(`실습 워크스페이스를 준비합니다. (submissions/${id}/${test})`);
-  if (tool === 'Cline') toggleClineGlobal(test, entry);
+  if (tool === 'Cline') toggleClineGlobal(test, server);
   prepareRunFolder(ctx, runDir, template);
-  wireFolderMcp(test, tool, runDir, entry);
+  wireFolderMcp(test, tool, runDir, server);
 
   const now = new Date();
   recordRun(ctx, participant, versions, warnings, now);
   printNext(ctx, runDir, now);
 }
 
-try {
-  main();
-} catch (e) {
+main().catch((e) => {
   log.err(`실습 준비 중 예기치 않은 오류가 발생했습니다: ${e.message}`);
   process.exit(1);
-}
+});

@@ -3,6 +3,7 @@
 // 종료 코드와 함께 출력의 머리표와 문구를 확인한다.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { removeTemps, tempDir, copySources, workRepo, runScript, put } from './helpers.mjs';
 
@@ -26,6 +27,9 @@ test('a folder that is not a git clone fails the check', () => {
   // 저장소가 아니므로 origin 은 확인하지 않는다.
   assert.doesNotMatch(r.out, /origin 원격/);
   assert.ok(r.out.includes(`[완료] ${NO_LEFTOVER}`), r.out);
+  // codegen 번들은 저장소 안에 풀지 않고, MCP 연결 설정과 같은 npx 명령으로 띄워 확인한다.
+  assert.match(r.out, /\[완료\] npx 로 codegen MCP 서버를 실행해 도구 \d+개를 확인했습니다/);
+  assert.ok(!fs.existsSync(path.join(ctx.repo, '.mcp-servers')));
 });
 
 // 교육생 clone 에서는 저장소 위치 오류가 없고, origin 이 없으면 완료가 아니라 주의로 알린다.

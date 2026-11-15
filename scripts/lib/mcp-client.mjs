@@ -1,6 +1,7 @@
-// 최소 stdio MCP 클라이언트: 도구 하나를 호출하고 결과를 돌려준다. Node 내장 모듈만 사용한다.
+// 최소 stdio MCP 클라이언트: 서버를 띄워 초기화한 뒤 요청 하나를 보내고 결과를 돌려준다. Node 내장 모듈만 사용한다.
+// server 는 MCP 연결 설정과 같은 { command, args } 이다 (bundle.mjs 의 npxServer).
 import { spawn } from 'node:child_process';
-import path from 'node:path';
+import os from 'node:os';
 
 export const BOARD_DDL = `CREATE TABLE BOARD (
   BOARD_ID VARCHAR(20) NOT NULL,
@@ -10,11 +11,13 @@ export const BOARD_DDL = `CREATE TABLE BOARD (
   PRIMARY KEY (BOARD_ID)
 );`;
 
-export function callTool(entry, name, args, opts = {}) {
+// initialize 다음에 method 요청을 보내고, 그 응답 메시지({ result } 또는 { error })를 돌려준다.
+function request(server, method, params, opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 300000;
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [entry], {
-      cwd: path.dirname(entry),
+    // 저장소 안에서 띄우면 npx 가 저장소의 package.json 을 프로젝트로 읽으므로 임시 폴더에서 띄운다.
+    const child = spawn(server.command, server.args, {
+      cwd: opts.cwd ?? os.tmpdir(),
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
     });
@@ -59,18 +62,9 @@ export function callTool(entry, name, args, opts = {}) {
           return;
         }
         send({ method: 'notifications/initialized' });
-        send({ id: 2, method: 'tools/call', params: { name, arguments: args } });
+        send({ id: 2, method, params });
       } else if (msg.id === 2) {
-        if (msg.error) {
-          finish(resolve, { isError: true, text: String(msg.error.message ?? '') });
-          return;
-        }
-        const r = msg.result || {};
-        const text = (Array.isArray(r.content) ? r.content : [])
-          .map((c) => c?.text)
-          .filter((t) => typeof t === 'string')
-          .join('\n');
-        finish(resolve, { isError: r.isError === true, text });
+        finish(resolve, msg);
       }
     };
 
@@ -96,7 +90,7 @@ export function callTool(entry, name, args, opts = {}) {
       errText = (errText + c).slice(-4000);
     });
     child.stdin.on('error', () => {});
-    child.on('error', (e) => finish(reject, new Error(`MCP 서버를 시작하지 못했습니다: ${e.message}`)));
+    child.on('error', (e) => finish(reject, new Error(`MCP 서버를 시작하지 못했습니다(${server.command}): ${e.message}`)));
     child.on('close', (code) => {
       const tail = errText.trim().split(/\r?\n/).slice(-5).join('\n');
       finish(reject, new Error(`MCP 서버가 결과를 보내기 전에 종료되었습니다. (종료 코드 ${code})${tail ? `\n${tail}` : ''}`));
@@ -114,9 +108,27 @@ export function callTool(entry, name, args, opts = {}) {
   });
 }
 
-export function scaffoldBoard(entry, outputPath, projectName = 'board-app') {
+export async function callTool(server, name, args, opts = {}) {
+  const msg = await request(server, 'tools/call', { name, arguments: args }, opts);
+  if (msg.error) return { isError: true, text: String(msg.error.message ?? '') };
+  const r = msg.result || {};
+  const text = (Array.isArray(r.content) ? r.content : [])
+    .map((c) => c?.text)
+    .filter((t) => typeof t === 'string')
+    .join('\n');
+  return { isError: r.isError === true, text };
+}
+
+// 서버가 뜨는지 확인하고 도구 이름 목록을 돌려준다.
+export async function listTools(server, opts = {}) {
+  const msg = await request(server, 'tools/list', {}, opts);
+  if (msg.error) throw new Error(`MCP 서버가 도구 목록을 돌려주지 않았습니다: ${msg.error.message}`);
+  return (msg.result?.tools ?? []).map((t) => t?.name).filter((n) => typeof n === 'string');
+}
+
+export function scaffoldBoard(server, outputPath, projectName = 'board-app') {
   return callTool(
-    entry,
+    server,
     'egov_scaffold_project',
     {
       projectName,

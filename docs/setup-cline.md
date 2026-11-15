@@ -42,7 +42,7 @@ Cline 은 폴더 단위 MCP 설정이 없습니다. 그래서 setup 명령은 �
 - mcp 실습을 준비하면 같은 항목을 켭니다(`"disabled": false`).
 - 전역 설정 파일이 이미 있었다면 setup 명령은 처음 바꾸기 전의 원본 사본을 저장소 폴더의 `.edu/backup/` 에 남깁니다. 바꾼 내용은 `.edu/global-changes.json` 에 기록하며, 실습이 끝난 뒤 `npm run cleanup` 으로 이 항목을 setup 이전 상태로 되돌릴 수 있습니다.
 - 환경 변수 `CLINE_MCP_SETTINGS_PATH`, `CLINE_DATA_DIR`, `CLINE_DIR` 가 있으면 setup 명령은 그 경로를 따릅니다. setup 명령이 바꾼 파일의 경로는 setup 출력에 나옵니다.
-- 전역 설정의 항목에는 setup 명령을 실행한 Node.js 와 저장소 폴더의 절대 경로가 들어 있습니다. 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+- 전역 설정의 항목은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 5. 처음 한 번 확인할 것
 
@@ -88,7 +88,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 setup 명령이 전역 설정 파일을 읽지 못해 멈춘 경우입니다. 출력에 나온 파일의 JSON 문법을 고치거나 파일을 다른 이름으로 옮긴 뒤 setup 명령을 다시 실행합니다.
 
 **`egovframe-codegen` 서버가 오류 상태이거나 시작되지 않습니다.**
-대개 Node.js 를 다시 설치했거나 저장소 폴더를 옮긴 경우입니다. 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 켜져 있습니다.**
 작업을 멈추고 진행자에게 알립니다. MCP Servers 화면에서 서버를 끄거나, 저장소 폴더에서 nomcp setup 명령을 다시 실행해 서버를 끕니다.

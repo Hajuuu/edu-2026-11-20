@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { REPO_ROOT } from '../scripts/lib/env.mjs';
-import { installBundle } from '../scripts/lib/bundle.mjs';
-import { callTool, scaffoldBoard, BOARD_DDL } from '../scripts/lib/mcp-client.mjs';
+import { npxServer } from '../scripts/lib/bundle.mjs';
+import { callTool, listTools, scaffoldBoard, BOARD_DDL } from '../scripts/lib/mcp-client.mjs';
 import { parseSlug } from '../scripts/lib/git.mjs';
 
 function tmp(p) {
@@ -33,11 +33,19 @@ function findFile(dir, pred) {
 }
 
 const root = fakeRepo();
-const { entry } = installBundle('codegen', { repoRoot: root });
+// MCP 연결 설정과 같은 npx 명령으로 번들 tgz 를 띄운다.
+const server = npxServer('codegen', { repoRoot: root });
+const nodeScript = (file) => ({ command: process.execPath, args: [file] });
+
+test('list tools through npx', { timeout: 120000 }, async () => {
+  const tools = await listTools(server, { timeoutMs: 120000 });
+  assert.ok(tools.includes('egov_scaffold_project'), tools.join(', '));
+  assert.ok(!fs.existsSync(path.join(root, '.mcp-servers')));
+});
 
 test('scaffold board', { timeout: 120000 }, async () => {
   const out = tmp('mcp-client-out-');
-  const r = await scaffoldBoard(entry, out);
+  const r = await scaffoldBoard(server, out);
   assert.equal(r.isError, false, r.text);
   assert.ok(fs.existsSync(path.join(out, 'board-app', 'pom.xml')));
   const hit = findFile(path.join(out, 'board-app', 'src', 'main', 'java'), (p) => /Board/.test(fs.readFileSync(p, 'utf8')));
@@ -46,20 +54,20 @@ test('scaffold board', { timeout: 120000 }, async () => {
 });
 
 test('unknown tool', { timeout: 60000 }, async () => {
-  const r = await callTool(entry, 'no_such_tool_xyz', {}, { timeoutMs: 30000 });
+  const r = await callTool(server, 'no_such_tool_xyz', {}, { timeoutMs: 30000 });
   assert.equal(r.isError, true);
 });
 
 test('timeout rejects', { timeout: 20000 }, async () => {
   const stub = path.join(tmp('mcp-stub-'), 'stub.mjs');
   fs.writeFileSync(stub, 'setInterval(() => {}, 1000);\n');
-  await assert.rejects(callTool(stub, 'x', {}, { timeoutMs: 500 }), /초/);
+  await assert.rejects(callTool(nodeScript(stub), 'x', {}, { timeoutMs: 500 }), /초/);
 });
 
 test('early exit rejects with stderr', { timeout: 20000 }, async () => {
   const stub = path.join(tmp('mcp-stub-'), 'stub.mjs');
   fs.writeFileSync(stub, 'console.error("boom-detail"); process.exit(3);\n');
-  await assert.rejects(callTool(stub, 'x', {}, { timeoutMs: 10000 }), /boom-detail/);
+  await assert.rejects(callTool(nodeScript(stub), 'x', {}, { timeoutMs: 10000 }), /boom-detail/);
 });
 
 test('BOARD_DDL matches task/TASK.md', () => {
@@ -74,4 +82,8 @@ test('parseSlug URL forms', () => {
   assert.equal(parseSlug('ssh://git@github.com/a/b.git'), 'a/b');
   assert.equal(parseSlug('https://gitlab.com/a/b'), null);
   assert.equal(parseSlug(''), null);
+});
+
+test('missing command rejects with the command name', { timeout: 20000 }, async () => {
+  await assert.rejects(callTool({ command: 'edu-no-such-command-xyz', args: [] }, 'x', {}, { timeoutMs: 10000 }), /edu-no-such-command-xyz/);
 });

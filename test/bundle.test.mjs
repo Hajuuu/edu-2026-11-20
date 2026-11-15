@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { REPO_ROOT, IS_WIN } from '../scripts/lib/env.mjs';
 import zlib from 'node:zlib';
-import { extractTar, extractTgz, installBundle, codegenEntry } from '../scripts/lib/bundle.mjs';
+import { extractTar, extractTgz, bundlePath, npxServer, verifyBundle } from '../scripts/lib/bundle.mjs';
 
 const CODEGEN_TGZ = path.join(REPO_ROOT, 'mcp', 'egovframe-mcp-codegen', 'egovframe-mcp-codegen-1.0.0.tgz');
 
@@ -118,23 +118,23 @@ test('rejects traversal', () => {
   }
 });
 
-test('install idempotent', { skip: !fs.existsSync(CODEGEN_TGZ) }, () => {
+test('npxServer runs the codegen bundle tgz through npx without extracting it', { skip: !fs.existsSync(CODEGEN_TGZ) }, () => {
   const repoRoot = tmp();
   const dir = path.join(repoRoot, 'mcp', 'egovframe-mcp-codegen');
   fs.mkdirSync(dir, { recursive: true });
-  fs.copyFileSync(CODEGEN_TGZ, path.join(dir, path.basename(CODEGEN_TGZ)));
-  const first = installBundle('codegen', { repoRoot });
-  assert.equal(first.installed, true);
-  assert.ok(fs.existsSync(first.entry));
-  assert.equal(first.entry, codegenEntry(repoRoot));
-  const second = installBundle('codegen', { repoRoot });
-  assert.equal(second.installed, false);
-  assert.ok(fs.existsSync(second.entry));
+  const bundle = path.join(dir, path.basename(CODEGEN_TGZ));
+  fs.copyFileSync(CODEGEN_TGZ, bundle);
+  const args = ['-y', '--package', bundle, 'egovframe-mcp-codegen'];
+  assert.deepEqual(npxServer('codegen', { repoRoot, win: false }), { command: 'npx', args });
+  // Windows 의 npx 는 npx.cmd 이므로 셸 없이 띄우는 도구를 위해 cmd /c 로 감싼다.
+  assert.deepEqual(npxServer('codegen', { repoRoot, win: true }), { command: 'cmd', args: ['/c', 'npx', ...args] });
+  assert.deepEqual(fs.readdirSync(repoRoot), ['mcp']);
 });
 
 test('missing bundle throws a Korean error', () => {
   const repoRoot = tmp();
-  assert.throws(() => installBundle('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
+  assert.throws(() => bundlePath('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
+  assert.throws(() => npxServer('codegen', { repoRoot }), /번들/);
 });
 
 test('corrupt or truncated tar throws', () => {
@@ -191,40 +191,17 @@ function fakeCheckRepo(files) {
 
 test('win32-arm64 falls back to the win32-x64 bundle', () => {
   const { repoRoot, file } = fakeCheckRepo([]);
-  const r = installBundle('check', { repoRoot, platform: 'win32-arm64' });
-  assert.equal(r.bundle, file);
-  assert.ok(fs.existsSync(r.entry));
-  assert.throws(() => installBundle('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
+  assert.equal(bundlePath('check', { repoRoot, platform: 'win32-arm64' }), file);
+  assert.deepEqual(npxServer('check', { repoRoot, platform: 'win32-arm64', win: true }).args, ['/c', 'npx', '-y', '--package', file, 'egovframe-mcp-check']);
+  assert.throws(() => bundlePath('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
 });
 
-test('re-extracts when the bundle changes or the entry is missing', () => {
-  const { repoRoot, file } = fakeCheckRepo([]);
-  const opts = { repoRoot, platform: 'win32-x64' };
-  const first = installBundle('check', opts);
-  assert.equal(first.installed, true);
-  assert.equal(installBundle('check', opts).installed, false);
-  fs.rmSync(first.entry);
-  assert.equal(installBundle('check', opts).installed, true);
-  assert.ok(fs.existsSync(first.entry));
-  const stale = path.join(path.dirname(path.dirname(path.dirname(first.entry))), 'stale.txt');
-  fs.writeFileSync(stale, 'old');
-  fs.writeFileSync(
-    file,
-    zlib.gzipSync(tar(entry({ name: 'package/build/index.js', body: 'v2' }))),
-  );
-  assert.equal(installBundle('check', opts).installed, true);
-  assert.equal(fs.readFileSync(first.entry, 'utf8'), 'v2');
-  assert.ok(!fs.existsSync(stale));
-});
-
-test('failed extraction leaves no marker and retries next time', () => {
-  const { repoRoot, file } = fakeCheckRepo([]);
-  const good = fs.readFileSync(file);
-  fs.writeFileSync(file, zlib.gzipSync(tar(entry({ name: '../evil', body: 'x' }))));
-  const opts = { repoRoot, platform: 'win32-x64' };
-  assert.throws(() => installBundle('check', opts));
-  const dir = path.join(repoRoot, '.mcp-servers', 'egovframe-mcp-check');
-  assert.ok(!fs.existsSync(path.join(dir, '.bundle-sha256')));
-  fs.writeFileSync(file, good);
-  assert.equal(installBundle('check', opts).installed, true);
+test('verifyBundle accepts the real bundles and rejects broken ones', () => {
+  if (fs.existsSync(CODEGEN_TGZ)) verifyBundle('codegen', CODEGEN_TGZ);
+  const { file } = fakeCheckRepo([]);
+  assert.throws(() => verifyBundle('check', file), /실행 파일 정보가 없습니다/);
+  fs.writeFileSync(file, 'not a bundle');
+  assert.throws(() => verifyBundle('check', file), /읽을 수 없습니다/);
+  const withBin = fakeCheckRepo([entry({ name: 'package/package.json', body: JSON.stringify({ bin: { 'egovframe-mcp-check': './build/index.js' } }) })]);
+  verifyBundle('check', withBin.file);
 });

@@ -16,9 +16,10 @@ import {
   undoClineChange,
 } from '../scripts/lib/mcp-config.mjs';
 
+// Windows 에서 setup 이 쓰는 모양: cmd /c npx 로 저장소의 번들 tgz 를 실행한다.
 const SERVER = {
-  command: 'C:\\Program Files\\nodejs\\node.exe',
-  args: ['C:\\Users\\홍 길동\\edu\\.mcp-servers\\egovframe-mcp-codegen\\package\\build\\index.js'],
+  command: 'cmd',
+  args: ['/c', 'npx', '-y', '--package', 'C:\\Users\\홍 길동\\edu\\mcp\\egovframe-mcp-codegen\\egovframe-mcp-codegen-1.0.0.tgz', 'egovframe-mcp-codegen'],
 };
 const temps = [];
 after(() => {

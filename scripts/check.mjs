@@ -1,11 +1,11 @@
-// 전날 환경 점검: 도구 확인, 저장소 위치 확인, 전역 설정에 남은 codegen MCP 서버 확인, codegen MCP 설치, Maven 의존성 미리 받기.
+// 전날 환경 점검: 도구 확인, 저장소 위치 확인, 전역 설정에 남은 codegen MCP 서버 확인, npx 로 codegen MCP 서버 실행 확인, Maven 의존성 미리 받기.
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { REPO_ROOT, homeDir, appDataDir, run, mvnInvocation, log, upstreamConfig } from './lib/env.mjs';
 import { parseArgs } from './lib/cli.mjs';
-import { installBundle } from './lib/bundle.mjs';
-import { scaffoldBoard } from './lib/mcp-client.mjs';
+import { npxServer, verifyBundle } from './lib/bundle.mjs';
+import { scaffoldBoard, listTools } from './lib/mcp-client.mjs';
 import { remoteSlug, repoRootStatus, NOT_REPO_ROOT } from './lib/git.mjs';
 import { scanGlobalMcp, removalHint } from './lib/guard.mjs';
 import { MCP_SERVER_NAME } from './lib/mcp-config.mjs';
@@ -131,23 +131,33 @@ function checkGlobalMcp() {
   if (!found) ok('AI 도구의 전역 설정에 eGovFrame 코드 생성 MCP 서버가 남아 있지 않습니다.');
 }
 
-function checkCodegen() {
+// 번들을 저장소에 풀지 않고, MCP 연결 설정과 같은 npx 명령으로 띄워 본다. 이때 npx 가 번들을 npm 캐시에 풀어 두므로
+// 당일 AI 도구가 서버를 처음 띄울 때 빨라진다.
+async function checkCodegen() {
+  let server;
   try {
-    const r = installBundle('codegen');
-    ok(r.installed ? 'codegen MCP 서버를 설치했습니다.' : 'codegen MCP 서버가 이미 설치되어 있습니다.');
-    return r.entry;
+    server = npxServer('codegen');
+    verifyBundle('codegen', server.args.find((a) => a.endsWith('.tgz')));
   } catch (e) {
-    err(`codegen MCP 서버를 설치하지 못했습니다: ${e.message}`);
+    err(`codegen MCP 서버 번들에 문제가 있습니다: ${e.message}`);
+    return null;
+  }
+  try {
+    const tools = await listTools(server, { timeoutMs: 120000 });
+    ok(`npx 로 codegen MCP 서버를 실행해 도구 ${tools.length}개를 확인했습니다.`);
+    return server;
+  } catch (e) {
+    err(`npx 로 codegen MCP 서버를 실행하지 못했습니다. 터미널에서 npx --version 이 실행되는지 확인해 주세요. (${e.message.split(/\r?\n/)[0]})`);
     return null;
   }
 }
 
-async function warmup(entry) {
+async function warmup(server) {
   log.step('Maven 의존성을 미리 받습니다. 처음에는 몇 분 걸릴 수 있습니다.');
   const started = Date.now();
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'egov-warmup-'));
   try {
-    const s = await scaffoldBoard(entry, dir);
+    const s = await scaffoldBoard(server, dir);
     if (s.isError) return err(`예열용 프로젝트를 만들지 못했습니다: ${s.text}`);
     const proj = path.join(dir, 'board-app');
     const { cmd, shell } = mvnInvocation();
@@ -181,10 +191,10 @@ async function main() {
   checkGh();
   checkRepo(gitFound);
   checkGlobalMcp();
-  const entry = checkCodegen();
+  const server = await checkCodegen();
   if (flags.has('skip-warmup')) warn('Maven 의존성 미리 받기를 생략했습니다. 수업 전에 한 번은 실행해 두는 것을 권장합니다.');
-  else if (entry) await warmup(entry);
-  else warn('codegen 설치에 실패해 Maven 의존성 미리 받기를 건너뜁니다.');
+  else if (server) await warmup(server);
+  else warn('codegen MCP 서버를 실행하지 못해 Maven 의존성 미리 받기를 건너뜁니다.');
   summary();
 }
 
