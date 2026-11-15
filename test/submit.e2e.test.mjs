@@ -221,6 +221,41 @@ test('big file excluded', () => {
   assert.ok(lines().includes('/submissions/T01/nomcp/board-app/data.bin'));
   assert.equal(lines().filter((l) => l === '/submissions/T01/nomcp/board-app/big.bin').length, 1);
   assert.equal(git(ctx.repo, 'status', '--porcelain'), '');
+  // submit 이 .git/info/exclude 에 적은 줄로 빠진 파일은 저장소 밖 무시 규칙으로 알리지 않는다.
+  assert.ok(!r.out.includes('무시 설정'), r.out);
+});
+
+// 교육생 PC 의 git 전역 제외 파일이나 직접 적은 .git/info/exclude 줄 때문에 빠지는 파일은 알리되 제출은 막지 않는다.
+// 저장소의 .gitignore 가 빼는 target/ 과 .codex/ 는 알리지 않는다.
+test('files ignored by rules outside the repository are reported', () => {
+  const ctx = prepared('T07');
+  const app = path.join(runDir(ctx, 'T07', 'nomcp'), 'board-app');
+  put(path.join(app, 'src', 'main', 'resources', 'app.secret'), 'k=v\n');
+  put(path.join(app, 'scratch', 'try.sql'), 'select 1;\n');
+  // 저장소의 .gitignore 에도 있는 규칙(.idea/)은 저장소 규칙이 앞서므로 알리지 않는다.
+  put(path.join(app, '.idea', 'workspace.xml'), '<x/>\n');
+  put(path.join(app, 'notes.txt'), 'memo\n');
+  const excludes = path.join(tempDir('edu-excludes-'), 'global-ignore');
+  fs.writeFileSync(excludes, '*.secret\nscratch/\n.idea/\n');
+  const slash = (p) => p.split(path.sep).join('/');
+  const config = globalGitConfig(`\texcludesFile = ${slash(excludes)}\n`);
+  fs.appendFileSync(path.join(ctx.repo, '.git', 'info', 'exclude'), 'notes.txt\n');
+
+  const r = submit(ctx, ['--no-pr'], { GIT_CONFIG_GLOBAL: config });
+  assert.equal(r.code, 0, r.out);
+  const warned = r.out.split('\n').filter((l) => l.startsWith('[주의]') && l.includes('무시 설정'));
+  assert.equal(warned.length, 2, r.out);
+  const global = warned.find((l) => l.includes(slash(excludes)) || l.includes(excludes));
+  assert.ok(global, r.out);
+  assert.ok(global.includes('submissions/T07/nomcp/board-app/src/main/resources/app.secret'), global);
+  assert.ok(global.includes('submissions/T07/nomcp/board-app/scratch/'), global);
+  const local = warned.find((l) => l.includes('.git/info/exclude'));
+  assert.ok(local && local.includes('submissions/T07/nomcp/board-app/notes.txt'), r.out);
+  for (const l of warned) assert.ok(!l.includes('/target/') && !l.includes('.codex') && !l.includes('.idea'), l);
+  assert.equal(git(ctx.repo, 'log', '-1', '--format=%s'), 'submit: T07 nomcp');
+  const files = remoteFiles(ctx.remote, 'submit/T07');
+  assert.ok(files.includes('submissions/T07/nomcp/board-app/pom.xml'), files.join('\n'));
+  assert.ok(!files.some((f) => f.endsWith('app.secret') || f.includes('/scratch/') || f.endsWith('notes.txt')), files.join('\n'));
 });
 
 test('no gh fallback', () => {
@@ -273,7 +308,7 @@ test('a nested git repository stops before committing', () => {
   assert.equal(r.code, 1, r.out);
   assert.match(r.out, /\[오류\][^\n]*git 저장소/);
   assert.ok(r.out.includes(removeGitDirCommand(path.join(runDir(ctx, 'T01', 'nomcp'), 'board-app'))), r.out);
-  assert.ok(!r.out.includes('git rm --cached'), r.out);
+  assert.ok(!r.out.includes('rm --cached'), r.out);
   assert.equal(commitCount(ctx), before);
   assert.equal(fs.readFileSync(participantFile(ctx, 'T01'), 'utf8'), record);
 });
@@ -297,7 +332,8 @@ test('a staged git link stops submit until it is removed', () => {
   assert.match(statusOf(ctx, 'submissions/T01/nomcp/board-app'), /^A {2}submissions\/T01\/nomcp\/board-app$/);
   const before = commitCount(ctx);
   const record = fs.readFileSync(participantFile(ctx, 'T01'), 'utf8');
-  const unlink = `git rm --cached -f -q -- "${app}"`;
+  // git rm 은 -C 로 저장소를 가리켜, 중첩 저장소 안(IDE 터미널의 board-app 등)에서 실행해도 바깥 저장소에 적용되게 한다.
+  const unlink = `git -C "${ctx.repo}" rm --cached -f -q -- "${app}"`;
 
   for (const args of [['--dry-run'], ['--no-pr']]) {
     const r = submit(ctx, args);
@@ -310,8 +346,8 @@ test('a staged git link stops submit until it is removed', () => {
   }
   assert.ok(!remoteHas(ctx.remote, 'submit/T01'));
 
-  // 안내한 두 명령을 실행 폴더의 터미널에서 실행한 것과 같게 한다.
-  git(runDir(ctx, 'T01', 'nomcp'), 'rm', '--cached', '-f', '-q', '--', app);
+  // 안내한 두 명령을 중첩 저장소 안(board-app)의 터미널에서 차례로 실행한 것과 같게 한다.
+  git(app, '-C', ctx.repo, 'rm', '--cached', '-f', '-q', '--', app);
   fs.rmSync(path.join(app, '.git'), { recursive: true, force: true });
   const r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 0, r.out);
@@ -327,12 +363,12 @@ test('a committed git link is caught even after its .git folder was deleted', ()
 
   let r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 1, r.out);
-  assert.ok(r.out.includes(`git rm --cached -f -q -- "${app}"`), r.out);
+  assert.ok(r.out.includes(`git -C "${ctx.repo}" rm --cached -f -q -- "${app}"`), r.out);
   assert.match(r.out, /이미 커밋한 내용에도/);
   assert.ok(!r.out.includes(removeGitDirCommand(app)), r.out);
   assert.ok(!remoteHas(ctx.remote, 'submit/T02'));
 
-  git(runDir(ctx, 'T02', 'nomcp'), 'rm', '--cached', '-f', '-q', '--', app);
+  git(app, '-C', ctx.repo, 'rm', '--cached', '-f', '-q', '--', app);
   r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 0, r.out);
   assert.match(git(ctx.remote, 'ls-tree', 'submit/T02', '--', 'submissions/T02/nomcp/board-app/pom.xml'), /^100644 blob /);

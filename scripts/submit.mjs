@@ -201,7 +201,8 @@ const removeGitDirCommand = (dir) => {
 
 // 실행 폴더 안의 별도 git 저장소는 파일 대신 빈 링크(mode 160000)로만 커밋된다. 아직 추가하지 않은 것(?? 폴더/)과
 // 인덱스에 있는 링크(스테이징했거나 이미 커밋한 것)를 모두 막는다. HEAD 에만 있고 인덱스에서 빠진 링크는 이번 커밋이 지우므로 막지 않는다.
-// 안내 명령은 실행 폴더의 터미널에서 실행해도 되도록 절대 경로로 보여 준다 (화면에만 쓰고 파일에는 남기지 않는다).
+// 안내 명령은 어느 폴더의 터미널에서 실행해도 되도록 절대 경로로 보여 준다 (화면에만 쓰고 파일에는 남기지 않는다).
+// git rm 은 -C 로 이 저장소를 가리킨다. 중첩 저장소 안(IDE 터미널의 board-app 등)에서 실행하면 그 저장소에 적용되기 때문이다.
 function stopOnNestedRepos(scoped, runRel) {
   const indexed = gitlinkPaths(['ls-files', '-s', '-z', '--', runRel]);
   const committed = gitlinkPaths(['ls-tree', '-r', '-z', 'HEAD', '--', runRel]);
@@ -214,7 +215,7 @@ function stopOnNestedRepos(scoped, runRel) {
     console.error(`  - ${rel}`);
     if (committed.has(rel)) console.error('    이미 커밋한 내용에도 이 폴더가 파일 없이 링크로만 들어 있습니다. 아래 명령으로 고친 뒤 제출하면 파일이 들어갑니다.');
     // 링크만 스테이징한 경우 git 은 -f 없이는 빼지 않는다. --cached 이므로 -f 를 줘도 작업 폴더의 파일은 지우지 않는다.
-    if (indexed.has(rel)) console.error(`    git rm --cached -f -q -- "${abs}"`);
+    if (indexed.has(rel)) console.error(`    git -C "${REPO_ROOT}" rm --cached -f -q -- "${abs}"`);
     if (fs.existsSync(path.join(abs, '.git'))) console.error(`    ${removeGitDirCommand(abs)}`);
   }
   process.exit(1);
@@ -269,6 +270,41 @@ function excludeBigFiles(big, dryRun) {
   if (tracked.length) gitOrFail(rmArgs, '20MB 를 넘는 파일을 제출에서 빼지 못했습니다.');
 }
 
+const samePath = (a, b) => (IS_WIN ? a.toLowerCase() === b.toLowerCase() : a === b);
+
+// 실행 폴더 안에서 저장소 밖의 무시 규칙(git 전역 제외 파일, submit 이 적지 않은 .git/info/exclude 줄) 때문에 제출에서
+// 빠지는 파일을 알린다. 저장소의 .gitignore 가 빼는 파일(target/, 실행 폴더 바로 아래의 도구 설정 등)과 submit 이 뺀
+// 20MB 초과 파일은 알리지 않는다. 알리기만 하고 제출은 막지 않는다.
+function warnExternallyIgnored(runRel) {
+  const ls = git(['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--directory', '--', runRel]);
+  const paths = ls.status === 0 ? ls.stdout.split('\0').filter(Boolean) : [];
+  if (!paths.length) return;
+  // -v -z 출력은 무시 규칙 파일, 줄 번호, 규칙, 경로가 NUL 로 이어진 묶음이다.
+  const ci = git(['check-ignore', '-v', '-z', '--stdin'], { input: `${paths.join('\0')}\0` });
+  if (ci.status !== 0) return;
+  const where = git(['rev-parse', '--git-path', 'info/exclude']);
+  const excludeFile = where.status === 0 ? path.resolve(REPO_ROOT, where.stdout.trim()) : null;
+  const bySource = new Map();
+  const fields = ci.stdout.split('\0');
+  for (let i = 0; i + 3 < fields.length; i += 4) {
+    const [source, , pattern, file] = fields.slice(i, i + 4);
+    if (!source || !file) continue;
+    if (excludeFile && samePath(path.resolve(REPO_ROOT, source), excludeFile)) {
+      if (pattern === ignoreLine(file)) continue;
+    } else if (!path.isAbsolute(source) && path.posix.basename(source) === '.gitignore') {
+      continue;
+    }
+    if (!bySource.has(source)) bySource.set(source, []);
+    bySource.get(source).push(file);
+  }
+  for (const [source, files] of bySource) {
+    log.warn(`이 PC 의 git 무시 설정(${source}) 때문에 실행 폴더의 다음 파일은 제출되지 않습니다: ${listed(files)}`);
+  }
+  if (bySource.size) {
+    log.info('  이 설정은 저장소 밖의 규칙이라 submit 이 바꾸지 않습니다. 이 파일도 제출하려면 위 파일에서 해당 줄을 지우거나 고친 뒤 npm run submit 을 다시 실행해 주세요.');
+  }
+}
+
 // 제출 범위 밖의 변경을 알린다. 같은 참가자의 다른 실행 폴더와 그 밖의 파일을 나눠 보여 준다.
 function reportUnsubmitted(others, outside, { id, test, p }) {
   const byRun = new Map();
@@ -301,6 +337,7 @@ function collectChanges(ctx, dryRun) {
   stopOnNestedRepos(scoped, scope.runRel);
   const big = findBigFiles(scoped);
   if (big.length) excludeBigFiles(big, dryRun);
+  warnExternallyIgnored(scope.runRel);
   const outside = statusEntries(['.', `:(exclude)submissions/${id}`], 'normal');
   reportUnsubmitted(under.filter((e) => !scope.inScope(e.path)), outside, ctx);
   const skipped = new Set(big.filter((b) => !b.tracked).map((b) => b.path));
