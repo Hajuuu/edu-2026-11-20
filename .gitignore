@@ -2,6 +2,7 @@
 /grading/
 /README-local.md
 /docs/superpowers/
+/.superpowers/
 
 # 도구와 로컬 상태
 /node_modules/

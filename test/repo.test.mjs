@@ -1,14 +1,18 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { cleanEnv, removeTemps } from './helpers.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+after(removeTemps);
+
+// 개발자 PC 의 git 전역·시스템 설정(전역 제외 파일 등)이 결과를 바꾸지 않게, 비어 있는 것과 같은 전역 설정으로 실행한다.
 function isIgnored(path) {
-  const r = spawnSync('git', ['check-ignore', '-q', '--no-index', path], { cwd: root });
+  const r = spawnSync('git', ['check-ignore', '-q', '--no-index', path], { cwd: root, env: cleanEnv() });
   return r.status === 0;
 }
 
@@ -17,11 +21,14 @@ test('ignored paths', () => {
     'grading/rubric.md',
     'README-local.md',
     'docs/superpowers/x.md',
+    '.superpowers/x.md',
+    '.superpowers/sdd/x/ledger.md',
     '.mcp-servers/a',
     '.edu/state.json',
     '.claude/settings.local.json',
     'submissions/P01/mcp/.mcp.json',
     'submissions/P01/mcp/.claude/settings.json',
+    'submissions/P01/nomcp/.claude/settings.json',
     'submissions/P01/mcp/.codex/config.toml',
     'submissions/P01/mcp/.agents/mcp_config.json',
     'submissions/P01/mcp/.cursor/mcp.json',
