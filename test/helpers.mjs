@@ -73,10 +73,15 @@ export function commitAll(cwd, message) {
   git(cwd, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', message);
 }
 
+// 명령 실행에 필요한 이 저장소의 파일을 dir 에 복사한다 (git 저장소는 만들지 않는다).
+export function copySources(dir) {
+  for (const rel of COPY) fs.cpSync(path.join(SRC, rel), path.join(dir, rel), { recursive: true });
+  return dir;
+}
+
 // 교육생 clone 과 같은 모양의 작업 저장소(main 브랜치 커밋 하나)와 비어 있는 임시 홈
 export function workRepo() {
-  const repo = tempDir('edu-repo-');
-  for (const rel of COPY) fs.cpSync(path.join(SRC, rel), path.join(repo, rel), { recursive: true });
+  const repo = copySources(tempDir('edu-repo-'));
   git(repo, 'init', '-q', '-b', 'main');
   commitAll(repo, 'init');
   return { repo, home: tempDir('edu-home-') };
