@@ -56,7 +56,7 @@ AI 도구의 설치와 로그인 방법은 도구별 문서의 첫 부분에 있
 
 ### 1.1 운영체제별 설치
 
-아래는 설치 방법의 예입니다. 이미 설치되어 있으면 위 표의 확인 명령으로 버전만 확인합니다. Node.js 는 22 보다 높은 버전도 그대로 쓸 수 있습니다. Maven 은 3.9.9 를 권장하며, 3.9 이상인 3.x 버전이면 `npm run check` 점검을 통과합니다. 미리 보기 단계인 Maven 4 는 쓰지 않습니다. 설치하거나 환경 변수를 바꾼 뒤에는 터미널을 새로 열어야 바뀐 내용이 적용됩니다.
+아래는 설치 방법의 예입니다. 이미 설치되어 있으면 위 표의 확인 명령으로 버전만 확인합니다. Node.js 는 nvm 으로 설치하며, 22 보다 높은 버전도 그대로 쓸 수 있습니다. Maven 은 3.9.9 를 권장하며, 3.9 이상인 3.x 버전이면 `npm run check` 점검을 통과합니다. 미리 보기 단계인 Maven 4 는 쓰지 않습니다. 설치하거나 환경 변수를 바꾼 뒤에는 터미널을 새로 열어야 바뀐 내용이 적용됩니다.
 
 #### Windows x64 와 Windows on Arm (ARM64)
 
@@ -84,7 +84,16 @@ AI 도구의 설치와 로그인 방법은 도구별 문서의 첫 부분에 있
    [Environment]::SetEnvironmentVariable("Path", "$p;$HOME\tools\apache-maven-3.9.9\bin", "User")
    ```
 
-4. Node.js 22 를 설치합니다. [Node.js 다운로드 페이지](https://nodejs.org/ko/download)에서 v22 LTS 의 Windows 설치 파일을 받습니다. ARM64 PC 는 `node-v22.x.x-arm64.msi` 를, x64 PC 는 `node-v22.x.x-x64.msi` 를 받습니다.
+4. Node.js 22 를 nvm 으로 설치합니다. Windows 에서는 NVM for Windows 를 씁니다. [NVM for Windows 릴리스 페이지](https://github.com/nvm-windows/nvm/releases/latest)에서 x64 PC 는 `nvm-<버전>-x64-setup.exe` 를, ARM64 PC 는 `nvm-<버전>-arm64-setup.exe` 를 받아 실행합니다. 설치 파일은 관리자 권한으로 실행하지 않습니다. Node.js 공식 설치 파일로 설치한 Node.js 가 이미 있으면 설치 마법사가 그 Node.js 를 가져올지(Adopt) 지울지(Drop) 묻는데, 어느 쪽을 골라도 됩니다. 설치를 마치면 새 PowerShell 창에서 다음 명령을 실행합니다. `nvm use` 로 고른 버전이 새 터미널의 기본 버전이 됩니다.
+
+   ```powershell
+   nvm install 22
+   nvm use 22
+   node --version
+   ```
+
+   ARM64 PC 에서는 `node -p process.arch` 가 `arm64` 를 보여 주는지도 확인합니다. `x64` 가 나와도 Windows 의 x64 에뮬레이션으로 동작하므로 실습에는 지장이 없습니다.
+
 5. Git 과 gh 를 설치합니다. winget 을 쓰거나 [Git 다운로드 페이지](https://git-scm.com/install/windows)와 [GitHub CLI 페이지](https://cli.github.com)에서 설치 파일을 받습니다. ARM64 PC 용 설치 파일은 Git 의 `Git-<버전>-arm64.exe` 와 gh 의 `gh_<버전>_windows_arm64.msi` 입니다.
 
    ```powershell
@@ -101,23 +110,22 @@ AI 도구의 설치와 로그인 방법은 도구별 문서의 첫 부분에 있
 **Apple silicon: Homebrew 로 설치합니다.** [Homebrew](https://brew.sh) 가 없으면 먼저 설치합니다.
 
 ```bash
-brew install openjdk@17 maven node@22 git gh
+brew install openjdk@17 maven git gh
 ```
 
-Homebrew 는 `openjdk@17` 과 `node@22` 를 PATH 에 자동으로 넣지 않습니다. 또한 Homebrew 의 `maven` 은 `JAVA_HOME` 이 없으면 Homebrew 의 최신 JDK 로 실행됩니다. 그래서 다음 명령으로 `JAVA_HOME` 을 JDK 17 로 정하고 PATH 에 두 폴더를 넣습니다. Homebrew 의 `maven` 은 3.9 보다 높은 3.x 버전(예: 3.10.0)일 수 있으며, `npm run check` 를 통과하면 그대로 씁니다.
+Homebrew 는 `openjdk@17` 을 PATH 에 자동으로 넣지 않습니다. 또한 Homebrew 의 `maven` 은 `JAVA_HOME` 이 없으면 Homebrew 의 최신 JDK 로 실행됩니다. 그래서 다음 명령으로 `JAVA_HOME` 을 JDK 17 로 정하고 PATH 에 JDK 17 의 `bin` 폴더를 넣습니다. Node.js 는 아래의 nvm 으로 설치합니다. Homebrew 의 `maven` 은 3.9 보다 높은 3.x 버전(예: 3.10.0)일 수 있으며, `npm run check` 를 통과하면 그대로 씁니다.
 
 ```bash
 echo 'export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"' >> ~/.zshrc
-echo 'export PATH="$JAVA_HOME/bin:/opt/homebrew/opt/node@22/bin:$PATH"' >> ~/.zshrc
+echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> ~/.zshrc
 ```
 
 **Intel: 공식 설치 파일로 설치합니다.** Homebrew 는 Intel Mac 용 새 바이너리를 더 만들지 않아, Intel Mac 에서는 설치할 때 소스에서 빌드하느라 오래 걸리거나 실패할 수 있습니다. Apple silicon 에서도 이 방법을 쓸 수 있습니다.
 
 1. JDK 17 을 설치합니다. [Microsoft Build of OpenJDK 다운로드 페이지](https://learn.microsoft.com/ko-kr/java/openjdk/download)에서 OpenJDK 17 의 macOS `pkg` 파일을 받습니다. Intel 은 `macos-x64` 파일을, Apple silicon 은 `macos-aarch64` 파일을 받습니다.
-2. Node.js 22 를 설치합니다. [Node.js 다운로드 페이지](https://nodejs.org/ko/download)에서 v22 LTS 의 macOS 설치 파일(`.pkg`)을 받습니다.
-3. Git 을 설치합니다. 터미널에서 `xcode-select --install` 을 실행해 Command Line Tools 를 설치하면 git 이 함께 설치됩니다.
-4. gh 를 설치합니다. [GitHub CLI 페이지](https://cli.github.com)에서 macOS 설치 파일(`gh_<버전>_macOS_universal.pkg`)을 받습니다.
-5. 다음 명령으로 Maven 3.9.9 를 홈 폴더의 `tools` 폴더에 풀고, `JAVA_HOME` 과 PATH 를 정합니다.
+2. Git 을 설치합니다. 터미널에서 `xcode-select --install` 을 실행해 Command Line Tools 를 설치하면 git 이 함께 설치됩니다.
+3. gh 를 설치합니다. [GitHub CLI 페이지](https://cli.github.com)에서 macOS 설치 파일(`gh_<버전>_macOS_universal.pkg`)을 받습니다.
+4. 다음 명령으로 Maven 3.9.9 를 홈 폴더의 `tools` 폴더에 풀고, `JAVA_HOME` 과 PATH 를 정합니다.
 
    ```bash
    mkdir -p ~/tools
@@ -126,7 +134,21 @@ echo 'export PATH="$JAVA_HOME/bin:/opt/homebrew/opt/node@22/bin:$PATH"' >> ~/.zs
    echo 'export PATH="$JAVA_HOME/bin:$HOME/tools/apache-maven-3.9.9/bin:$PATH"' >> ~/.zshrc
    ```
 
-설치를 마치면 새 터미널에서 위 표의 확인 명령을 실행합니다. `mvn -version` 출력의 `Java version` 이 17 인지도 확인합니다.
+**Node.js: nvm 으로 설치합니다(Apple silicon 과 Intel 공통).** nvm 설치 스크립트는 Command Line Tools 가 있어야 동작하므로 위의 설치를 먼저 마칩니다. Apple silicon 에서는 Homebrew 를 설치할 때 Command Line Tools 가 함께 설치됩니다. nvm 은 `~/.zshrc` 에 설정을 더하므로, 이 파일이 없을 때를 대비해 먼저 만들어 둡니다.
+
+```bash
+touch ~/.zshrc
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash
+```
+
+새 터미널을 열고 다음 명령으로 Node.js 22 를 설치합니다. `nvm alias default 22` 는 새 터미널에서 기본으로 쓸 버전을 정합니다. `nvm` 명령을 찾지 못하면 터미널을 다시 열고 `command -v nvm` 으로 확인합니다.
+
+```bash
+nvm install 22
+nvm alias default 22
+```
+
+설치를 마치면 새 터미널에서 위 표의 확인 명령을 실행합니다. `mvn -version` 출력의 `Java version` 이 17 인지도 확인합니다. AI 도구는 `npx` 로 MCP 서버를 띄우므로, Node.js 를 설치한 뒤에는 열려 있던 AI 도구도 다시 시작합니다.
 
 ### 1.2 GitHub 로그인과 Fork
 
@@ -272,7 +294,7 @@ mcp 실습은 nomcp 실습을 제출한 뒤에만 준비할 수 있습니다. no
 도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있어 MCP 없이 진행할 수 없는 상태입니다. 출력에 나온 제거 방법(예: `codex mcp remove egovframe-codegen`, `claude mcp remove egovframe-codegen -s user`)을 실행한 뒤 같은 setup 명령을 다시 실행합니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄는 것만으로는 풀리지 않을 수 있으므로, 출력에 나온 파일에서 그 항목을 지웁니다. `npm run check` 도 이런 서버를 `[주의]` 로 미리 알려 주므로, 실습에 쓰는 도구의 서버라면 같은 방법으로 교육 전에 지웁니다.
 
 **`Node.js ... 에서는 codegen MCP 서버를 실행할 수 없습니다` 가 나옵니다.**
-Node.js 가 18 보다 낮은 경우입니다. Node.js 22 를 설치하고 터미널을 다시 연 뒤 실행합니다.
+Node.js 가 18 보다 낮은 경우입니다. [1.1 운영체제별 설치](#11-운영체제별-설치)에 따라 nvm 으로 Node.js 22 를 설치하고 기본 버전으로 정한 뒤(macOS 는 `nvm alias default 22`, Windows 는 `nvm use 22`), 터미널을 다시 열고 실행합니다.
 
 **`codegen MCP 서버 번들에 문제가 있습니다` 또는 `npx 로 codegen MCP 서버를 실행하지 못했습니다` 가 나옵니다.**
 앞의 오류는 `mcp` 폴더의 묶음 파일(`.tgz`)이 바뀌거나 지워진 경우입니다. `git status` 로 확인하고 `git restore mcp` 로 되돌린 뒤 다시 실행합니다. 뒤의 오류는 npx 로 서버를 띄우지 못한 경우입니다. npx 는 Node.js 와 함께 설치되므로, 새 터미널에서 `npx --version` 이 실행되는지 확인합니다(PowerShell 에서 `npx.ps1` 오류가 나면 `npx.cmd --version`). 해결하기 어려우면 출력 내용과 함께 진행자에게 알립니다.
