@@ -42,7 +42,7 @@ const PREREQ_ROWS = [
 const MCP_TOOLS = ['egov_scaffold_project', 'egov_add_entity', 'egov_add_query_view', 'egov_add_attach_file_infrastructure'];
 
 // 도구 문서마다 있어야 하는 절 (제목에 들어갈 말)
-const DOC_SECTIONS = ['모델', '요금제', '개인 설정', '실습 워크스페이스에 쓰는 파일', '처음 한 번', '연결 확인', '작업 방법', '문제 해결'];
+const DOC_SECTIONS = ['모델', '요금제', '실습 워크스페이스에 쓰는 파일', '처음 한 번', '연결 확인', '작업 방법', '문제 해결'];
 
 // 공개 파일에 쓰지 않는 말의 목록은 이 파일이 그 말을 드러내지 않도록 일부러 SHA-256 값으로만 둔다.
 // 모든 공개 파일(README.md, docs/*.md, task/TASK.md, scripts/**, test/**)에 적용한다.

@@ -4,7 +4,7 @@
 
 VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/download)에서 설치합니다. 그다음 확장 Cline(`saoudrizwan.claude-dev`)을 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)나 VS Code 의 확장 화면에서 설치합니다. 자세한 사용법은 [Cline 공식 문서](https://docs.cline.bot)에 있습니다. 화면 표기는 버전에 따라 다를 수 있습니다.
 
-Cline 은 실습 전에 v4.1 이상의 최신 버전으로 업데이트하고, VS Code 의 확장 화면에서 버전을 확인합니다. setup 명령은 `egovframe-codegen` 서버를 Cline 의 MCP 설정 파일 `~/.cline/data/settings/cline_mcp_settings.json` 에서 켜고 끄는데, v4.1 보다 오래된 Cline 은 이 파일을 읽지 않아 setup 명령이 바꾼 상태가 Cline 에 반영되지 않습니다. 업데이트한 뒤에도 mcp setup 명령을 실행한 다음에는 MCP Servers 화면에 `egovframe-codegen` 서버가 보이는지 확인합니다(6절).
+Cline 은 실습 전에 v4.1 이상의 최신 버전으로 업데이트하고, VS Code 의 확장 화면에서 버전을 확인합니다. setup 명령은 `egovframe-codegen` 서버를 Cline 의 MCP 설정 파일 `~/.cline/data/settings/cline_mcp_settings.json` 에서 켜고 끄는데, v4.1 보다 오래된 Cline 은 이 파일을 읽지 않아 setup 명령이 바꾼 상태가 Cline 에 반영되지 않습니다. 업데이트한 뒤에도 mcp setup 명령을 실행한 다음에는 MCP Servers 화면에 `egovframe-codegen` 서버가 보이는지 확인합니다(5절).
 
 ## 1. 모델과 노력 수준
 
@@ -21,14 +21,7 @@ Cline 은 실습 전에 v4.1 이상의 최신 버전으로 업데이트하고, V
 
 구독은 필요하지 않습니다. OpenRouter API Key 는 실습 중에 센터가 제공합니다. 키를 받기 전에는 VS Code 와 Cline 설치까지만 마쳐 둡니다.
 
-## 3. 개인 설정 끄기
-
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다.
-
-- 개인 규칙(`.clinerules`)과 Custom Instructions 는 내용을 메모 파일 같은 다른 곳에 복사해 둔 뒤 실습 동안 비워 둡니다. 실습이 끝나면 복사해 둔 내용을 다시 넣습니다.
-- `egovframe-codegen` 이 아닌 다른 MCP 서버는 MCP Servers 화면에서 끕니다.
-
-## 4. setup 이 실습 워크스페이스에 쓰는 파일
+## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
 Cline 은 폴더 단위 MCP 설정이 없습니다. 그래서 setup 명령은 실습 워크스페이스에는 과제와 지침 파일만 쓰고, MCP 연결은 Cline 의 전역 설정 파일에서 켜고 끕니다.
 
@@ -44,12 +37,12 @@ Cline 은 폴더 단위 MCP 설정이 없습니다. 그래서 setup 명령은 �
 - 환경 변수 `CLINE_MCP_SETTINGS_PATH`, `CLINE_DATA_DIR`, `CLINE_DIR` 가 있으면 setup 명령은 그 경로를 따릅니다. setup 명령이 바꾼 파일의 경로는 setup 출력에 나옵니다.
 - 전역 설정의 항목은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
-## 5. 처음 한 번 확인할 것
+## 4. 처음 한 번 확인할 것
 
 - VS Code 에서 실습 워크스페이스 하나만 작업 영역으로 엽니다(File 메뉴의 Open Folder). 여러 폴더를 함께 연 작업 영역은 쓰지 않습니다. 이 폴더의 작성자를 신뢰할지 물으면 신뢰를 선택합니다.
 - setup 명령이 전역 설정을 바꾼 뒤에는 Cline 의 MCP Servers 화면에서 바뀐 상태를 확인합니다. 화면이 바뀌지 않으면 명령 팔레트(Windows 는 Ctrl+Shift+P, macOS 는 Cmd+Shift+P)에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
 
-## 6. 연결 확인
+## 5. 연결 확인
 
 Cline 패널 위쪽 도구 모음의 MCP Servers 아이콘을 눌러 서버 목록을 엽니다.
 
@@ -60,9 +53,9 @@ mcp 실습에서는 `egovframe-codegen` 서버가 켜져 있고 다음 도구 4�
 - `egov_add_query_view`
 - `egov_add_attach_file_infrastructure`
 
-nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 있어야 합니다. 이 서버를 직접 켜지 않습니다. 두 실습 모두 다른 개인 MCP 서버는 꺼져 있어야 합니다.
+nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 있어야 합니다. 이 서버를 직접 켜지 않습니다.
 
-## 7. 작업 방법
+## 6. 작업 방법
 
 1. nomcp setup 명령을 실행한 뒤, VS Code 에서 실습 워크스페이스(`submissions/P01/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
 2. MCP Servers 화면에서 `egovframe-codegen` 서버가 꺼져 있는지 확인합니다.
@@ -77,7 +70,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 6. mcp 실습에서는 mcp setup 명령을 실행한 뒤 nomcp 창을 닫고, 새 창에서 `submissions/P01/mcp` 를 엽니다. MCP Servers 화면에서 `egovframe-codegen` 서버가 켜졌는지 확인하고, 새 작업으로 시작합니다. nomcp 실습의 작업을 이어 가지 않습니다.
 7. 두 실습을 모두 제출한 뒤에는 저장소 폴더에서 `npm run cleanup` 을 실행할 수 있습니다. 이 명령은 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌립니다. 저장소 폴더를 지울 생각이라면 지우기 전에 이 명령을 먼저 실행합니다. 저장소 폴더를 먼저 지우면 Cline 전역 설정에 지운 폴더를 가리키는 항목이 남습니다. Cline 설정에 넣은 OpenRouter API Key 도 지웁니다.
 
-## 8. 문제 해결
+## 7. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 

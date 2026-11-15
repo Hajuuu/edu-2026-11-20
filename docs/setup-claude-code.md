@@ -36,52 +36,34 @@ claude --version
 
 Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계정으로 쓸 수 있으며, 이 요금제에서는 Opus 5.5 가 기본 모델입니다. 무료(Free) 요금제로는 Claude Code 를 쓸 수 없습니다.
 
-## 3. 개인 설정 끄기
-
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다.
-
-- 전역 지침 파일 `~/.claude/CLAUDE.md` 는 이름을 바꿔 둡니다. macOS 에서는 `mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.off` 를, Windows PowerShell 에서는 `Rename-Item $HOME\.claude\CLAUDE.md CLAUDE.md.off` 를 실행합니다.
-- 개인 규칙 폴더 `~/.claude/rules/` 와 개인 스킬 폴더 `~/.claude/skills/` 도 같은 방법으로 이름을 바꿔 둡니다(예: `rules.off`, `skills.off`). 저장소 폴더가 홈 폴더 안에 있으면 setup 명령은 `~/.claude/rules/` 도 `[주의]` 로 알려 줍니다.
-- 설치한 플러그인은 `/plugin` 화면에서 실습 동안 끕니다. 화면 표기는 버전에 따라 다를 수 있습니다.
-- 사용자 범위 MCP 서버는 `claude mcp list` 로 확인하고, 실습 동안 `claude mcp remove <이름> -s user` 로 지웁니다. 나중에 다시 추가할 수 있도록 지우기 전에 `claude mcp get <이름>` 으로 설정을 확인해 적어 둡니다.
-- claude.ai 계정으로 로그인했다면 claude.ai 에 추가한 커넥터(connector)도 `/mcp` 에 claude.ai 에서 왔다는 표시와 함께 나타납니다. 이 커넥터는 setup 명령이 두 실습 워크스페이스의 `.claude/settings.json` 에 `"disableClaudeAiConnectors": true` 를 써서 모두 끄므로 따로 끌 필요가 없습니다. 이 설정은 7절처럼 터미널에서 실습 워크스페이스로 이동해 시작한 Claude Code 에 적용되며, 6절의 연결 확인에서 커넥터가 보이지 않는지 확인합니다.
-- claude.ai 계정으로 로그인했다면 claude.ai 계정에서 켠 스킬과 플러그인도 Claude Code 가 내려받아 함께 로드합니다. 실습 동안에는 `~/.claude/settings.json` 에 다음 두 항목을 넣어 이 동기화를 끕니다. 파일이 이미 있으면 기존 내용에 두 항목을 더합니다. 이 두 항목은 실습 워크스페이스의 `.claude/settings.json` 같은 프로젝트 설정에서는 적용되지 않으므로 setup 명령이 대신 넣지 않습니다. 끈 뒤 Claude Code 를 다시 시작하면 이미 내려받은 스킬과 플러그인은 `~/.claude/skills/.trash/` 와 `~/.claude/plugins/.trash/` 로 옮겨지고 로드되지 않습니다. claude.ai 계정의 스킬과 플러그인은 그대로 남아 있으며, 실습이 끝나면 두 항목을 지웁니다.
-
-  ```json
-  {
-    "syncClaudeAiSkills": false,
-    "syncClaudeAiPlugins": false
-  }
-  ```
-
-## 4. setup 이 실습 워크스페이스에 쓰는 파일
+## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
 | 실습 | 파일 | 역할 |
 |---|---|---|
 | nomcp, mcp | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 한 줄이 붙습니다 |
 | nomcp, mcp | `CLAUDE.md` | 작업 범위 지침. Claude Code 가 자동으로 읽습니다 |
-| nomcp, mcp | `.claude/settings.json` | claude.ai 커넥터 끄기(`disableClaudeAiConnectors`). mcp 실습에서는 `.mcp.json` 의 `egovframe-codegen` 서버 사용 허용(`enabledMcpjsonServers`)도 들어갑니다 |
+| mcp | `.claude/settings.json` | `.mcp.json` 의 `egovframe-codegen` 서버 사용 허용(`enabledMcpjsonServers`) |
 | mcp | `.mcp.json` | `egovframe-codegen` 서버 연결 설정 |
 
-nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. nomcp 의 `.claude/settings.json` 에는 커넥터를 끄는 항목만 들어갑니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
-## 5. 처음 한 번 확인할 것
+## 4. 처음 한 번 확인할 것
 
 - 실습 워크스페이스에서 `claude` 를 처음 실행하면 폴더를 신뢰할지 묻습니다. 신뢰를 선택합니다. 이 확인은 저장소 폴더(git 저장소의 루트)를 기준으로 기록되므로 두 실습에서 한 번만 나올 수 있습니다.
 - mcp 실습에서는 setup 명령이 `.claude/settings.json` 으로 `egovframe-codegen` 서버 사용을 미리 허용해 둡니다. 그래도 `.mcp.json` 의 서버를 사용할지 묻는 창이 나오면 허용합니다.
 
-## 6. 연결 확인
+## 5. 연결 확인
 
-mcp 실습에서는 실습 워크스페이스에서 Claude Code 를 시작한 뒤(시작 방법은 7절) `/mcp` 를 입력합니다. `egovframe-codegen` 서버가 연결됨(connected)으로 보여야 하고, 서버를 선택하면 다음 도구 4개가 보여야 합니다.
+mcp 실습에서는 실습 워크스페이스에서 Claude Code 를 시작한 뒤(시작 방법은 6절) `/mcp` 를 입력합니다. `egovframe-codegen` 서버가 연결됨(connected)으로 보여야 하고, 서버를 선택하면 다음 도구 4개가 보여야 합니다.
 
 - `egov_scaffold_project`
 - `egov_add_entity`
 - `egov_add_query_view`
 - `egov_add_attach_file_infrastructure`
 
-nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다. 두 실습 모두 개인 MCP 서버와 claude.ai 커넥터는 연결되어 있지 않아야 합니다.
+nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다.ai 커넥터는 연결되어 있지 않아야 합니다.
 
-## 7. 작업 방법
+## 6. 작업 방법
 
 1. 새 터미널(Windows 는 PowerShell)을 엽니다. setup 명령이 마지막 `다음 할 일` 의 1번 항목에 출력한 실습 워크스페이스의 절대 경로로 이동한 뒤 `claude` 를 실행합니다. 새 터미널은 보통 홈 폴더에서 시작하므로 `submissions/...` 같은 상대 경로로는 이동할 수 없습니다.
 
@@ -100,7 +82,7 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 4. 작업을 마치면 `/exit` 로 Claude Code 를 끝냅니다. 그리고 저장소 폴더로 이동해 `npm run submit` 을 실행합니다. 실습 워크스페이스에서는 `cd ../../..` 로 저장소 폴더에 갈 수 있고, setup 명령이 `다음 할 일` 의 5번 항목에 출력한 저장소 폴더의 경로를 써도 됩니다.
 5. mcp 실습은 새 세션으로 시작합니다. `claude --continue` 나 `/resume` 으로 nomcp 실습의 대화를 이어 가지 않습니다.
 
-## 8. 문제 해결
+## 7. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 

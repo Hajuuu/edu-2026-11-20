@@ -7,7 +7,6 @@ import { TOOLS } from './lib/tools.mjs';
 import {
   MCP_SERVER_NAME,
   folderMcpFiles,
-  folderNomcpFiles,
   ALL_FOLDER_MCP_PATHS,
   instructionFile,
   clineSettingsPath,
@@ -139,22 +138,20 @@ const recordPath = (p) => safePath(p, { repo: REPO_ROOT, home: homeDir(), appDat
 
 // 전역 설정에 남은 MCP 서버(8.1)와 자동으로 읽히는 지침 파일(8.2)을 확인한다. 파일을 쓰기 전에 실행한다.
 function guard({ test, id, tool }, runDir) {
-  log.step('전역 MCP 설정과 AI 도구가 자동으로 읽는 지침 파일을 점검합니다.');
+  log.step('전역 MCP 설정과 AI 도구가 자동으로 읽는 지침 파일을 확인합니다.');
   const home = homeDir();
   const warnings = [];
+  // 개인 MCP 서버와 지침 파일은 실습에 써도 된다. 화면에 알리지 않고, 채점 결과를 해석할 수 있게 참가자 기록에만 남긴다.
   // Cline 의 egovframe-codegen 항목은 setup 이 실습 종류에 맞춰 직접 켜고 끈다.
   const hits = scanGlobalMcp(tool, { home, appData: appDataDir(), env: process.env, runDir }).filter(
     (h) => h.enabled && !(tool === 'Cline' && h.name === MCP_SERVER_NAME),
   );
   const codegen = hits.filter((h) => h.codegen);
   const blocked = test === 'nomcp' && codegen.length > 0;
-  // 막는 경우에도 나머지 주의 사항을 먼저 보여 줘 한 번에 정리할 수 있게 한다.
   for (const h of hits.filter((x) => !x.codegen)) {
-    log.warn(`${h.name} MCP 서버가 켜져 있습니다(${h.source}). 실습 동안 꺼 주세요.`);
     warnings.push(`켜져 있는 다른 MCP 서버: ${h.name} (${recordPath(h.source)})`);
   }
   for (const p of findInstructionLeaks(runDir, home, process.env)) {
-    log.warn(`AI 도구가 자동으로 읽을 수 있는 지침 파일이 있습니다(${p}). 실습 동안 이름을 바꾸거나 다른 곳으로 옮겨 두세요.`);
     warnings.push(`자동으로 읽힐 수 있는 지침 파일: ${recordPath(p)}`);
   }
   if (blocked) {
@@ -167,7 +164,9 @@ function guard({ test, id, tool }, runDir) {
     log.warn(`전역 설정(${h.source})에도 ${h.name} 서버가 켜져 있어 이 폴더의 연결과 겹칩니다. 실습 동안에는 전역 설정의 서버를 꺼 두기를 권장합니다. ${removalHint(tool, h)}`);
     warnings.push(`전역 설정에도 codegen MCP 서버가 켜져 있음: ${h.name} (${recordPath(h.source)})`);
   }
-  if (!warnings.length) log.ok('실습에 영향을 줄 수 있는 전역 MCP 서버나 지침 파일이 없습니다.');
+  if (!codegen.length) log.ok('전역 설정에 켜진 eGovFrame 코드 생성 MCP 서버가 없습니다.');
+  const personal = warnings.length - codegen.length;
+  if (personal > 0) log.ok(`켜져 있는 개인 MCP 서버와 지침 파일 ${personal}개를 참가자 기록에 남겼습니다. 실습에 그대로 써도 됩니다.`);
   return warnings;
 }
 
@@ -247,15 +246,9 @@ function wireFolderMcp(test, tool, runDir, server) {
     }
     return;
   }
-  // nomcp 에도 쓰는 도구 설정(Claude Code 의 claude.ai 커넥터 끄기)은 새로 쓰고, 아래에서 지우지 않는다.
-  const kept = folderNomcpFiles(tool);
-  for (const [rel, content] of Object.entries(kept)) writeRel(runDir, rel, content);
-  if (Object.keys(kept).length) {
-    log.ok(`claude.ai 커넥터를 끄는 설정(${Object.keys(kept).join(', ')})을 썼습니다. mcp 실습 워크스페이스에도 같은 설정을 씁니다.`);
-  }
+  // nomcp 는 MCP 연결 설정을 쓰지 않고, 앞서 남은 연결 설정이 있으면 지운다.
   const removed = [];
   for (const rel of ALL_FOLDER_MCP_PATHS) {
-    if (Object.hasOwn(kept, rel)) continue;
     const file = path.join(runDir, ...rel.split('/'));
     let stat;
     try {

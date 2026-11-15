@@ -23,10 +23,6 @@ function requireTool(tool) {
   return name;
 }
 
-// Claude Code 가 claude.ai 계정에서 가져오는 커넥터(MCP 서버)를 끈다. 두 실습 워크스페이스에 똑같이 써서
-// 두 실습의 차이가 egovframe-codegen 하나가 되게 한다. 프로젝트 설정의 true 는 다른 설정보다 앞선다.
-const CLAUDE_NO_CONNECTORS = { disableClaudeAiConnectors: true };
-
 // mcp 실습 워크스페이스에 쓰는 도구 설정
 export function folderMcpFiles(tool, server) {
   const name = requireTool(tool);
@@ -36,7 +32,7 @@ export function folderMcpFiles(tool, server) {
     case 'Claude-Code':
       return {
         '.mcp.json': stdioDoc,
-        '.claude/settings.json': toJson({ enabledMcpjsonServers: [MCP_SERVER_NAME], ...CLAUDE_NO_CONNECTORS }),
+        '.claude/settings.json': toJson({ enabledMcpjsonServers: [MCP_SERVER_NAME] }),
       };
     case 'GitHub-Copilot':
       return { '.mcp.json': stdioDoc };
@@ -61,14 +57,6 @@ export function folderMcpFiles(tool, server) {
     default:
       return {};
   }
-}
-
-// nomcp 실습 워크스페이스에 쓰는 도구 설정. MCP 서버는 연결하지 않고, mcp 실습에도 똑같이 들어가는 설정만 쓴다
-// (지금은 Claude Code 의 claude.ai 커넥터 끄기 하나). setup 은 nomcp 에서 MCP 연결 설정을 지울 때 이 파일은 남긴다.
-export function folderNomcpFiles(tool) {
-  const name = requireTool(tool);
-  if (name === 'Claude-Code') return { '.claude/settings.json': toJson(CLAUDE_NO_CONNECTORS) };
-  return {};
 }
 
 export function instructionFile(tool, ctx) {

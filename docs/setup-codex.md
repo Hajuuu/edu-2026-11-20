@@ -25,15 +25,7 @@ Codex 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명�
 
 ChatGPT Plus, Pro, Business, Enterprise, Edu 요금제 가운데 하나가 필요합니다.
 
-## 3. 개인 설정 끄기
-
-실습 동안 다음 개인 설정을 끄고, 실습이 끝나면 되돌립니다. setup 명령은 찾을 수 있는 개인 MCP 서버와 지침 파일을 `[주의]` 로 알려 주며, 그 내용은 참가자 기록에 남아 PR 과 함께 공개됩니다. 그러므로 setup 명령을 실행하기 전에 미리 끕니다. 환경 변수 `CODEX_HOME` 을 쓰고 있다면 아래의 `~/.codex` 대신 그 폴더를 봅니다.
-
-- 전역 지침 파일 `~/.codex/AGENTS.md` 와 `~/.codex/AGENTS.override.md` 는 이름을 바꿔 둡니다(예: `AGENTS.md.off`).
-- 개인 MCP 서버는 `codex mcp list` 로 확인합니다. 실습 동안 `~/.codex/config.toml` 의 `[mcp_servers.<이름>]` 아래에 `enabled = false` 를 넣어 끄거나, `codex mcp remove <이름>` 으로 지웁니다.
-- 특히 전역 설정에 `egovframe-codegen` 서버가 남아 있으면 setup 명령이 nomcp 실습 준비를 멈춥니다. 이때는 `codex mcp remove egovframe-codegen` 을 실행한 뒤 setup 명령을 다시 실행합니다.
-
-## 4. setup 이 실습 워크스페이스에 쓰는 파일
+## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
 | 실습 | 파일 | 역할 |
 |---|---|---|
@@ -43,22 +35,22 @@ ChatGPT Plus, Pro, Business, Enterprise, Edu 요금제 가운데 하나가 필�
 
 nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.codex/` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
-## 5. 처음 한 번 확인할 것
+## 4. 처음 한 번 확인할 것
 
 Codex 는 신뢰한 프로젝트에서만 프로젝트의 `.codex/config.toml` 을 읽습니다. 실습 워크스페이스에서 Codex 를 처음 실행할 때 이 폴더를 신뢰할지 물으면 신뢰를 선택합니다. 신뢰는 git 저장소의 루트(저장소 폴더)를 기준으로 기록됩니다. 신뢰하지 않으면 mcp 실습에서 `egovframe-codegen` 서버가 연결되지 않습니다.
 
-## 6. 연결 확인
+## 5. 연결 확인
 
-mcp 실습에서는 실습 워크스페이스에서 Codex 를 시작한 뒤(시작 방법은 7절) `/mcp` 를 입력합니다. `egovframe-codegen` 서버와 다음 도구 4개가 보여야 합니다.
+mcp 실습에서는 실습 워크스페이스에서 Codex 를 시작한 뒤(시작 방법은 6절) `/mcp` 를 입력합니다. `egovframe-codegen` 서버와 다음 도구 4개가 보여야 합니다.
 
 - `egov_scaffold_project`
 - `egov_add_entity`
 - `egov_add_query_view`
 - `egov_add_attach_file_infrastructure`
 
-nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다. 두 실습 모두 개인 MCP 서버는 보이지 않아야 합니다.
+nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다.
 
-## 7. 작업 방법
+## 6. 작업 방법
 
 1. 새 터미널(Windows 는 PowerShell)을 엽니다. setup 명령이 마지막 `다음 할 일` 의 1번 항목에 출력한 실습 워크스페이스의 절대 경로로 이동한 뒤 `codex` 를 실행합니다. 새 터미널은 보통 홈 폴더에서 시작하므로 `submissions/...` 같은 상대 경로로는 이동할 수 없습니다.
 
@@ -77,7 +69,7 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 4. 작업을 마치면 Codex 를 끝냅니다. 그리고 저장소 폴더로 이동해 `npm run submit` 을 실행합니다. 실습 워크스페이스에서는 `cd ../../..` 로 저장소 폴더에 갈 수 있고, setup 명령이 `다음 할 일` 의 5번 항목에 출력한 저장소 폴더의 경로를 써도 됩니다.
 5. mcp 실습은 새 세션으로 시작합니다. 이전 대화를 이어 가는 기능(`codex resume` 등)으로 nomcp 실습의 대화를 이어 가지 않습니다.
 
-## 8. 문제 해결
+## 7. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 

@@ -6,7 +6,6 @@ import path from 'node:path';
 import {
   MCP_SERVER_NAME,
   folderMcpFiles,
-  folderNomcpFiles,
   ALL_FOLDER_MCP_PATHS,
   instructionFile,
   clineSettingsPath,
@@ -48,17 +47,10 @@ test('json files parse and keep windows paths', () => {
     else assert.equal('type' in entry, false);
   }
   const s = JSON.parse(folderMcpFiles('Claude-Code', SERVER)['.claude/settings.json']);
-  assert.deepEqual(s, { enabledMcpjsonServers: [MCP_SERVER_NAME], disableClaudeAiConnectors: true });
+  // 개인 MCP 서버와 claude.ai 커넥터는 실습에 써도 되므로 끄지 않는다.
+  assert.deepEqual(s, { enabledMcpjsonServers: [MCP_SERVER_NAME] });
 });
 
-// claude.ai 커넥터는 두 실습에서 똑같이 끈다. nomcp 에는 MCP 서버를 허용하는 키가 없어야 한다.
-test('nomcp folder files: only the Claude Code connectors switch', () => {
-  const files = folderNomcpFiles('Claude-Code');
-  assert.deepEqual(Object.keys(files), ['.claude/settings.json']);
-  assert.deepEqual(JSON.parse(files['.claude/settings.json']), { disableClaudeAiConnectors: true });
-  for (const tool of ['Codex', 'Antigravity', 'Cursor', 'GitHub-Copilot', 'Cline']) assert.deepEqual(folderNomcpFiles(tool), {}, tool);
-  assert.throws(() => folderNomcpFiles('nope'));
-});
 
 test('codex toml keeps windows paths', () => {
   const toml = folderMcpFiles('Codex', SERVER)['.codex/config.toml'];
