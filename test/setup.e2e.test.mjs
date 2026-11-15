@@ -31,7 +31,7 @@ test('nomcp codex', () => {
   assert.equal(fs.readFileSync(path.join(run, 'TASK.md'), 'utf8'), `${NOMCP_HEADER}${eol}${eol}${original}`);
   assert.ok(fs.existsSync(path.join(run, 'AGENTS.md')));
   assert.ok(!fs.existsSync(path.join(run, '.codex')));
-  // nomcp 에서도 번들이 없으면 설치해 둔다 (깨진 번들을 mcp 실행 전에 발견).
+  // nomcp 에서도 번들이 없으면 설치해 둔다 (깨진 번들을 mcp 실습 전에 발견).
   assert.ok(fs.statSync(codegenEntryOf(ctx)).isFile());
 
   const p = readParticipant(ctx, 'T01');
@@ -119,7 +119,7 @@ test('rerun keeps work', () => {
   assert.ok(!fs.existsSync(path.join(run, '.cursor', 'mcp.json')));
 });
 
-// nomcp 를 다시 준비하면 남아 있던 MCP 연결 설정은 지우고, 두 실행에 같이 쓰는 Claude Code 설정은 다시 쓴다.
+// nomcp 를 다시 준비하면 남아 있던 MCP 연결 설정은 지우고, 두 실습에 같이 쓰는 Claude Code 설정은 다시 쓴다.
 test('nomcp rerun keeps only the shared Claude Code settings', () => {
   const ctx = workRepo();
   const args = ['--test', 'nomcp', '--id', 'T11', '--tool', 'Claude-Code'];

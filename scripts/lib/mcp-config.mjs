@@ -1,4 +1,4 @@
-// 실행 폴더의 도구별 MCP 설정 파일, 작업 범위 지침 파일, Cline 전역 토글과 그 기록·되돌리기. Node 내장 모듈만 사용한다.
+// 실습 워크스페이스의 도구별 MCP 설정 파일, 작업 범위 지침 파일, Cline 전역 토글과 그 기록·되돌리기. Node 내장 모듈만 사용한다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT, homeDir, readJson, writeJson } from './env.mjs';
@@ -23,11 +23,11 @@ function requireTool(tool) {
   return name;
 }
 
-// Claude Code 가 claude.ai 계정에서 가져오는 커넥터(MCP 서버)를 끈다. 두 실행 폴더에 똑같이 써서
-// 두 실행의 차이가 egovframe-codegen 하나가 되게 한다. 프로젝트 설정의 true 는 다른 설정보다 앞선다.
+// Claude Code 가 claude.ai 계정에서 가져오는 커넥터(MCP 서버)를 끈다. 두 실습 워크스페이스에 똑같이 써서
+// 두 실습의 차이가 egovframe-codegen 하나가 되게 한다. 프로젝트 설정의 true 는 다른 설정보다 앞선다.
 const CLAUDE_NO_CONNECTORS = { disableClaudeAiConnectors: true };
 
-// mcp 실행 폴더에 쓰는 도구 설정
+// mcp 실습 워크스페이스에 쓰는 도구 설정
 export function folderMcpFiles(tool, server) {
   const name = requireTool(tool);
   const stdio = { type: 'stdio', command: server.command, args: server.args };
@@ -51,7 +51,7 @@ export function folderMcpFiles(tool, server) {
     case 'Codex':
       return {
         '.codex/config.toml': [
-          '# 이 실행 폴더에서만 연결하는 MCP 서버',
+          '# 이 실습 워크스페이스에서만 연결하는 MCP 서버',
           `[mcp_servers.${MCP_SERVER_NAME}]`,
           `command = ${JSON.stringify(server.command)}`,
           `args = [${server.args.map((a) => JSON.stringify(a)).join(', ')}]`,
@@ -63,7 +63,7 @@ export function folderMcpFiles(tool, server) {
   }
 }
 
-// nomcp 실행 폴더에 쓰는 도구 설정. MCP 서버는 연결하지 않고, mcp 실행에도 똑같이 들어가는 설정만 쓴다
+// nomcp 실습 워크스페이스에 쓰는 도구 설정. MCP 서버는 연결하지 않고, mcp 실습에도 똑같이 들어가는 설정만 쓴다
 // (지금은 Claude Code 의 claude.ai 커넥터 끄기 하나). setup 은 nomcp 에서 MCP 연결 설정을 지울 때 이 파일은 남긴다.
 export function folderNomcpFiles(tool) {
   const name = requireTool(tool);
@@ -78,7 +78,7 @@ export function instructionFile(tool, ctx) {
     '',
     `이 폴더(\`submissions/${ctx.id}/${ctx.test}\`)가 이번 작업 영역의 전부입니다.`,
     '',
-    '- 이 폴더 밖의 파일과 폴더(상위 폴더, 다른 실행 폴더, 저장소의 다른 폴더)는 읽거나 검색하거나 참고하지 않습니다.',
+    '- 이 폴더 밖의 파일과 폴더(상위 폴더, 다른 실습 워크스페이스, 저장소의 다른 폴더)는 읽거나 검색하거나 참고하지 않습니다.',
     '- 파일은 이 폴더 안에서만 만들고 고칩니다.',
     '- JDK, Maven, Maven 로컬 저장소(~/.m2)는 평소대로 사용합니다.',
     '',

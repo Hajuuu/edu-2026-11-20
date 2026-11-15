@@ -109,8 +109,8 @@ function checkOrigin() {
 }
 
 // 여섯 AI 도구의 전역 설정에 켜진 codegen MCP 서버가 남아 있으면 지우는 방법을 알린다. 설정은 읽기만 한다.
-// nomcp 실행 준비는 선택한 도구에 이런 서버가 있으면 멈추므로, 교육 당일이 아니라 전날 찾아 지우게 한다.
-// 실행 폴더는 아직 없으므로, Claude Code 의 로컬 범위 서버는 모든 실행 폴더의 상위인 submissions 폴더를 기준으로 본다.
+// nomcp 실습 준비는 선택한 도구에 이런 서버가 있으면 멈추므로, 교육 당일이 아니라 전날 찾아 지우게 한다.
+// 실습 워크스페이스는 아직 없으므로, Claude Code 의 로컬 범위 서버는 모든 실습 워크스페이스의 상위인 submissions 폴더를 기준으로 본다.
 function checkGlobalMcp() {
   const ctx = { home: homeDir(), appData: appDataDir(), env: process.env, runDir: path.join(REPO_ROOT, 'submissions') };
   let found = 0;
@@ -122,10 +122,10 @@ function checkGlobalMcp() {
       /* 읽을 수 없는 설정은 setup 이 다시 확인한다 */
     }
     for (const h of hits) {
-      // Cline 의 egovframe-codegen 항목은 setup 이 실행 종류에 맞춰 직접 켜고 끈다.
+      // Cline 의 egovframe-codegen 항목은 setup 이 실습 종류에 맞춰 직접 켜고 끈다.
       if (!h.enabled || !h.codegen || (tool === 'Cline' && h.name === MCP_SERVER_NAME)) continue;
       found += 1;
-      warn(`${tool.replace('-', ' ')} 의 전역 설정(${h.source})에 eGovFrame 코드 생성 MCP 서버(${h.name})가 켜져 있습니다. 이 도구로 실습하면 nomcp 실행 준비가 멈추므로 교육 전에 제거해 주세요. ${removalHint(tool, h)}`);
+      warn(`${tool.replace('-', ' ')} 의 전역 설정(${h.source})에 eGovFrame 코드 생성 MCP 서버(${h.name})가 켜져 있습니다. 이 도구로 실습하면 nomcp 실습 준비가 멈추므로 교육 전에 제거해 주세요. ${removalHint(tool, h)}`);
     }
   }
   if (!found) ok('AI 도구의 전역 설정에 eGovFrame 코드 생성 MCP 서버가 남아 있지 않습니다.');

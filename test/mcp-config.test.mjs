@@ -50,7 +50,7 @@ test('json files parse and keep windows paths', () => {
   assert.deepEqual(s, { enabledMcpjsonServers: [MCP_SERVER_NAME], disableClaudeAiConnectors: true });
 });
 
-// claude.ai 커넥터는 두 실행에서 똑같이 끈다. nomcp 에는 MCP 서버를 허용하는 키가 없어야 한다.
+// claude.ai 커넥터는 두 실습에서 똑같이 끈다. nomcp 에는 MCP 서버를 허용하는 키가 없어야 한다.
 test('nomcp folder files: only the Claude Code connectors switch', () => {
   const files = folderNomcpFiles('Claude-Code');
   assert.deepEqual(Object.keys(files), ['.claude/settings.json']);

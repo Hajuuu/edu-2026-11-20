@@ -1,5 +1,5 @@
 // 실습 후 정리(npm run cleanup): setup 이 전역 설정에 넣은 항목(현재는 Cline 의 egovframe-codegen)만 되돌린다.
-// 사용자가 원래 갖고 있던 설정과 실행 폴더 단위 설정은 건드리지 않는다.
+// 사용자가 원래 갖고 있던 설정과 실습 워크스페이스 단위 설정은 건드리지 않는다.
 import fs from 'node:fs';
 import { log, fail } from './lib/env.mjs';
 import { parseArgs } from './lib/cli.mjs';

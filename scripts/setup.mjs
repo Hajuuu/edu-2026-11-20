@@ -1,4 +1,4 @@
-// 실행 준비(npm run setup): 브랜치, 실행 폴더(TASK.md·작업 범위 지침 파일), 도구별 MCP 연결, 참가자 기록, 다음 할 일 안내.
+// 실습 준비(npm run setup): 브랜치, 실습 워크스페이스(TASK.md·작업 범위 지침 파일), 도구별 MCP 연결, 참가자 기록, 다음 할 일 안내.
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT, homeDir, appDataDir, platformKey, log, fail, upstreamConfig } from './lib/env.mjs';
@@ -114,19 +114,19 @@ function prepareBranch(id) {
   else log.ok(`${name} 브랜치로 전환했습니다.`);
 }
 
-// 실행 순서는 nomcp 다음 mcp 로 고정이다. --force 는 진행자용이라 안내 문구에 넣지 않는다.
+// 실습 순서는 nomcp 다음 mcp 로 고정이다. --force 는 진행자용이라 안내 문구에 넣지 않는다.
 function checkOrder({ test, id, tool, force }, participant) {
   if (test !== 'mcp') return;
   const nomcp = participant?.runs?.nomcp;
   if (nomcp?.submittedAt) return;
   if (force) {
-    log.warn('--force 옵션에 따라 nomcp 제출 여부를 확인하지 않고 mcp 실행을 준비합니다.');
+    log.warn('--force 옵션에 따라 nomcp 제출 여부를 확인하지 않고 mcp 실습을 준비합니다.');
     return;
   }
   if (nomcp?.setupAt) {
-    log.err('nomcp 실행을 아직 제출하지 않았습니다. 실행 순서는 nomcp 다음 mcp 이므로 nomcp 작업을 마치고 npm run submit 으로 먼저 제출한 뒤 다시 실행해 주세요.');
+    log.err('nomcp 실습을 아직 제출하지 않았습니다. 실습 순서는 nomcp 다음 mcp 이므로 nomcp 작업을 마치고 npm run submit 으로 먼저 제출한 뒤 다시 실행해 주세요.');
   } else {
-    log.err(`실행 순서는 nomcp 다음 mcp 입니다. 먼저 ${setupCommand('nomcp', id, tool)} 로 nomcp 실행을 준비하고, 작업을 마친 뒤 npm run submit 으로 제출해 주세요.`);
+    log.err(`실습 순서는 nomcp 다음 mcp 입니다. 먼저 ${setupCommand('nomcp', id, tool)} 로 nomcp 실습을 준비하고, 작업을 마친 뒤 npm run submit 으로 제출해 주세요.`);
   }
   process.exit(1);
 }
@@ -139,7 +139,7 @@ function guard({ test, id, tool }, runDir) {
   log.step('전역 MCP 설정과 AI 도구가 자동으로 읽는 지침 파일을 점검합니다.');
   const home = homeDir();
   const warnings = [];
-  // Cline 의 egovframe-codegen 항목은 setup 이 실행 종류에 맞춰 직접 켜고 끈다.
+  // Cline 의 egovframe-codegen 항목은 setup 이 실습 종류에 맞춰 직접 켜고 끈다.
   const hits = scanGlobalMcp(tool, { home, appData: appDataDir(), env: process.env, runDir }).filter(
     (h) => h.enabled && !(tool === 'Cline' && h.name === MCP_SERVER_NAME),
   );
@@ -155,7 +155,7 @@ function guard({ test, id, tool }, runDir) {
     warnings.push(`자동으로 읽힐 수 있는 지침 파일: ${recordPath(p)}`);
   }
   if (blocked) {
-    log.err('전역 설정에 eGovFrame 코드 생성 MCP 서버가 켜져 있습니다. nomcp 실행은 MCP 없이 진행해야 하므로 아래 서버를 먼저 제거해 주세요.');
+    log.err('전역 설정에 eGovFrame 코드 생성 MCP 서버가 켜져 있습니다. nomcp 실습은 MCP 없이 진행해야 하므로 아래 서버를 먼저 제거해 주세요.');
     for (const h of codegen) console.error(`  - ${h.name} 서버 (${h.source}): ${removalHint(tool, h)}`);
     console.error(`  제거한 뒤 ${setupCommand(test, id, tool)} 를 다시 실행해 주세요.`);
     process.exit(1);
@@ -232,7 +232,7 @@ function wireFolderMcp(test, tool, runDir, entry) {
   const kept = folderNomcpFiles(tool);
   for (const [rel, content] of Object.entries(kept)) writeRel(runDir, rel, content);
   if (Object.keys(kept).length) {
-    log.ok(`claude.ai 커넥터를 끄는 설정(${Object.keys(kept).join(', ')})을 썼습니다. mcp 실행 폴더에도 같은 설정을 씁니다.`);
+    log.ok(`claude.ai 커넥터를 끄는 설정(${Object.keys(kept).join(', ')})을 썼습니다. mcp 실습 워크스페이스에도 같은 설정을 씁니다.`);
   }
   const removed = [];
   for (const rel of ALL_FOLDER_MCP_PATHS) {
@@ -255,8 +255,8 @@ function wireFolderMcp(test, tool, runDir, entry) {
       }
     }
   }
-  if (removed.length) log.warn(`이 실행은 MCP 없이 진행하므로 폴더에 남아 있던 MCP 연결 설정(${removed.join(', ')})을 지웠습니다.`);
-  else if (tool !== 'Cline') log.ok('이 실행은 MCP 없이 진행하므로 MCP 연결 설정을 쓰지 않았습니다.');
+  if (removed.length) log.warn(`이 실습은 MCP 없이 진행하므로 폴더에 남아 있던 MCP 연결 설정(${removed.join(', ')})을 지웠습니다.`);
+  else if (tool !== 'Cline') log.ok('이 실습은 MCP 없이 진행하므로 MCP 연결 설정을 쓰지 않았습니다.');
 }
 
 function recordRun({ test, id, tool }, participant, versions, warnings, now) {
@@ -265,14 +265,14 @@ function recordRun({ test, id, tool }, participant, versions, warnings, now) {
   const shown = toSlash(path.relative(REPO_ROOT, file));
   if (!participant && fs.existsSync(file)) log.warn(`${shown} 파일을 읽을 수 없어 새로 만듭니다.`);
   if (participant?.tool && participant.tool !== tool) {
-    log.warn(`앞선 실행은 ${participant.tool} 도구로 준비했는데 이번에는 ${tool} 도구입니다. 두 실행은 같은 도구로 진행하는 것이 원칙이니 --tool 값을 확인해 주세요.`);
+    log.warn(`앞선 실습은 ${participant.tool} 도구로 준비했는데 이번에는 ${tool} 도구입니다. 두 실습은 같은 도구로 진행하는 것이 원칙이니 --tool 값을 확인해 주세요.`);
   }
   if (participant?.runs?.[test]?.submittedAt) {
-    log.warn(`${test} 실행은 이미 제출했습니다. 다시 작업한 뒤 npm run submit 을 실행하면 제출 기록이 갱신됩니다.`);
+    log.warn(`${test} 실습은 이미 제출했습니다. 다시 작업한 뒤 npm run submit 을 실행하면 제출 기록이 갱신됩니다.`);
   }
   const model = TOOLS[tool].model;
   saveParticipant(id, recordSetup(participant, { id, test, tool, model, platform: platformKey(), versions, warnings, now }));
-  log.ok(`${shown} 파일에 이번 실행을 기록했습니다.`);
+  log.ok(`${shown} 파일에 이번 실습을 기록했습니다.`);
 }
 
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -293,16 +293,16 @@ function printNext({ test, id, tool }, runDir, now) {
   log.info(`  4. 제한 시간은 ${limit}분입니다. 지금 시작하면 예상 종료 시각은 ${hhmm(end)} 입니다.`);
   log.info(`  5. 작업을 마치면 저장소 폴더(${REPO_ROOT})에서 npm run submit 을 실행합니다.`);
   if (test === 'nomcp') {
-    log.info(`  제출을 마친 뒤의 다음 실행은 mcp 입니다. 그때 ${setupCommand('mcp', id, tool)} 를 실행합니다.`);
+    log.info(`  제출을 마친 뒤의 다음 실습은 mcp 입니다. 그때 ${setupCommand('mcp', id, tool)} 를 실행합니다.`);
   } else {
-    log.info('  이번 mcp 실행이 마지막 실행입니다.');
+    log.info('  이번 mcp 실습이 마지막 실습입니다.');
   }
 }
 
 function main() {
   const ctx = readArgs();
   const { test, id, tool } = ctx;
-  log.step(`실습 실행을 준비합니다. (참가자 ${id}, 실행 ${test}, 도구 ${tool})`);
+  log.step(`실습을 준비합니다. (참가자 ${id}, 실습 ${test}, 도구 ${tool})`);
   requireRepoRoot();
   const template = readTaskTemplate();
   const versions = checkEnvironment();
@@ -313,10 +313,10 @@ function main() {
   checkOrder(ctx, participant);
   const runDir = path.join(REPO_ROOT, 'submissions', id, test);
   const warnings = guard(ctx, runDir);
-  // 두 실행 모두 번들이 없으면 설치한다. 깨진 번들을 시간 제한이 있는 mcp 실행 전에 발견하기 위해서다.
+  // 두 실습 모두 번들이 없으면 설치한다. 깨진 번들을 시간 제한이 있는 mcp 실습 전에 발견하기 위해서다.
   const entry = prepareCodegen();
 
-  log.step(`실행 폴더를 준비합니다. (submissions/${id}/${test})`);
+  log.step(`실습 워크스페이스를 준비합니다. (submissions/${id}/${test})`);
   if (tool === 'Cline') toggleClineGlobal(test, entry);
   prepareRunFolder(ctx, runDir, template);
   wireFolderMcp(test, tool, runDir, entry);
@@ -329,6 +329,6 @@ function main() {
 try {
   main();
 } catch (e) {
-  log.err(`실행 준비 중 예기치 않은 오류가 발생했습니다: ${e.message}`);
+  log.err(`실습 준비 중 예기치 않은 오류가 발생했습니다: ${e.message}`);
   process.exit(1);
 }

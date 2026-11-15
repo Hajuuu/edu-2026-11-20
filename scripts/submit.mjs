@@ -1,4 +1,4 @@
-// 제출(npm run submit): 마지막으로 준비한 실행을 기록하고 커밋한 뒤 Fork(origin)에 push 하고 원본 저장소에 PR 을 만든다.
+// 제출(npm run submit): 마지막으로 준비한 실습을 기록하고 커밋한 뒤 Fork(origin)에 push 하고 원본 저장소에 PR 을 만든다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT, IS_WIN, log, fail, upstreamConfig } from './lib/env.mjs';
@@ -88,7 +88,7 @@ function readBranch(opts) {
   const branch = currentBranch();
   const m = branch.match(/^submit\/(.+)$/);
   if (!m || !ID_PATTERN.test(m[1])) {
-    log.err(`지금 브랜치(${branch || '브랜치 없음'})는 제출 브랜치(submit/참가자ID)가 아닙니다. 먼저 ${setupCommand('nomcp', '참가자ID', '도구')} 로 실행을 준비하고 작업한 뒤 제출해 주세요.`);
+    log.err(`지금 브랜치(${branch || '브랜치 없음'})는 제출 브랜치(submit/참가자ID)가 아닙니다. 먼저 ${setupCommand('nomcp', '참가자ID', '도구')} 로 실습을 준비하고 작업한 뒤 제출해 주세요.`);
     const own = lines(git(['branch', '--list', '--format=%(refname:short)', 'submit/*']).stdout);
     if (own.length) {
       console.error(`  이미 준비했다면 git switch ${own[0]} 을 실행해 제출 브랜치로 돌아간 뒤 npm run submit 을 다시 실행해 주세요.`);
@@ -109,18 +109,18 @@ function readRecord(id, opts) {
     if (fs.existsSync(participantPath(id))) {
       fail(`참가자 기록(${shown})을 읽을 수 없습니다. 파일 내용이 올바른 JSON 인지 확인해 주세요. 고치기 어려우면 진행자에게 알려 주세요.`);
     }
-    fail(`참가자 기록(${shown})이 없습니다. 먼저 ${setupCommand('nomcp', id, '도구')} 로 실행을 준비해 주세요.`);
+    fail(`참가자 기록(${shown})이 없습니다. 먼저 ${setupCommand('nomcp', id, '도구')} 로 실습을 준비해 주세요.`);
   }
   const test = lastSetupTest(p);
-  if (!test) fail(`참가자 기록(${shown})에 준비한 실행이 없습니다. 먼저 ${setupCommand('nomcp', id, '도구')} 로 실행을 준비해 주세요.`);
+  if (!test) fail(`참가자 기록(${shown})에 준비한 실습이 없습니다. 먼저 ${setupCommand('nomcp', id, '도구')} 로 실습을 준비해 주세요.`);
   if (opts.test && opts.test !== test) {
-    log.warn(`npm run submit 은 마지막으로 준비한 실행을 제출합니다. --test ${opts.test} 대신 ${test} 실행을 제출합니다.`);
+    log.warn(`npm run submit 은 마지막으로 준비한 실습을 제출합니다. --test ${opts.test} 대신 ${test} 실습을 제출합니다.`);
   }
   const tool = p.tool || p.runs[test]?.tool || '도구';
   return { p, test, tool };
 }
 
-// 실행 폴더에서 세 단계 깊이까지 pom.xml 을 찾는다. 과제가 정한 위치는 board-app/pom.xml 이다.
+// 실습 워크스페이스에서 세 단계 깊이까지 pom.xml 을 찾는다. 과제가 정한 위치는 board-app/pom.xml 이다.
 function findPoms(runDir) {
   const found = [];
   const walk = (dir, rel, depth) => {
@@ -144,16 +144,16 @@ function findPoms(runDir) {
 
 function checkRunFolder({ id, test, tool }) {
   const rel = `submissions/${id}/${test}`;
-  log.step(`실행 폴더를 점검합니다. (${rel})`);
+  log.step(`실습 워크스페이스를 점검합니다. (${rel})`);
   const dir = fromRepo(rel);
-  if (!fs.existsSync(dir)) fail(`실행 폴더(${rel})가 없습니다. ${setupCommand(test, id, tool)} 로 다시 준비해 주세요.`);
+  if (!fs.existsSync(dir)) fail(`실습 워크스페이스(${rel})가 없습니다. ${setupCommand(test, id, tool)} 로 다시 준비해 주세요.`);
   const poms = findPoms(dir);
   if (poms.includes('board-app/pom.xml')) {
     log.ok('프로젝트 파일(board-app/pom.xml)을 확인했습니다.');
   } else if (poms.length) {
     log.warn(`pom.xml 이 과제에서 정한 위치(board-app/pom.xml)가 아닌 곳에 있습니다(${listed(poms)}). 지금 상태 그대로 제출합니다.`);
   } else {
-    log.warn('실행 폴더에서 pom.xml 을 찾지 못했습니다. 과제는 board-app/pom.xml 이 생기도록 프로젝트를 만드는 것이지만, 지금 상태 그대로 제출합니다.');
+    log.warn('실습 워크스페이스에서 pom.xml 을 찾지 못했습니다. 과제는 board-app/pom.xml 이 생기도록 프로젝트를 만드는 것이지만, 지금 상태 그대로 제출합니다.');
   }
 }
 
@@ -172,7 +172,7 @@ function statusEntries(pathspecs, untracked) {
   return out;
 }
 
-// 이번 제출 범위: 지금 실행 폴더와 참가자 기록. 다른 실행 폴더의 변경(제출을 마친 실행을 나중에 고친 것 등)은 넣지 않는다.
+// 이번 제출 범위: 지금 실습 워크스페이스와 참가자 기록. 다른 실습 워크스페이스의 변경(제출을 마친 실습을 나중에 고친 것 등)은 넣지 않는다.
 function submitScope(id, test) {
   const runRel = `submissions/${id}/${test}`;
   const record = `submissions/${id}/participant.json`;
@@ -199,7 +199,7 @@ const removeGitDirCommand = (dir) => {
   return IS_WIN ? `Remove-Item -Recurse -Force "${gitDir}"` : `rm -rf "${gitDir}"`;
 };
 
-// 실행 폴더 안의 별도 git 저장소는 파일 대신 빈 링크(mode 160000)로만 커밋된다. 아직 추가하지 않은 것(?? 폴더/)과
+// 실습 워크스페이스 안의 별도 git 저장소는 파일 대신 빈 링크(mode 160000)로만 커밋된다. 아직 추가하지 않은 것(?? 폴더/)과
 // 인덱스에 있는 링크(스테이징했거나 이미 커밋한 것)를 모두 막는다. HEAD 에만 있고 인덱스에서 빠진 링크는 이번 커밋이 지우므로 막지 않는다.
 // 안내 명령은 어느 폴더의 터미널에서 실행해도 되도록 절대 경로로 보여 준다 (화면에만 쓰고 파일에는 남기지 않는다).
 // git rm 은 -C 로 이 저장소를 가리킨다. 중첩 저장소 안(IDE 터미널의 board-app 등)에서 실행하면 그 저장소에 적용되기 때문이다.
@@ -209,7 +209,7 @@ function stopOnNestedRepos(scoped, runRel) {
   const untracked = scoped.filter((e) => e.x === '?' && e.path.endsWith('/')).map((e) => e.path.replace(/\/+$/, ''));
   const found = [...new Set([...indexed, ...untracked])].sort();
   if (!found.length) return;
-  log.err('제출할 실행 폴더 안에 별도의 git 저장소가 있어, 그 폴더는 파일 없이 빈 링크로만 제출됩니다. 폴더마다 아래 명령을 실행한 뒤 npm run submit 을 다시 실행해 주세요. 그 폴더 안의 git 기록(.git)만 지워지고 작업한 파일은 그대로 남습니다.');
+  log.err('제출할 실습 워크스페이스 안에 별도의 git 저장소가 있어, 그 폴더는 파일 없이 빈 링크로만 제출됩니다. 폴더마다 아래 명령을 실행한 뒤 npm run submit 을 다시 실행해 주세요. 그 폴더 안의 git 기록(.git)만 지워지고 작업한 파일은 그대로 남습니다.');
   for (const rel of found) {
     const abs = fromRepo(rel);
     console.error(`  - ${rel}`);
@@ -272,8 +272,8 @@ function excludeBigFiles(big, dryRun) {
 
 const samePath = (a, b) => (IS_WIN ? a.toLowerCase() === b.toLowerCase() : a === b);
 
-// 실행 폴더 안에서 저장소 밖의 무시 규칙(git 전역 제외 파일, submit 이 적지 않은 .git/info/exclude 줄) 때문에 제출에서
-// 빠지는 파일을 알린다. 저장소의 .gitignore 가 빼는 파일(target/, 실행 폴더 바로 아래의 도구 설정 등)과 submit 이 뺀
+// 실습 워크스페이스 안에서 저장소 밖의 무시 규칙(git 전역 제외 파일, submit 이 적지 않은 .git/info/exclude 줄) 때문에 제출에서
+// 빠지는 파일을 알린다. 저장소의 .gitignore 가 빼는 파일(target/, 실습 워크스페이스 바로 아래의 도구 설정 등)과 submit 이 뺀
 // 20MB 초과 파일은 알리지 않는다. 알리기만 하고 제출은 막지 않는다.
 function warnExternallyIgnored(runRel) {
   const ls = git(['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--directory', '--', runRel]);
@@ -298,14 +298,14 @@ function warnExternallyIgnored(runRel) {
     bySource.get(source).push(file);
   }
   for (const [source, files] of bySource) {
-    log.warn(`이 PC 의 git 무시 설정(${source}) 때문에 실행 폴더의 다음 파일은 제출되지 않습니다: ${listed(files)}`);
+    log.warn(`이 PC 의 git 무시 설정(${source}) 때문에 실습 워크스페이스의 다음 파일은 제출되지 않습니다: ${listed(files)}`);
   }
   if (bySource.size) {
     log.info('  이 설정은 저장소 밖의 규칙이라 submit 이 바꾸지 않습니다. 이 파일도 제출하려면 위 파일에서 해당 줄을 지우거나 고친 뒤 npm run submit 을 다시 실행해 주세요.');
   }
 }
 
-// 제출 범위 밖의 변경을 알린다. 같은 참가자의 다른 실행 폴더와 그 밖의 파일을 나눠 보여 준다.
+// 제출 범위 밖의 변경을 알린다. 같은 참가자의 다른 실습 워크스페이스와 그 밖의 파일을 나눠 보여 준다.
 function reportUnsubmitted(others, outside, { id, test, p }) {
   const byRun = new Map();
   const rest = [];
@@ -319,8 +319,8 @@ function reportUnsubmitted(others, outside, { id, test, p }) {
     }
   }
   for (const [t, paths] of byRun) {
-    if (p.runs?.[t]?.submittedAt) log.warn(`이미 제출한 다른 실행 폴더의 변경은 제출하지 않습니다: ${listed(paths)}`);
-    else log.warn(`다른 실행 폴더(${t})의 변경은 이번 제출에 넣지 않습니다: ${listed(paths)}`);
+    if (p.runs?.[t]?.submittedAt) log.warn(`이미 제출한 다른 실습 워크스페이스의 변경은 제출하지 않습니다: ${listed(paths)}`);
+    else log.warn(`다른 실습 워크스페이스(${t})의 변경은 이번 제출에 넣지 않습니다: ${listed(paths)}`);
   }
   rest.push(...outside.map((e) => e.path));
   if (rest.length) {
@@ -363,20 +363,20 @@ function reportElapsed(test, run, dryRun) {
   const m = run.elapsedMinutes;
   const limit = run.limitMinutes ?? LIMIT_MINUTES[test];
   if (typeof m !== 'number') {
-    log.warn(`${test} 실행을 준비한 시각을 찾지 못해 소요 시간을 계산하지 못했습니다.`);
+    log.warn(`${test} 실습을 준비한 시각을 찾지 못해 소요 시간을 계산하지 못했습니다.`);
   } else if (dryRun) {
     const over = run.overLimit ? ` 제한 시간 ${limit}분을 넘지만 제출은 막지 않습니다.` : ` (제한 시간 ${limit}분)`;
-    (run.overLimit ? log.warn : log.ok)(`지금 제출하면 ${test} 실행의 소요 시간은 ${m}분으로 기록됩니다.${over}`);
+    (run.overLimit ? log.warn : log.ok)(`지금 제출하면 ${test} 실습의 소요 시간은 ${m}분으로 기록됩니다.${over}`);
   } else if (run.overLimit) {
-    log.warn(`${test} 실행의 소요 시간은 ${m}분으로 제한 시간 ${limit}분을 넘었습니다. 기록만 남기고 제출은 그대로 진행합니다.`);
+    log.warn(`${test} 실습의 소요 시간은 ${m}분으로 제한 시간 ${limit}분을 넘었습니다. 기록만 남기고 제출은 그대로 진행합니다.`);
   } else {
-    log.ok(`${test} 실행의 소요 시간은 ${m}분입니다. (제한 시간 ${limit}분)`);
+    log.ok(`${test} 실습의 소요 시간은 ${m}분입니다. (제한 시간 ${limit}분)`);
   }
 }
 
 // 바뀐 것이 있을 때만 제출 시각을 기록하고 커밋한다. 소요 시간이 마지막 실제 변경에 묶이게 하기 위해서다.
-// 이미 제출한 실행은 participant.json 만 바뀐 것(setup 을 다시 실행해 current 등이 바뀐 것)을 변경으로 보지 않는다.
-// 아직 제출 기록이 없는 실행은 바뀐 것이 없어도 기록한다 (예: 직접 커밋한 뒤 처음 제출하는 경우).
+// 이미 제출한 실습은 participant.json 만 바뀐 것(setup 을 다시 실행해 current 등이 바뀐 것)을 변경으로 보지 않는다.
+// 아직 제출 기록이 없는 실습은 바뀐 것이 없어도 기록한다 (예: 직접 커밋한 뒤 처음 제출하는 경우).
 function commitRun(ctx, collected, dryRun) {
   const { id, test, p } = ctx;
   const { scope, changes, work, stagedOutside } = collected;
@@ -384,7 +384,7 @@ function commitRun(ctx, collected, dryRun) {
   if (run.submittedAt && !work.length) {
     log.warn('바뀐 것이 없어 새 커밋을 만들지 않습니다. 앞서 만든 커밋을 다시 push 하고 PR 을 확인합니다.');
     if (changes.length) log.info('  참가자 기록(participant.json)만 바뀐 것은 새 제출로 보지 않습니다.');
-    if (typeof run.elapsedMinutes === 'number') log.info(`  ${test} 실행의 제출 기록(소요 시간 ${run.elapsedMinutes}분)은 그대로 둡니다.`);
+    if (typeof run.elapsedMinutes === 'number') log.info(`  ${test} 실습의 제출 기록(소요 시간 ${run.elapsedMinutes}분)은 그대로 둡니다.`);
     return p;
   }
   stopOnPartialStaged(stagedOutside, scope);
@@ -407,8 +407,8 @@ function commitRun(ctx, collected, dryRun) {
     gitOrFail(restoreArgs, '제출 범위 밖의 스테이징을 풀지 못했습니다.');
     log.info(`  제출 범위 밖에서 스테이징해 둔 변경(${listed(unstage)})은 이번 커밋에 섞이지 않도록 스테이징만 풀었습니다. 파일 내용은 그대로입니다.`);
   }
-  // 커밋하지 못하면 참가자 기록을 제출 전 상태로 되돌린다. 커밋되지 않은 제출 기록이 남으면 다음 실행 준비가 진행되어
-  // 이 실행의 작업이 제출 범위 밖으로 밀려날 수 있다.
+  // 커밋하지 못하면 참가자 기록을 제출 전 상태로 되돌린다. 커밋되지 않은 제출 기록이 남으면 다음 실습 준비가 진행되어
+  // 이 실습의 작업이 제출 범위 밖으로 밀려날 수 있다.
   const file = participantPath(id);
   const before = fs.readFileSync(file, 'utf8');
   saveParticipant(id, updated);
@@ -490,7 +490,7 @@ function pushBranch(branch, target, dryRun) {
 
 const cell = (v) => (v === null || v === undefined || v === '' ? '-' : String(v));
 
-// PR 본문: 도구·모델·플랫폼과 실행별 시각. 절대 경로와 PC 사용자 이름은 넣지 않는다.
+// PR 본문: 도구·모델·플랫폼과 실습별 시각. 절대 경로와 PC 사용자 이름은 넣지 않는다.
 function prBody(id, p) {
   const row = (t) => {
     const r = p.runs?.[t];
@@ -505,7 +505,7 @@ function prBody(id, p) {
     `- 모델: ${cell(p.model)}`,
     `- 플랫폼: ${cell(p.platform)}`,
     '',
-    '| 실행 | 준비 시각(UTC) | 제출 시각(UTC) | 소요 시간(분) | 제한 시간(분) | 제한 시간 초과 |',
+    '| 실습 | 준비 시각(UTC) | 제출 시각(UTC) | 소요 시간(분) | 제한 시간(분) | 제한 시간 초과 |',
     '|---|---|---|---|---|---|',
     row('nomcp'),
     row('mcp'),
@@ -576,11 +576,11 @@ function printNext(ctx, link, dryRun) {
   log.info(`  ${link.label}: ${link.url}`);
   const runs = p.runs || {};
   if (test === 'nomcp' && !runs.mcp?.submittedAt) {
-    log.info(`  다음 실행은 mcp 입니다. 진행자가 안내하면 ${setupCommand('mcp', id, tool)} 를 실행해 주세요.`);
+    log.info(`  다음 실습은 mcp 입니다. 진행자가 안내하면 ${setupCommand('mcp', id, tool)} 를 실행해 주세요.`);
     return;
   }
   if (runs.nomcp?.submittedAt && runs.mcp?.submittedAt) {
-    log.info('  두 실행을 모두 제출했습니다. 수고하셨습니다.');
+    log.info('  두 실습을 모두 제출했습니다. 수고하셨습니다.');
     const changes = readGlobalChanges();
     if (changes && changes.length) {
       log.info('  실습이 모두 끝나면 npm run cleanup 으로 setup 이 바꾼 전역 설정을 되돌릴 수 있습니다.');
@@ -595,7 +595,7 @@ function main() {
   requireRepoRoot();
   const { id, branch } = readBranch(opts);
   const { p, test, tool } = readRecord(id, opts);
-  log.ok(`참가자 ${id} 의 ${test} 실행을 제출합니다. (도구 ${tool}, 브랜치 ${branch})`);
+  log.ok(`참가자 ${id} 의 ${test} 실습을 제출합니다. (도구 ${tool}, 브랜치 ${branch})`);
   if (opts.dryRun) {
     log.warn('--dry-run 옵션에 따라 커밋, push, PR 명령을 실행하지 않고 보여 주기만 합니다. 참가자 기록과 제외 목록도 바꾸지 않습니다.');
   }

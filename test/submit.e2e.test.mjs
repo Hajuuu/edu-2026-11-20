@@ -1,4 +1,4 @@
-// npm run submit 과 npm run cleanup 종단 시험: 임시 작업 저장소에서 setup 으로 실행을 준비하고
+// npm run submit 과 npm run cleanup 종단 시험: 임시 작업 저장소에서 setup 으로 실습을 준비하고
 // 로컬 bare 저장소를 origin 으로 둔다. gh 는 없는 명령이거나, 인자를 기록하는 가짜 명령이다.
 // GitHub 주소처럼 보이는 origin 은 pushInsteadOf 로 로컬 bare 저장소에 push 되게 한다.
 import { test, after } from 'node:test';
@@ -49,7 +49,7 @@ function githubRemote(ctx, url, target) {
   git(ctx.repo, 'config', `url.${target}.pushInsteadOf`, url);
 }
 
-// nomcp 실행을 준비하고 AI 가 만든 것처럼 파일을 둔다. target/ 과 .codex/ 는 제출되면 안 되는 파일이다.
+// nomcp 실습을 준비하고 AI 가 만든 것처럼 파일을 둔다. target/ 과 .codex/ 는 제출되면 안 되는 파일이다.
 function prepared(id) {
   const ctx = submitRepo();
   const r = setup(ctx, '--test', 'nomcp', '--id', id, '--tool', 'codex');
@@ -120,7 +120,7 @@ test('push without pr, then the mcp run', () => {
   assert.ok(r.out.includes(`https://github.com/${UPSTREAM}/compare/`), r.out);
   assert.ok(r.out.trimEnd().endsWith('npm run setup --test mcp --id T01 --tool Codex 를 실행해 주세요.'), r.out);
 
-  // 두 번째 실행(mcp): setup 이 nomcp 제출 기록을 보고 진행하고, 도구 설정 폴더는 제출되지 않는다.
+  // 두 번째 실습(mcp): setup 이 nomcp 제출 기록을 보고 진행하고, 도구 설정 폴더는 제출되지 않는다.
   r = setup(ctx, '--test', 'mcp', '--id', 'T01', '--tool', 'codex');
   assert.equal(r.code, 0, r.out);
   put(path.join(runDir(ctx, 'T01', 'mcp'), 'board-app', 'pom.xml'), '<project/>\n');
@@ -385,7 +385,7 @@ test('changes in an already submitted run folder are not submitted', () => {
 
   const r = submit(ctx, ['--no-pr']);
   assert.equal(r.code, 0, r.out);
-  assert.match(r.out, /\[주의\] 이미 제출한 다른 실행 폴더의 변경은 제출하지 않습니다[^\n]*submissions\/T01\/nomcp\/board-app\/pom\.xml/);
+  assert.match(r.out, /\[주의\] 이미 제출한 다른 실습 워크스페이스의 변경은 제출하지 않습니다[^\n]*submissions\/T01\/nomcp\/board-app\/pom\.xml/);
   assert.equal(git(ctx.repo, 'log', '-1', '--format=%s'), 'submit: T01 mcp');
   assert.ok(headFiles(ctx).every((f) => f === 'submissions/T01/participant.json' || f.startsWith('submissions/T01/mcp/')), headFiles(ctx).join('\n'));
   assert.equal(statusOf(ctx, 'submissions/T01/nomcp'), 'M submissions/T01/nomcp/board-app/pom.xml');
@@ -444,7 +444,7 @@ test('a failed commit puts the record back so the next run stays blocked', () =>
   assert.match(r.out, /\[오류\][^\n]*커밋하지 못했습니다/);
   assert.ok(r.out.includes('commit-blocked'), r.out);
   assert.equal(fs.readFileSync(participantFile(ctx, 'T05'), 'utf8'), record);
-  // 제출 기록이 남지 않았으므로 mcp 실행 준비는 여전히 막힌다.
+  // 제출 기록이 남지 않았으므로 mcp 실습 준비는 여전히 막힌다.
   r = setup(ctx, '--test', 'mcp', '--id', 'T05', '--tool', 'codex');
   assert.equal(r.code, 1, r.out);
 

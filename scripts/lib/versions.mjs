@@ -1,4 +1,4 @@
-// 도구 버전 확인과 기준. 전날 점검(check)과 실행 준비(setup)가 같은 기준을 쓴다. Node 내장 모듈만 사용한다.
+// 도구 버전 확인과 기준. 전날 점검(check)과 실습 준비(setup)가 같은 기준을 쓴다. Node 내장 모듈만 사용한다.
 import { run, mvnInvocation } from './env.mjs';
 import { gh } from './git.mjs';
 

@@ -1,4 +1,4 @@
-// 도구 메타데이터. instruction 은 실행 폴더 기준 작업 범위 지침 파일 경로(/ 구분)다.
+// 도구 메타데이터. instruction 은 실습 워크스페이스 기준 작업 범위 지침 파일 경로(/ 구분)다.
 
 export const TOOLS = {
   'Claude-Code': { aliases: ['claude', 'claudecode'], doc: 'docs/setup-claude-code.md', model: 'Claude Opus 5.5 · medium', instruction: 'CLAUDE.md' },
