@@ -12,6 +12,7 @@ import {
   ensureIdentity,
   viewerCanPush,
   findOpenPr,
+  editPrBody,
   createPr,
   forkWithRemote,
   FORK_ARGS,
@@ -510,7 +511,7 @@ function prBody(id, p) {
     row('nomcp'),
     row('mcp'),
     '',
-    `이 표는 PR 을 만들 때의 기록입니다. 최신 기록은 \`submissions/${id}/participant.json\` 에 있습니다.`,
+    `이 표는 npm run submit 을 실행할 때마다 갱신됩니다. 같은 기록이 \`submissions/${id}/participant.json\` 에 있습니다.`,
     '',
   ].join('\n');
 }
@@ -536,7 +537,7 @@ function handlePr(ctx, target, pushedNew, opts) {
   const title = `[제출] ${id} (${tool})`;
   const head = `${owner || OWNER_PLACEHOLDER}:${branch}`;
   if (opts.dryRun) {
-    log.info('  같은 브랜치로 열린 PR 이 있으면 새로 만들지 않고, push 한 커밋으로 그 PR 이 갱신됩니다.');
+    log.info('  같은 브랜치로 열린 PR 이 있으면 새로 만들지 않고, push 한 커밋과 PR 본문의 실습 기록으로 그 PR 을 갱신합니다.');
     log.info(`  실행할 명령: ${showCmd('gh', ['pr', 'create', '--repo', upstream, '--base', base, '--head', head, '--title', title, '--body-file', '-'])}`);
     return compare;
   }
@@ -552,6 +553,14 @@ function handlePr(ctx, target, pushedNew, opts) {
   if (open) {
     if (pushedNew) log.ok('PR 이 갱신되었습니다. 새로 push 한 커밋이 PR 에 들어갔습니다.');
     else log.ok('이미 열려 있는 PR 이 있습니다. 새로 push 한 커밋은 없습니다.');
+    // 두 번째 제출(mcp)의 시각과 소요 시간이 보이도록 PR 본문의 실습 기록 표를 다시 쓴다.
+    const edited = editPrBody(open, prBody(id, p));
+    if (edited.ok) {
+      log.ok('PR 본문의 실습 기록을 최신 내용으로 바꿨습니다.');
+    } else {
+      log.warn(`PR 본문의 실습 기록을 바꾸지 못했습니다. 제출은 끝났고, 최신 기록은 submissions/${id}/participant.json 에 있습니다.`);
+      for (const l of lines(edited.error)) log.info(`    ${l}`);
+    }
     return { label: 'PR', url: open };
   }
   const pr = createPr({ slug: upstream, base, head, title, body: prBody(id, p) });

@@ -173,6 +173,14 @@ export function createPr({ slug, base, head, title, body }) {
   return { error: (r.stderr || r.stdout || '').trim() || `gh 가 종료 코드 ${r.status} 로 끝났습니다.` };
 }
 
+// 열려 있는 PR(주소)의 본문을 body 로 바꾼다. PR 을 만든 계정은 원본 저장소의 쓰기 권한이 없어도 본문을 고칠 수 있다.
+export function editPrBody(url, body) {
+  const r = gh(['pr', 'edit', url, '--body-file', '-'], { input: body ?? '' });
+  if (r.status === 0) return { ok: true };
+  if (r.error) return { ok: false, error: `gh 를 실행할 수 없습니다: ${r.error.message}` };
+  return { ok: false, error: (r.stderr || r.stdout || '').trim() || `gh 가 종료 코드 ${r.status} 로 끝났습니다.` };
+}
+
 // 지금 origin 저장소를 Fork 하고, Fork 를 origin 으로, 원래 origin 을 upstream 으로 바꾼다.
 // --remote-name 을 직접 주면 gh 가 기존 origin 의 이름을 바꾸지 않으므로 기본값에 맡긴다.
 // --default-branch-only: 원본 저장소의 다른 브랜치(진행자 리허설 브랜치 등)가 교육생 Fork 에 복사되지 않게 한다.

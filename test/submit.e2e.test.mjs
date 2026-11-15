@@ -459,7 +459,7 @@ const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
 const a = process.argv.slice(2);
 const call = { args: a };
-if (a[0] === 'pr' && a[1] === 'create') call.body = fs.readFileSync(0, 'utf8');
+if (a[0] === 'pr' && (a[1] === 'create' || a[1] === 'edit')) call.body = fs.readFileSync(0, 'utf8');
 fs.appendFileSync(process.env.FAKE_GH_LOG, JSON.stringify(call) + '\\n');
 const out = (v) => process.stdout.write(typeof v === 'string' ? v + '\\n' : JSON.stringify(v));
 if (a[0] === '--version') out('gh version 2.76.2 (2025-07-30)');
@@ -467,6 +467,7 @@ else if (a[0] === 'api' && a[1] === 'user') out({ login: 'kim', id: 42 });
 else if (a[0] === 'api' && a[1].startsWith('repos/')) out({ permissions: { push: process.env.FAKE_GH_PUSH === '1' } });
 else if (a[0] === 'pr' && a[1] === 'list') out(JSON.parse(process.env.FAKE_GH_PRS || '[]'));
 else if (a[0] === 'pr' && a[1] === 'create') out('https://github.com/${UPSTREAM}/pull/7');
+else if (a[0] === 'pr' && a[1] === 'edit') { if (process.env.FAKE_GH_EDIT_FAIL === '1') { process.stderr.write('GraphQL: edit denied'); process.exit(1); } out(a[2]); }
 else if (a[0] === 'repo' && a[1] === 'fork') {
   execFileSync('git', ['remote', 'rename', 'origin', 'upstream']);
   execFileSync('git', ['remote', 'add', 'origin', 'https://github.com/kim/edu-2026-11-20.git']);
@@ -492,6 +493,7 @@ function fakeGh(extraEnv = {}) {
 
 const prCreates = (gh) => gh.calls().filter((c) => c.args[0] === 'pr' && c.args[1] === 'create');
 const flagOf = (call, flag) => call.args[call.args.indexOf(flag) + 1];
+const prEdits = (gh) => gh.calls().filter((c) => c.args[0] === 'pr' && c.args[1] === 'edit');
 
 test('opens a pr with gh and reuses the open pr', { skip: !canFake }, () => {
   const ctx = prepared('T04');
@@ -519,6 +521,40 @@ test('opens a pr with gh and reuses the open pr', { skip: !canFake }, () => {
   assert.ok(r.out.includes(`https://github.com/${UPSTREAM}/pull/5`), r.out);
   assert.equal(prCreates(gh).length, 0);
   assert.ok(remoteFiles(ctx.remote, 'submit/T04').includes('submissions/T04/nomcp/board-app/README.md'));
+});
+
+// mcp 를 제출하면 열려 있는 PR 의 본문(실습 기록 표)도 두 실습의 시각과 소요 시간으로 다시 쓴다.
+test('second submit rewrites the open pr body with the mcp record', { skip: !canFake }, () => {
+  const ctx = prepared('T07');
+  githubRemote(ctx, 'https://github.com/kim/edu-2026-11-20.git', ctx.remote);
+  let gh = fakeGh();
+  assert.equal(submit(ctx, [], gh.env).code, 0);
+  assert.match(prCreates(gh)[0].body, /\| mcp \| 준비 전 \|/);
+
+  let r = setup(ctx, '--test', 'mcp', '--id', 'T07', '--tool', 'codex');
+  assert.equal(r.code, 0, r.out);
+  put(path.join(runDir(ctx, 'T07', 'mcp'), 'board-app', 'pom.xml'), '<project/>\n');
+  const url = `https://github.com/${UPSTREAM}/pull/7`;
+  const open = { FAKE_GH_PRS: JSON.stringify([{ url, headRepositoryOwner: { login: 'kim' } }]) };
+  gh = fakeGh(open);
+  r = submit(ctx, [], gh.env);
+  assert.equal(r.code, 0, r.out);
+  assert.equal(prCreates(gh).length, 0);
+  const [edit] = prEdits(gh);
+  assert.ok(edit, r.out);
+  assert.equal(edit.args[2], url);
+  const p = readParticipant(ctx, 'T07');
+  assert.ok(edit.body.includes(`| mcp | ${p.runs.mcp.setupAt} | ${p.runs.mcp.submittedAt} | ${p.runs.mcp.elapsedMinutes} | 20 |`), edit.body);
+  assert.ok(edit.body.includes(`| nomcp | ${p.runs.nomcp.setupAt} | ${p.runs.nomcp.submittedAt} |`), edit.body);
+  assert.match(r.out, /PR 본문의 실습 기록을 최신 내용으로 바꿨습니다/);
+
+  // 본문을 고치지 못해도 제출은 끝난 것으로 보고 주의만 알린다.
+  put(path.join(runDir(ctx, 'T07', 'mcp'), 'board-app', 'README.md'), 'x\n');
+  gh = fakeGh({ ...open, FAKE_GH_EDIT_FAIL: '1' });
+  r = submit(ctx, [], gh.env);
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /\[주의\][^\n]*PR 본문의 실습 기록을 바꾸지 못했습니다/);
+  assert.match(r.out, /edit denied/);
 });
 
 test('origin is the upstream: fork first without push permission', { skip: !canFake }, () => {
