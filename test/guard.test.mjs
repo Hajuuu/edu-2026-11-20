@@ -1,11 +1,19 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { scanGlobalMcp, findInstructionLeaks, removalHint } from '../scripts/lib/guard.mjs';
 
-const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
+const temps = [];
+after(() => {
+  for (const d of temps.splice(0)) fs.rmSync(d, { recursive: true, force: true });
+});
+const tmp = () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-'));
+  temps.push(d);
+  return d;
+};
 const put = (file, text) => {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, typeof text === 'string' ? text : JSON.stringify(text));
@@ -37,6 +45,49 @@ test('codex honors CODEX_HOME and detects codegen by args', () => {
   assert.equal(hits[0].codegen, true);
 });
 
+// [mcp_servers.<이름>] 한 줄 머리가 아닌 TOML 표기도 켜진 codegen 서버로 보고 nomcp 를 막아야 한다.
+test('codex toml: other valid forms of the codegen server', () => {
+  const forms = {
+    'spaced table header': '[ mcp_servers . egovframe-codegen ]\ncommand = "node"\nargs = ["/x/index.js"]\n',
+    'dotted keys under [mcp_servers]': '[mcp_servers]\negovframe-codegen.command = "node"\negovframe-codegen.args = ["/x/index.js"]\n',
+    'inline table under [mcp_servers]': '[mcp_servers]\nfoo = { command = "node", args = ["/x/egovframe-mcp-codegen/build/index.js"] }\n',
+    'inline table at the top level': 'model = "gpt-6.1-sol"\nmcp_servers = { egovframe-codegen = { command = "node", args = ["/x/index.js"] } }\n',
+    'dotted key at the top level over several lines': 'mcp_servers.foo.command = "node"\nmcp_servers.foo.args = [\n  "/x/egovframe-mcp-codegen/build/index.js",\n]\n[projects."/w"]\ntrust_level = "trusted"\n',
+  };
+  for (const [name, text] of Object.entries(forms)) {
+    const home = tmp();
+    const f = path.join(home, '.codex', 'config.toml');
+    put(f, text);
+    const hits = scanGlobalMcp('Codex', { home, appData: home, env: {}, runDir: home });
+    const codegen = hits.filter((h) => h.enabled && h.codegen);
+    assert.equal(codegen.length, 1, `${name}: ${JSON.stringify(hits)}`);
+    assert.equal(codegen[0].source, f, name);
+    assert.equal(codegen[0].name, 'egovframe-codegen', name);
+    const hint = removalHint('Codex', codegen[0]);
+    assert.match(hint, /codex mcp remove egovframe-codegen/, name);
+    if (codegen[0].fallback) assert.ok(hint.includes(f), `${name}: ${hint}`);
+  }
+});
+
+// 주석과 다른 표(신뢰한 폴더 경로 등)에 든 이름으로는 막지 않고, 꺼 둔 서버는 꺼진 것으로 본다.
+test('codex toml: comments, other tables and disabled servers do not count', () => {
+  const cases = [
+    '# [mcp_servers.egovframe-codegen]\n# command = "node"\n[mcp_servers.other]\ncommand = "x" # 예전 egovframe-mcp-codegen 은 지웠음\n',
+    '[projects."/Users/me/egovframe-mcp-codegen"]\ntrust_level = "trusted"\n[sandbox_workspace_write]\nwritable_roots = ["/w/egovframe-codegen"]\n',
+    '[ mcp_servers . egovframe-codegen ]\ncommand = "node"\nenabled = false # 실습 동안 끔\n',
+  ];
+  for (const text of cases) {
+    const home = tmp();
+    put(path.join(home, '.codex', 'config.toml'), text);
+    const hits = scanGlobalMcp('Codex', { home, appData: home, env: {}, runDir: home });
+    assert.ok(!hits.some((h) => h.enabled && h.codegen), `${text}\n${JSON.stringify(hits)}`);
+  }
+  // 문자열 안의 # 은 주석이 아니다.
+  const home = tmp();
+  put(path.join(home, '.codex', 'config.toml'), '[mcp_servers]\nfoo = { command = "node#1", args = ["/x/egovframe-mcp-codegen/index.js"] }\n');
+  assert.ok(scanGlobalMcp('Codex', { home, appData: home, env: {}, runDir: home }).some((h) => h.enabled && h.codegen));
+});
+
 test('antigravity disabled flag', () => {
   const home = tmp();
   put(path.join(home, '.gemini', 'config', 'mcp_config.json'), {
@@ -64,6 +115,13 @@ test('claude code: user scope and matching project paths only', () => {
   assert.deepEqual(hits.map((h) => h.name).sort(), ['egovframe-codegen', 'p1', 'p2']);
   assert.equal(hits.find((h) => h.name === 'p2').enabled, false);
   assert.equal(hits.find((h) => h.name === 'p1').codegen, true);
+  // 로컬 범위 서버는 등록한 폴더에서 지워야 하므로 그 폴더를 안내한다.
+  const p1 = hits.find((h) => h.name === 'p1');
+  assert.equal(p1.project, path.join(home, 'edu'));
+  const hint = removalHint('Claude-Code', p1);
+  assert.ok(hint.includes(path.join(home, 'edu')), hint);
+  assert.match(hint, /claude mcp remove p1 -s local/);
+  assert.match(hint, /등록한 폴더/);
 });
 
 test('copilot reads both files and both keys', () => {
@@ -103,6 +161,7 @@ test('instruction leaks: parents and personal files, not runDir', () => {
   put(path.join(root, 'AGENTS.md'), 'x');
   put(path.join(root, 'a', '.claude', 'rules', 'r.md'), 'x');
   put(path.join(root, 'a', 'b', '.mcp.json'), '{}');
+  put(path.join(root, 'a', '.claude', 'CLAUDE.md'), 'x');
   put(path.join(run, 'CLAUDE.md'), 'own');
   put(path.join(home, '.claude', 'CLAUDE.md'), 'x');
   put(path.join(home, '.gemini', 'GEMINI.md'), 'x');
@@ -110,6 +169,7 @@ test('instruction leaks: parents and personal files, not runDir', () => {
   assert.ok(leaks.includes(path.join(root, 'AGENTS.md')));
   assert.ok(leaks.includes(path.join(root, 'a', '.claude', 'rules')));
   assert.ok(leaks.includes(path.join(root, 'a', 'b', '.mcp.json')));
+  assert.ok(leaks.includes(path.join(root, 'a', '.claude', 'CLAUDE.md')));
   assert.ok(leaks.includes(path.join(home, '.claude', 'CLAUDE.md')));
   assert.ok(leaks.includes(path.join(home, '.gemini', 'GEMINI.md')));
   assert.ok(!leaks.includes(path.join(run, 'CLAUDE.md')));

@@ -19,20 +19,42 @@ export function nodeInfo(version = process.versions.node) {
   return { version, major, level };
 }
 
-// java -version 출력(stderr 와 stdout 을 합친 것)을 해석한다. 1.8 형식은 8 로 본다.
+// Java 버전 문자열의 주 버전. 1.8 형식은 8 로 본다.
+const javaMajorOf = (first, second) => (first === '1' ? Number(second) : Number(first));
+
+// java -version 출력(stderr 와 stdout 을 합친 것)을 해석한다.
 export function parseJava(text) {
   const m = String(text || '').match(/version "((\d+)(?:\.(\d+))?[^"]*)"/);
   if (!m) return { found: false, version: null, major: null, ok: false, line: '' };
-  const major = m[2] === '1' ? Number(m[3]) : Number(m[2]);
+  const major = javaMajorOf(m[2], m[3]);
   return { found: true, version: m[1], major, ok: major === JDK_MAJOR, line: firstLine(text) };
 }
 
+// mvn -version 출력을 해석한다. Maven 은 JAVA_HOME(없으면 PATH 의 java)으로 실행되므로, Maven 이 쓰는 JDK 는
+// java -version 과 다를 수 있어 Java version 줄도 읽는다 (javaVersion, javaMajor, 줄이 없으면 null).
 export function parseMaven(stdout) {
-  const m = String(stdout || '').match(/Apache Maven ((\d+)\.(\d+)[\w.-]*)/);
-  if (!m) return { found: false, version: null, major: null, minor: null, ok: false, line: '' };
+  const text = String(stdout || '');
+  const m = text.match(/Apache Maven ((\d+)\.(\d+)[\w.-]*)/);
+  if (!m) return { found: false, version: null, major: null, minor: null, ok: false, line: '', javaVersion: null, javaMajor: null };
   const [major, minor] = [Number(m[2]), Number(m[3])];
   const ok = major === MAVEN_MIN[0] && minor >= MAVEN_MIN[1];
-  return { found: true, version: m[1], major, minor, ok, line: firstLine(stdout) };
+  const j = text.match(/Java version:\s*((\d+)(?:\.(\d+))?[^\s,]*)/);
+  const java = j ? { javaVersion: j[1], javaMajor: javaMajorOf(j[2], j[3]) } : { javaVersion: null, javaMajor: null };
+  return { found: true, version: m[1], major, minor, ok, line: firstLine(text), ...java };
+}
+
+// Maven 버전이 기준에 맞지 않을 때의 안내. Maven 4 이상은 올리라고 하지 않고 쓰지 않는다고 알린다 (README 1.1).
+export function mavenAdvice(m) {
+  if (m.major > MAVEN_MIN[0]) {
+    return `교육 기준은 Maven ${MAVEN_MIN.join('.')}.x 입니다. Maven ${m.major} 는 쓰지 않습니다. README 의 1.1 절에 따라 Maven 3.9.9 를 설치해 주세요.`;
+  }
+  return `Maven ${MAVEN_MIN.join('.')} 이상으로 올려 주세요.`;
+}
+
+// Maven 이 쓰는 JDK 가 교육 기준과 다르면 안내 문장, 같거나 알 수 없으면 null.
+export function mavenJavaWarning(m) {
+  if (!m.found || m.javaMajor === null || m.javaMajor === JDK_MAJOR) return null;
+  return `Maven 이 쓰는 JDK 는 ${m.javaVersion} 입니다(mvn -version 의 Java version). 교육은 JDK ${JDK_MAJOR} 기준이므로 JAVA_HOME 을 JDK ${JDK_MAJOR} 폴더로 정하고 터미널을 다시 열어 주세요.`;
 }
 
 export function javaInfo() {

@@ -23,6 +23,11 @@ function requireTool(tool) {
   return name;
 }
 
+// Claude Code 가 claude.ai 계정에서 가져오는 커넥터(MCP 서버)를 끈다. 두 실행 폴더에 똑같이 써서
+// 두 실행의 차이가 egovframe-codegen 하나가 되게 한다. 프로젝트 설정의 true 는 다른 설정보다 앞선다.
+const CLAUDE_NO_CONNECTORS = { disableClaudeAiConnectors: true };
+
+// mcp 실행 폴더에 쓰는 도구 설정
 export function folderMcpFiles(tool, server) {
   const name = requireTool(tool);
   const stdio = { type: 'stdio', command: server.command, args: server.args };
@@ -31,7 +36,7 @@ export function folderMcpFiles(tool, server) {
     case 'Claude-Code':
       return {
         '.mcp.json': stdioDoc,
-        '.claude/settings.json': toJson({ enabledMcpjsonServers: [MCP_SERVER_NAME] }),
+        '.claude/settings.json': toJson({ enabledMcpjsonServers: [MCP_SERVER_NAME], ...CLAUDE_NO_CONNECTORS }),
       };
     case 'GitHub-Copilot':
       return { '.mcp.json': stdioDoc };
@@ -58,6 +63,14 @@ export function folderMcpFiles(tool, server) {
   }
 }
 
+// nomcp 실행 폴더에 쓰는 도구 설정. MCP 서버는 연결하지 않고, mcp 실행에도 똑같이 들어가는 설정만 쓴다
+// (지금은 Claude Code 의 claude.ai 커넥터 끄기 하나). setup 은 nomcp 에서 MCP 연결 설정을 지울 때 이 파일은 남긴다.
+export function folderNomcpFiles(tool) {
+  const name = requireTool(tool);
+  if (name === 'Claude-Code') return { '.claude/settings.json': toJson(CLAUDE_NO_CONNECTORS) };
+  return {};
+}
+
 export function instructionFile(tool, ctx) {
   const name = requireTool(tool);
   const body = [
@@ -65,9 +78,9 @@ export function instructionFile(tool, ctx) {
     '',
     `이 폴더(\`submissions/${ctx.id}/${ctx.test}\`)가 이번 작업 영역의 전부입니다.`,
     '',
-    '- 이 폴더 밖의 파일과 폴더(상위 폴더, 다른 실행 폴더, 저장소의 다른 폴더)는 읽거나 검색하거나 참고하지 마세요.',
-    '- 파일은 이 폴더 안에서만 만들고 고치세요.',
-    '- JDK·Maven 실행과 Maven 로컬 저장소(~/.m2) 사용은 평소대로 하면 됩니다.',
+    '- 이 폴더 밖의 파일과 폴더(상위 폴더, 다른 실행 폴더, 저장소의 다른 폴더)는 읽거나 검색하거나 참고하지 않습니다.',
+    '- 파일은 이 폴더 안에서만 만들고 고칩니다.',
+    '- JDK, Maven, Maven 로컬 저장소(~/.m2)는 평소대로 사용합니다.',
     '',
   ].join('\n');
   const front = name === 'Cursor' ? '---\ndescription: 작업 범위\nalwaysApply: true\n---\n' : '';

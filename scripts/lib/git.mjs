@@ -17,15 +17,24 @@ function canonical(p) {
   return IS_WIN ? r.toLowerCase() : r;
 }
 
-// 이 스크립트가 들어 있는 폴더가 git 저장소의 루트인지 확인하고, 아니면 이유를 알리고 끝낸다
-// (ZIP 으로 받은 폴더, 다른 저장소 안의 복사본에서 git 명령이 바깥 저장소에 적용되는 것을 막는다).
-export function requireRepoRoot() {
+// 이 스크립트가 들어 있는 폴더가 git 저장소의 루트인지 본다 (ZIP 으로 받은 폴더, 다른 저장소 안의 복사본을 가려낸다).
+// { ok } 와, git 을 실행할 수 없으면 gitMissing, 루트가 아니면 git 이 알려 준 이유(why)를 돌려준다.
+export function repoRootStatus() {
   const top = git(['rev-parse', '--show-toplevel']);
-  if (top.error) fail('Git 을 찾지 못했습니다. Git 을 설치하고 터미널을 다시 연 뒤 실행해 주세요.');
-  if (top.status === 0 && canonical(top.stdout.trim()) === canonical(REPO_ROOT)) return;
-  log.err(`이 폴더(${REPO_ROOT})는 git 으로 clone 한 저장소의 루트가 아닙니다. 본인의 Fork 를 git clone 한 폴더에서 실행해 주세요.`);
-  const why = top.status === 0 ? '' : (top.stderr || '').trim();
-  if (why) console.error(`  git 메시지: ${why}`);
+  if (top.error) return { ok: false, gitMissing: true, why: '' };
+  if (top.status === 0 && canonical(top.stdout.trim()) === canonical(REPO_ROOT)) return { ok: true, gitMissing: false, why: '' };
+  return { ok: false, gitMissing: false, why: top.status === 0 ? '' : (top.stderr || '').trim() };
+}
+
+export const NOT_REPO_ROOT = `이 폴더(${REPO_ROOT})는 git 으로 clone 한 저장소의 루트가 아닙니다.`;
+
+// 저장소의 루트가 아니면 이유를 알리고 끝낸다 (git 명령이 바깥 저장소에 적용되는 것을 막는다).
+export function requireRepoRoot() {
+  const s = repoRootStatus();
+  if (s.ok) return;
+  if (s.gitMissing) fail('Git 을 찾지 못했습니다. Git 을 설치하고 터미널을 다시 연 뒤 실행해 주세요.');
+  log.err(`${NOT_REPO_ROOT} 본인의 Fork 를 git clone 한 폴더에서 실행해 주세요.`);
+  if (s.why) console.error(`  git 메시지: ${s.why}`);
   process.exit(1);
 }
 
@@ -76,7 +85,7 @@ export function ensureBranch(name, base) {
   if (refExists(`refs/heads/${base}`)) start = base;
   else if (refExists(`refs/remotes/origin/${base}`)) start = `origin/${base}`;
   if (!start) {
-    return { ok: false, created: false, message: `기준 브랜치 ${base} 를 로컬과 origin 어디에서도 찾을 수 없습니다.` };
+    return { ok: false, created: false, message: `기준 브랜치 ${base} 을 로컬과 origin 어디에서도 찾을 수 없습니다.` };
   }
   const r = git(['switch', '--no-track', '-c', name, start]);
   return r.status === 0 ? { ok: true, created: true, from: start } : { ok: false, created: false, message: gitMessage(r) };

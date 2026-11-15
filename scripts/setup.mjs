@@ -7,6 +7,7 @@ import { TOOLS } from './lib/tools.mjs';
 import {
   MCP_SERVER_NAME,
   folderMcpFiles,
+  folderNomcpFiles,
   ALL_FOLDER_MCP_PATHS,
   instructionFile,
   clineSettingsPath,
@@ -25,6 +26,8 @@ import {
   nodeInfo,
   javaInfo,
   mavenInfo,
+  mavenAdvice,
+  mavenJavaWarning,
   gitInfo,
   ghInfo,
 } from './lib/versions.mjs';
@@ -85,7 +88,9 @@ function checkEnvironment() {
   if (!java.found) log.warn(`JDK 를 찾지 못했습니다. 프로젝트를 빌드하고 실행하려면 JDK ${JDK_MAJOR} 이 필요합니다.`);
   else if (!java.ok) log.warn(`지금 쓰는 JDK 는 ${java.version} 입니다. 교육은 JDK ${JDK_MAJOR} 기준이니 JDK ${JDK_MAJOR} 로 바꿔 주세요.`);
   if (!maven.found) log.warn(`Maven 을 찾지 못했습니다. 프로젝트를 빌드하려면 Maven ${mavenMin} 이상이 필요합니다.`);
-  else if (!maven.ok) log.warn(`지금 쓰는 Maven 은 ${maven.version} 입니다. Maven ${mavenMin} 이상으로 올려 주세요.`);
+  else if (!maven.ok) log.warn(`지금 쓰는 Maven 은 ${maven.version} 입니다. ${mavenAdvice(maven)}`);
+  const mavenJava = mavenJavaWarning(maven);
+  if (mavenJava) log.warn(mavenJava);
   if (!ghv.found) log.warn('GitHub CLI(gh) 를 찾지 못했습니다. 제출(npm run submit)할 때 필요하니 미리 설치해 두세요.');
   if (!fs.existsSync(path.join(homeDir(), '.m2', 'repository', 'org', 'egovframe', 'boot'))) {
     log.warn('Maven 로컬 저장소(~/.m2)에 eGovFrame Boot 라이브러리가 없어 첫 빌드가 느릴 수 있습니다. 교육 전날 npm run check 를 실행해 두면 미리 받아 둘 수 있습니다.');
@@ -223,8 +228,15 @@ function wireFolderMcp(test, tool, runDir, entry) {
     }
     return;
   }
+  // nomcp 에도 쓰는 도구 설정(Claude Code 의 claude.ai 커넥터 끄기)은 새로 쓰고, 아래에서 지우지 않는다.
+  const kept = folderNomcpFiles(tool);
+  for (const [rel, content] of Object.entries(kept)) writeRel(runDir, rel, content);
+  if (Object.keys(kept).length) {
+    log.ok(`claude.ai 커넥터를 끄는 설정(${Object.keys(kept).join(', ')})을 썼습니다. mcp 실행 폴더에도 같은 설정을 씁니다.`);
+  }
   const removed = [];
   for (const rel of ALL_FOLDER_MCP_PATHS) {
+    if (Object.hasOwn(kept, rel)) continue;
     const file = path.join(runDir, ...rel.split('/'));
     let stat;
     try {

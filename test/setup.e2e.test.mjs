@@ -64,9 +64,15 @@ test('mcp before nomcp submitted', () => {
   assert.equal(readParticipant(ctx, 'T01').runs.mcp.limitMinutes, 20);
 });
 
+const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+
 test('mcp claude', () => {
   const ctx = workRepo();
   assert.equal(setup(ctx, '--test', 'nomcp', '--id', 'T02', '--tool', 'claude').code, 0);
+  // claude.ai 커넥터는 nomcp 에서도 끄고, MCP 서버를 허용하는 키와 .mcp.json 은 쓰지 않는다.
+  const nomcp = runDir(ctx, 'T02', 'nomcp');
+  assert.deepEqual(readJson(path.join(nomcp, '.claude', 'settings.json')), { disableClaudeAiConnectors: true });
+  assert.ok(!fs.existsSync(path.join(nomcp, '.mcp.json')));
   const pfile = path.join(ctx.repo, 'submissions', 'T02', 'participant.json');
   const before = readParticipant(ctx, 'T02');
   before.runs.nomcp.submittedAt = new Date().toISOString();
@@ -79,7 +85,10 @@ test('mcp claude', () => {
   assert.equal(server.command, process.execPath);
   assert.ok(fs.statSync(server.args[0]).isFile(), server.args[0]);
   assert.ok(fs.existsSync(path.join(run, 'CLAUDE.md')));
-  assert.ok(fs.existsSync(path.join(run, '.claude', 'settings.json')));
+  assert.deepEqual(readJson(path.join(run, '.claude', 'settings.json')), {
+    enabledMcpjsonServers: ['egovframe-codegen'],
+    disableClaudeAiConnectors: true,
+  });
   assert.equal(firstLine(path.join(run, 'TASK.md')), MCP_HEADER);
   assert.ok(!fs.existsSync(path.join(runDir(ctx, 'T02', 'nomcp'), '.mcp.json')));
 
@@ -108,6 +117,29 @@ test('rerun keeps work', () => {
   assert.equal(firstLine(path.join(run, 'TASK.md')), NOMCP_HEADER);
   assert.ok(fs.existsSync(path.join(run, '.cursor', 'rules', 'workspace-boundary.mdc')));
   assert.ok(!fs.existsSync(path.join(run, '.cursor', 'mcp.json')));
+});
+
+// nomcp 를 다시 준비하면 남아 있던 MCP 연결 설정은 지우고, 두 실행에 같이 쓰는 Claude Code 설정은 다시 쓴다.
+test('nomcp rerun keeps only the shared Claude Code settings', () => {
+  const ctx = workRepo();
+  const args = ['--test', 'nomcp', '--id', 'T11', '--tool', 'Claude-Code'];
+  assert.equal(setup(ctx, ...args).code, 0);
+  const run = runDir(ctx, 'T11', 'nomcp');
+  put(path.join(run, '.mcp.json'), '{"mcpServers":{"egovframe-codegen":{"command":"node"}}}\n');
+  put(path.join(run, '.claude', 'settings.json'), '{"enabledMcpjsonServers":["egovframe-codegen"]}\n');
+  const r = setup(ctx, ...args);
+  assert.equal(r.code, 0, r.out);
+  assert.ok(!fs.existsSync(path.join(run, '.mcp.json')));
+  assert.deepEqual(readJson(path.join(run, '.claude', 'settings.json')), { disableClaudeAiConnectors: true });
+  assert.match(r.out, /\[주의\][^\n]*\.mcp\.json/);
+  assert.doesNotMatch(r.out, /\[주의\][^\n]*지웠습니다[^\n]*\.claude\/settings\.json/);
+
+  // 다른 도구의 nomcp 에서는 Claude Code 설정도 MCP 연결 설정으로 보고 지운다.
+  const other = workRepo();
+  const otherArgs = ['--test', 'nomcp', '--id', 'T12', '--tool', 'codex'];
+  put(path.join(runDir(other, 'T12', 'nomcp'), '.claude', 'settings.json'), '{"enabledMcpjsonServers":["egovframe-codegen"]}\n');
+  assert.equal(setup(other, ...otherArgs).code, 0);
+  assert.ok(!fs.existsSync(path.join(runDir(other, 'T12', 'nomcp'), '.claude')));
 });
 
 test('cline toggles global', () => {
@@ -212,6 +244,16 @@ test('codex leftover blocks nomcp', () => {
   r = setup(ctx, '--test', 'mcp', '--id', 'T05', '--tool', 'codex', '--force');
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /\[주의\][^\n]*egovframe-codegen/);
+
+  // [mcp_servers.<이름>] 머리가 아닌 표기(인라인 표)도 막고, 고칠 파일을 알려 준다.
+  const inline = workRepo();
+  const file = path.join(inline.home, '.codex', 'config.toml');
+  put(file, '[mcp_servers]\negovframe-codegen = { command = "node", args = ["/old/index.js"] }\n');
+  r = setup(inline, '--test', 'nomcp', '--id', 'T15', '--tool', 'codex');
+  assert.equal(r.code, 1, r.out);
+  assert.ok(r.out.includes('codex mcp remove egovframe-codegen'), r.out);
+  assert.ok(r.out.includes(file), r.out);
+  assert.ok(!fs.existsSync(path.join(inline.repo, 'submissions', 'T15')));
 });
 
 test('branch from origin main without upstream', () => {
