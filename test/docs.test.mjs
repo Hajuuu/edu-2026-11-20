@@ -1,6 +1,6 @@
 // 공개 문서 시험: README.md 와 도구별 설정 문서(docs/*.md)의 링크, 도구 표, 스크립트와 맞는 안내,
 // 공개 파일의 평가 내용 유출, 쓰지 않기로 한 문장 부호를 확인한다.
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -8,6 +8,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { TOOLS, TOOL_NAMES } from '../scripts/lib/tools.mjs';
+import { cleanEnv, removeTemps } from './helpers.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const abs = (rel) => path.join(ROOT, ...rel.split('/'));
@@ -17,7 +18,8 @@ const read = (rel) => fs.readFileSync(abs(rel), 'utf8');
 const TOOL_ROWS = [
   { tool: 'Claude-Code', label: 'Claude Code (권장)', model: '**Opus 5.5 · medium**', doc: 'docs/setup-claude-code.md' },
   { tool: 'Codex', label: 'Codex (권장)', model: '**GPT-6.1 Sol · medium**', doc: 'docs/setup-codex.md' },
-  { tool: 'Antigravity', label: 'Antigravity', model: '**Claude Opus 5.5 (Thinking)**', doc: 'docs/setup-antigravity.md' },
+  // 작업 영역의 MCP 설정을 공식 문서가 설명하는 IDE 로 진행한다 (docs/setup-antigravity.md).
+  { tool: 'Antigravity', label: 'Antigravity (IDE)', model: '**Claude Opus 5.5 (Thinking)**', doc: 'docs/setup-antigravity.md' },
   { tool: 'Cursor', label: 'Cursor', model: '**Claude Opus 5.5 · medium**', doc: 'docs/setup-cursor.md' },
   { tool: 'GitHub-Copilot', label: 'GitHub Copilot', model: '**Claude Opus 5.5 · medium**', doc: 'docs/setup-github-copilot.md' },
   {
@@ -148,8 +150,10 @@ function headingAnchors(md) {
   return out;
 }
 
+// 개발자 PC 의 git 전역·시스템 설정(전역 제외 파일 등)이 결과를 바꾸지 않게 한다.
+after(removeTemps);
 function isIgnored(rel) {
-  const r = spawnSync('git', ['check-ignore', '-q', '--no-index', rel], { cwd: ROOT });
+  const r = spawnSync('git', ['check-ignore', '-q', '--no-index', rel], { cwd: ROOT, env: cleanEnv() });
   return r.status === 0;
 }
 

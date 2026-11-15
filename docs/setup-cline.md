@@ -2,7 +2,9 @@
 
 상용 AI 를 쓸 수 없는 교육생을 위한 안내입니다. VS Code 의 확장 Cline 과 OpenRouter 를 씁니다. `npm run setup` 명령에는 `--tool Cline` 을 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 VS Code 와 Cline 에서 할 일을 설명합니다.
 
-VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/download)에서 설치합니다. 그다음 확장 Cline(`saoudrizwan.claude-dev`)을 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)나 VS Code 의 확장 화면에서 설치하고 최신 버전으로 업데이트합니다. 자세한 사용법은 [Cline 공식 문서](https://docs.cline.bot)에 있습니다. 화면 표기는 버전에 따라 다를 수 있습니다.
+VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/download)에서 설치합니다. 그다음 확장 Cline(`saoudrizwan.claude-dev`)을 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)나 VS Code 의 확장 화면에서 설치합니다. 자세한 사용법은 [Cline 공식 문서](https://docs.cline.bot)에 있습니다. 화면 표기는 버전에 따라 다를 수 있습니다.
+
+Cline 은 실습 전에 v4.1 이상의 최신 버전으로 업데이트하고, VS Code 의 확장 화면에서 버전을 확인합니다. setup 명령은 `egovframe-codegen` 서버를 Cline 의 MCP 설정 파일 `~/.cline/data/settings/cline_mcp_settings.json` 에서 켜고 끄는데, v4.1 보다 오래된 Cline 은 이 파일을 읽지 않아 setup 명령이 바꾼 상태가 Cline 에 반영되지 않습니다. 업데이트한 뒤에도 mcp setup 명령을 실행한 다음에는 MCP Servers 화면에 `egovframe-codegen` 서버가 보이는지 확인합니다(6절).
 
 ## 1. 모델과 노력 수준
 
@@ -73,14 +75,14 @@ nomcp 실행에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 4. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
 5. 작업을 마치면 저장소 폴더에서 연 터미널(PowerShell 또는 macOS 터미널)에서 `npm run submit` 을 실행합니다.
 6. mcp 실행에서는 mcp setup 명령을 실행한 뒤 nomcp 창을 닫고, 새 창에서 `submissions/P01/mcp` 를 엽니다. MCP Servers 화면에서 `egovframe-codegen` 서버가 켜졌는지 확인하고, 새 작업으로 시작합니다. nomcp 실행의 작업을 이어 가지 않습니다.
-7. 두 실행을 모두 제출한 뒤에는 저장소 폴더에서 `npm run cleanup` 을 실행할 수 있습니다. 이 명령은 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌립니다. Cline 설정에 넣은 OpenRouter API Key 도 지웁니다.
+7. 두 실행을 모두 제출한 뒤에는 저장소 폴더에서 `npm run cleanup` 을 실행할 수 있습니다. 이 명령은 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌립니다. 저장소 폴더를 지울 생각이라면 지우기 전에 이 명령을 먼저 실행합니다. 저장소 폴더를 먼저 지우면 Cline 전역 설정에 지운 폴더를 가리키는 항목이 남습니다. Cline 설정에 넣은 OpenRouter API Key 도 지웁니다.
 
 ## 8. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실행에서 setup 명령을 다시 실행하면 그 실행의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **setup 명령을 실행했는데 MCP Servers 화면이 바뀌지 않습니다.**
-명령 팔레트에서 `Developer: Reload Window` 를 실행합니다. 그래도 바뀌지 않으면 MCP Servers 화면의 Configure 탭에서 `Configure MCP Servers` 를 눌러 열리는 파일이 setup 출력에 나온 파일과 같은지 확인합니다. 다르면 진행자에게 알립니다.
+명령 팔레트에서 `Developer: Reload Window` 를 실행합니다. Cline 이 v4.1 이상의 최신 버전인지도 확인합니다. 이보다 오래된 버전은 setup 명령이 바꾸는 설정 파일을 읽지 않습니다. 그래도 바뀌지 않으면 MCP Servers 화면의 Configure 탭에서 `Configure MCP Servers` 를 눌러 열리는 파일이 setup 출력에 나온 파일과 같은지 확인합니다. 다르면 진행자에게 알립니다.
 
 **`Cline 설정 파일이 올바른 JSON 이 아니어서 건드리지 않았습니다` 가 나옵니다.**
 setup 명령이 전역 설정 파일을 읽지 못해 멈춘 경우입니다. 출력에 나온 파일의 JSON 문법을 고치거나 파일을 다른 이름으로 옮긴 뒤 setup 명령을 다시 실행합니다.

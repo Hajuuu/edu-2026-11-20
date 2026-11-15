@@ -36,7 +36,7 @@ AI 코딩 도구는 다음 중 하나를 준비하고, 모델과 노력 수준�
 |---|---|---|
 | Claude Code (권장) | **Opus 5.5 · medium** | [docs/setup-claude-code.md](docs/setup-claude-code.md) |
 | Codex (권장) | **GPT-6.1 Sol · medium** | [docs/setup-codex.md](docs/setup-codex.md) |
-| Antigravity | **Claude Opus 5.5 (Thinking)** | [docs/setup-antigravity.md](docs/setup-antigravity.md) |
+| Antigravity (IDE) | **Claude Opus 5.5 (Thinking)** | [docs/setup-antigravity.md](docs/setup-antigravity.md) |
 | Cursor | **Claude Opus 5.5 · medium** | [docs/setup-cursor.md](docs/setup-cursor.md) |
 | GitHub Copilot | **Claude Opus 5.5 · medium** | [docs/setup-github-copilot.md](docs/setup-github-copilot.md) |
 | 상용 AI 를 쓸 수 없는 경우 | VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **GPT-OSS-120B** | [docs/setup-cline.md](docs/setup-cline.md) |
@@ -155,8 +155,9 @@ npm run check
 
 이 명령은 다음 일을 합니다.
 
-- JDK, Maven, Node.js, Git, gh 의 버전과 GitHub 로그인 상태를 확인합니다.
-- `origin` 이 원본 저장소가 아니라 본인의 Fork 인지 확인합니다.
+- JDK, Maven, Node.js, Git, gh 의 버전과 GitHub 로그인 상태를 확인합니다. Maven 이 JDK 17 로 실행되는지(`mvn -version` 출력의 `Java version`)도 확인합니다.
+- git 으로 clone 한 저장소 폴더에서 실행했는지와, `origin` 이 원본 저장소가 아니라 본인의 Fork 인지 확인합니다.
+- 여섯 AI 도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있는지 확인합니다. 켜져 있으면 지우는 방법을 `[주의]` 로 알려 줍니다. 실습에 쓰는 도구의 서버라면 교육 전에 지웁니다.
 - `egovframe-codegen` MCP 서버를 저장소 폴더 안에 설치합니다.
 - 임시 폴더에 예제 프로젝트를 만들어 한 번 빌드한 뒤 지웁니다. 이때 내려받은 Maven 의존성은 Maven 로컬 저장소(`~/.m2`)에 남으므로 당일 첫 빌드가 빨라집니다.
 
@@ -244,7 +245,7 @@ CREATE TABLE BOARD (
 - AI 에게 저장소의 다른 파일, 다른 실행의 폴더, 다른 사람의 PR 이나 Fork 를 보여 주지 않습니다. 교육생도 다른 사람의 PR 과 Fork 를 열어 보지 않습니다.
 - 두 실행은 같은 도구, 같은 모델, 같은 노력 수준으로 진행합니다.
 - 실행 순서(nomcp 다음 mcp)를 지킵니다.
-- `submissions/<ID>` 밖의 파일을 고치지 않습니다. setup 명령이 실행 폴더에 쓴 `TASK.md`, 작업 범위 지침 파일, MCP 연결 설정도 고치거나 지우지 않습니다.
+- `submissions/<ID>` 밖의 파일을 고치지 않습니다. setup 명령이 실행 폴더에 쓴 `TASK.md`, 작업 범위 지침 파일, MCP 연결 설정 같은 도구 설정도 고치거나 지우지 않습니다.
 - AI 에게 `TASK.md` 밖의 자료(다른 프로젝트의 코드, 예제, 설계 문서 등)를 붙여 넣거나 첨부하지 않습니다.
 - 실습 동안 AI 도구의 개인 설정을 꺼 둡니다([1.4 개인 설정 끄기](#14-개인-설정-끄기)).
 
@@ -272,16 +273,19 @@ ZIP 으로 받은 폴더나 다른 폴더에서 명령을 실행한 경우입니
 mcp 실행은 nomcp 실행을 제출한 뒤에만 준비할 수 있습니다. nomcp 작업을 `npm run submit` 으로 먼저 제출합니다.
 
 **`전역 설정에 eGovFrame 코드 생성 MCP 서버가 켜져 있습니다` 가 나오고 nomcp 준비가 멈춥니다.**
-도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있어 MCP 없이 진행할 수 없는 상태입니다. 출력에 나온 제거 방법(예: `codex mcp remove egovframe-codegen`, `claude mcp remove egovframe-codegen -s user`)을 실행한 뒤 같은 setup 명령을 다시 실행합니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄는 것만으로는 풀리지 않을 수 있으므로, 출력에 나온 파일에서 그 항목을 지웁니다.
+도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있어 MCP 없이 진행할 수 없는 상태입니다. 출력에 나온 제거 방법(예: `codex mcp remove egovframe-codegen`, `claude mcp remove egovframe-codegen -s user`)을 실행한 뒤 같은 setup 명령을 다시 실행합니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄는 것만으로는 풀리지 않을 수 있으므로, 출력에 나온 파일에서 그 항목을 지웁니다. `npm run check` 도 이런 서버를 `[주의]` 로 미리 알려 주므로, 실습에 쓰는 도구의 서버라면 같은 방법으로 교육 전에 지웁니다.
 
 **`MCP 서버가 켜져 있습니다` 또는 `자동으로 읽을 수 있는 지침 파일이 있습니다` 라는 주의가 나옵니다.**
-개인 MCP 서버나 지침 파일이 실습에 섞일 수 있다는 뜻입니다. 지침 파일은 전역 지침 파일(예: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`)과, 저장소 폴더의 상위 폴더(홈 폴더 포함)에 있는 `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.agents/`, `.claude/rules/` 를 가리킵니다. 실습 동안 이 파일의 이름을 바꾸거나 다른 곳으로 옮기고, 개인 MCP 서버는 도구 문서에 따라 끕니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄기만 하면 설정 파일에 서버가 남아 주의가 계속 나올 수 있으므로, 도구 문서에 따라 파일에서 서버 항목을 지웁니다. 이 주의는 참가자 기록에도 남습니다.
+개인 MCP 서버나 지침 파일이 실습에 섞일 수 있다는 뜻입니다. 지침 파일은 전역 지침 파일(예: `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.gemini/GEMINI.md`)과, 저장소 폴더의 상위 폴더(홈 폴더 포함)에 있는 `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.mcp.json`, `.agents/`, `.claude/CLAUDE.md`, `.claude/rules/` 를 가리킵니다. 실습 동안 이 파일의 이름을 바꾸거나 다른 곳으로 옮기고, 개인 MCP 서버는 도구 문서에 따라 끕니다. Cursor 와 GitHub Copilot(VS Code)은 화면에서 끄기만 하면 설정 파일에 서버가 남아 주의가 계속 나올 수 있으므로, 도구 문서에 따라 파일에서 서버 항목을 지웁니다. 이 주의는 참가자 기록에도 남습니다.
 
 **`Node.js ... 에서는 codegen MCP 서버를 실행할 수 없습니다` 가 나옵니다.**
 Node.js 가 18 보다 낮은 경우입니다. Node.js 22 를 설치하고 터미널을 다시 연 뒤 실행합니다.
 
 **`Maven 로컬 저장소(~/.m2)에 eGovFrame Boot 라이브러리가 없어` 라는 주의가 나옵니다.**
 Maven 의존성을 아직 내려받지 않아 첫 빌드가 느릴 수 있다는 뜻입니다. 교육 전에 `npm run check` 를 실행해 둡니다.
+
+**`Maven 4 는 쓰지 않습니다` 또는 `Maven 이 쓰는 JDK 는 ... 입니다` 라는 주의가 나옵니다.**
+Maven 4 가 설치되어 있으면 [1.1 운영체제별 설치](#11-운영체제별-설치)에 따라 Maven 3.9.9 를 설치하고, PATH 에서 Maven 3.9.9 의 `bin` 폴더가 다른 Maven 보다 앞에 오게 합니다. Maven 이 JDK 17 이 아닌 JDK 로 실행된다는 주의가 나오면 `JAVA_HOME` 을 JDK 17 폴더로 정합니다. 두 경우 모두 터미널을 새로 연 뒤 `mvn -version` 으로 다시 확인합니다.
 
 **`npm run check` 에서 `예열용 프로젝트 빌드에 실패했습니다` 가 나옵니다.**
 인터넷 연결, 프록시, Maven 설정(`~/.m2/settings.xml`)을 확인합니다. `mvn -version` 출력의 `Java version` 이 17 인지 확인하고, 아니면 `JAVA_HOME` 을 JDK 17 폴더로 정합니다.
@@ -300,13 +304,16 @@ AI 도구로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 처음
 다른 브랜치로 전환된 상태입니다. 출력에 나온 명령(예: `git switch submit/P01`)으로 제출 브랜치로 돌아간 뒤 `npm run submit` 을 다시 실행합니다.
 
 **`실행 폴더 안에 별도의 git 저장소가 있어` 라는 오류가 나옵니다.**
-실행 폴더 안의 폴더(예: `board-app`)에서 `git init` 이 실행되어 별도의 git 저장소가 생긴 경우입니다. 이대로 제출하면 그 폴더가 파일 없이 빈 링크로만 올라갑니다. 출력에 나온 명령을 그대로 실행한 뒤 `npm run submit` 을 다시 실행합니다. macOS 는 `rm -rf "<폴더>/.git"`, Windows 는 `Remove-Item -Recurse -Force "<폴더>\.git"` 형태의 명령이며, 경우에 따라 `git rm --cached -f -q -- "<폴더>"` 도 함께 나옵니다. 이 명령은 그 폴더의 git 기록(`.git`)만 지우고 작업한 파일은 그대로 둡니다.
+실행 폴더 안의 폴더(예: `board-app`)에서 `git init` 이 실행되어 별도의 git 저장소가 생긴 경우입니다. 이대로 제출하면 그 폴더가 파일 없이 빈 링크로만 올라갑니다. 출력에 나온 명령을 그대로 실행한 뒤 `npm run submit` 을 다시 실행합니다. macOS 는 `rm -rf "<폴더>/.git"`, Windows 는 `Remove-Item -Recurse -Force "<폴더>\.git"` 형태의 명령이며, 경우에 따라 `git -C "<저장소 폴더>" rm --cached -f -q -- "<폴더>"` 도 함께 나옵니다. 이 명령은 그 폴더의 git 기록(`.git`)만 지우고 작업한 파일은 그대로 둡니다.
 
 **`제출 범위(...) 밖에서 바뀐 파일은 제출되지 않습니다` 라는 주의가 나옵니다.**
 실행 폴더와 `participant.json` 밖에서 바뀐 파일이 있다는 뜻입니다. 이 파일들은 제출되지 않습니다. 다른 실행 폴더의 변경도 이번 제출에 넣지 않습니다.
 
 **`20MB 를 넘는 파일` 이 제출에서 빠졌다는 주의가 나옵니다.**
 20MB 를 넘는 파일은 자동으로 `.git/info/exclude` 에 적혀 제출에서 빠집니다. 따로 할 일은 없습니다.
+
+**`이 PC 의 git 무시 설정(...) 때문에 실행 폴더의 다음 파일은 제출되지 않습니다` 라는 주의가 나옵니다.**
+이 PC 의 git 전역 제외 파일(`core.excludesFile`)이나 `.git/info/exclude` 에 직접 적은 규칙이 실행 폴더의 파일을 제외하고 있다는 뜻입니다. 제출은 그대로 진행되지만 나온 파일은 제출에 들어가지 않습니다. 그 파일도 제출해야 하면 괄호 안의 파일에서 해당 줄을 지우거나 고친 뒤 `npm run submit` 을 다시 실행합니다.
 
 **`제한 시간 ...분을 넘었습니다` 라는 주의가 나옵니다.**
 걸린 시간이 제한 시간보다 길다는 뜻입니다. 기록만 남고 제출은 그대로 진행됩니다.
@@ -326,7 +333,7 @@ gh 를 찾지 못했거나 PR 을 만드는 데 실패한 경우입니다. 출�
 ## 6. 실습 후
 
 - 제출한 PR 은 닫지 않고 그대로 둡니다.
-- Cline 을 썼다면 다음 명령으로 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌릴 수 있습니다. 이 단계는 선택입니다. 다른 도구는 setup 명령이 전역 설정을 바꾸지 않으므로 되돌릴 것이 없습니다.
+- Cline 을 썼다면 다음 명령으로 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌릴 수 있습니다. 이 단계는 선택이지만, 저장소 폴더를 지울 생각이라면 지우기 전에 이 명령을 먼저 실행합니다. 저장소 폴더를 먼저 지우면 Cline 전역 설정에 지운 폴더를 가리키는 항목이 남습니다. 다른 도구는 setup 명령이 전역 설정을 바꾸지 않으므로 되돌릴 것이 없습니다.
 
   ```bash
   npm run cleanup

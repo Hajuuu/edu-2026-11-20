@@ -44,11 +44,13 @@ Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계�
 - 개인 규칙 폴더 `~/.claude/rules/` 와 개인 스킬 폴더 `~/.claude/skills/` 도 같은 방법으로 이름을 바꿔 둡니다(예: `rules.off`, `skills.off`). 저장소 폴더가 홈 폴더 안에 있으면 setup 명령은 `~/.claude/rules/` 도 `[주의]` 로 알려 줍니다.
 - 설치한 플러그인은 `/plugin` 화면에서 실습 동안 끕니다. 화면 표기는 버전에 따라 다를 수 있습니다.
 - 사용자 범위 MCP 서버는 `claude mcp list` 로 확인하고, 실습 동안 `claude mcp remove <이름> -s user` 로 지웁니다. 나중에 다시 추가할 수 있도록 지우기 전에 `claude mcp get <이름>` 으로 설정을 확인해 적어 둡니다.
-- claude.ai 계정으로 로그인했다면 claude.ai 에 추가한 커넥터(connector)도 `/mcp` 에 claude.ai 에서 왔다는 표시와 함께 나타납니다. setup 명령은 이 커넥터를 확인하지 못합니다. 실습 동안에는 `~/.claude/settings.json` 에 다음 항목을 넣어 커넥터를 모두 끄고, 실습이 끝나면 이 항목을 지웁니다. 파일이 이미 있으면 기존 내용에 이 항목을 더합니다.
+- claude.ai 계정으로 로그인했다면 claude.ai 에 추가한 커넥터(connector)도 `/mcp` 에 claude.ai 에서 왔다는 표시와 함께 나타납니다. 이 커넥터는 setup 명령이 두 실행 폴더의 `.claude/settings.json` 에 `"disableClaudeAiConnectors": true` 를 써서 모두 끄므로 따로 끌 필요가 없습니다. 이 설정은 7절처럼 터미널에서 실행 폴더로 이동해 시작한 Claude Code 에 적용되며, 6절의 연결 확인에서 커넥터가 보이지 않는지 확인합니다.
+- claude.ai 계정으로 로그인했다면 claude.ai 계정에서 켠 스킬과 플러그인도 Claude Code 가 내려받아 함께 로드합니다. 실습 동안에는 `~/.claude/settings.json` 에 다음 두 항목을 넣어 이 동기화를 끕니다. 파일이 이미 있으면 기존 내용에 두 항목을 더합니다. 이 두 항목은 실행 폴더의 `.claude/settings.json` 같은 프로젝트 설정에서는 적용되지 않으므로 setup 명령이 대신 넣지 않습니다. 끈 뒤 Claude Code 를 다시 시작하면 이미 내려받은 스킬과 플러그인은 `~/.claude/skills/.trash/` 와 `~/.claude/plugins/.trash/` 로 옮겨지고 로드되지 않습니다. claude.ai 계정의 스킬과 플러그인은 그대로 남아 있으며, 실습이 끝나면 두 항목을 지웁니다.
 
   ```json
   {
-    "disableClaudeAiConnectors": true
+    "syncClaudeAiSkills": false,
+    "syncClaudeAiPlugins": false
   }
   ```
 
@@ -58,10 +60,10 @@ Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계�
 |---|---|---|
 | nomcp, mcp | `TASK.md` | 과제. 맨 위에 실행 종류를 알리는 한 줄이 붙습니다 |
 | nomcp, mcp | `CLAUDE.md` | 작업 범위 지침. Claude Code 가 자동으로 읽습니다 |
+| nomcp, mcp | `.claude/settings.json` | claude.ai 커넥터 끄기(`disableClaudeAiConnectors`). mcp 실행에서는 `.mcp.json` 의 `egovframe-codegen` 서버 사용 허용(`enabledMcpjsonServers`)도 들어갑니다 |
 | mcp | `.mcp.json` | `egovframe-codegen` 서버 연결 설정 |
-| mcp | `.claude/settings.json` | `.mcp.json` 의 `egovframe-codegen` 서버 사용 허용(`enabledMcpjsonServers`) |
 
-nomcp 실행 폴더에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정의 명령은 setup 명령을 실행한 Node.js 의 절대 경로이고, 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+nomcp 실행 폴더에는 MCP 연결 설정을 쓰지 않습니다. nomcp 의 `.claude/settings.json` 에는 커넥터를 끄는 항목만 들어갑니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정의 명령은 setup 명령을 실행한 Node.js 의 절대 경로이고, 서버 파일은 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 입니다. 따라서 Node.js 를 다시 설치했거나 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 5. 처음 한 번 확인할 것
 
