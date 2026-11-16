@@ -29,7 +29,7 @@ ChatGPT Plus, Pro, Business, Enterprise, Edu 요금제 가운데 하나가 필�
 
 | 실습 | 파일 | 역할 |
 |---|---|---|
-| nomcp, mcp | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 한 줄이 붙습니다 |
+| nomcp, mcp | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 안내가 붙고, mcp 실습에서는 egovframe-mcp-codegen MCP 서버의 도구를 사용해 프로젝트를 만들라는 안내도 붙습니다 |
 | nomcp, mcp | `AGENTS.md` | 작업 범위 지침. Codex 가 자동으로 읽습니다 |
 | mcp | `.codex/config.toml` | `egovframe-codegen` 서버 연결 설정(`[mcp_servers.egovframe-codegen]` 의 `command`, `args`) |
 
@@ -61,8 +61,16 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 
 2. `/status` 로 모델과 노력 수준을 확인하고 첫 프롬프트를 입력합니다.
 
+   nomcp 실습에서는 다음 문장을 입력합니다.
+
    ```text
    TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.
+   ```
+
+   mcp 실습에서는 egovframe-mcp-codegen MCP 를 사용하라는 말이 더해진 다음 문장을 입력합니다.
+
+   ```text
+   TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.
    ```
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.

@@ -22,7 +22,9 @@ import {
 
 const NOMCP_HEADER = '> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.';
 const MCP_HEADER = '> 이 폴더의 AI 도구에는 eGovFrame 코드 생성 MCP(`egovframe-codegen`)가 연결되어 있습니다.';
+const MCP_USE = '> 이 실습에서는 egovframe-mcp-codegen MCP 서버(`egovframe-codegen`)의 도구를 사용해 프로젝트를 만듭니다.';
 const FIRST_PROMPT = 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.';
+const MCP_PROMPT = 'TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.';
 
 after(removeTemps);
 
@@ -66,6 +68,9 @@ test('nomcp codex', () => {
     assert.ok(r.out.includes(s), `출력에 ${s} 가 있어야 합니다\n${r.out}`);
   }
   assert.match(r.out, /\b\d{2}:\d{2}\b/);
+  // nomcp 실습의 과제와 첫 프롬프트에는 codegen MCP 서버 이야기가 없다.
+  assert.ok(!r.out.includes(MCP_PROMPT), r.out);
+  assert.ok(!fs.readFileSync(path.join(run, 'TASK.md'), 'utf8').includes('egovframe-mcp-codegen'));
 });
 
 test('mcp before nomcp submitted', () => {
@@ -106,7 +111,12 @@ test('mcp claude', () => {
   assert.match(r.out, /node 로 codegen MCP 서버를 실행해 도구 4개를 확인했습니다/);
   assert.ok(fs.existsSync(path.join(run, 'CLAUDE.md')));
   assert.deepEqual(readJson(path.join(run, '.claude', 'settings.json')), { enabledMcpjsonServers: ['egovframe-codegen'] });
-  assert.equal(firstLine(path.join(run, 'TASK.md')), MCP_HEADER);
+  // mcp 실습의 TASK.md 맨 위에는 codegen MCP 서버를 사용해 만들라는 안내가 붙고, 첫 프롬프트도 그 서버를 쓰라고 한다.
+  const original = fs.readFileSync(path.join(SRC, 'task', 'TASK.md'), 'utf8');
+  const eol = original.includes('\r\n') ? '\r\n' : '\n';
+  assert.equal(fs.readFileSync(path.join(run, 'TASK.md'), 'utf8'), `${MCP_HEADER}${eol}${MCP_USE}${eol}${eol}${original}`);
+  assert.ok(r.out.includes(`     ${MCP_PROMPT}`), r.out);
+  assert.ok(!r.out.includes(FIRST_PROMPT), r.out);
   assert.ok(!fs.existsSync(path.join(runDir(ctx, 'T02', 'nomcp'), '.mcp.json')));
 
   const p = readParticipant(ctx, 'T02');

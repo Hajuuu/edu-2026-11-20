@@ -68,7 +68,10 @@ const PRIVATE_PATHS = ['grading', 'README-local', 'superpowers'];
 // 한글은 조사가 붙어 낱말 전체로는 비교할 수 없으므로, 공백 하나로 이어진 한글 낱말들 안의 구간을 이 길이까지 본다.
 const HANGUL_WINDOW = 12;
 
-const FIRST_PROMPT = read('scripts/setup.mjs').match(/const FIRST_PROMPT = '([^']+)'/)?.[1];
+// setup 이 실습마다 안내하는 첫 프롬프트 ({ nomcp, mcp })
+const FIRST_PROMPTS = Object.fromEntries(
+  [...(read('scripts/setup.mjs').match(/const FIRST_PROMPTS = \{([\s\S]*?)\};/)?.[1] ?? '').matchAll(/(\w+): '([^']+)'/g)].map((m) => [m[1], m[2]]),
+);
 const UPSTREAM = JSON.parse(read('package.json')).edu.upstream;
 
 function docFiles() {
@@ -243,8 +246,13 @@ test('readme prerequisites and commands', () => {
   ]) {
     assert.ok(readme.includes(s), `README 에 ${s} 가 없습니다`);
   }
-  assert.ok(FIRST_PROMPT, 'scripts/setup.mjs 에서 첫 프롬프트를 찾지 못했습니다');
-  assert.ok(readme.includes(FIRST_PROMPT), 'README 의 첫 프롬프트가 setup 안내와 다릅니다');
+  assert.deepEqual(Object.keys(FIRST_PROMPTS), ['nomcp', 'mcp'], 'scripts/setup.mjs 에서 실습별 첫 프롬프트를 찾지 못했습니다');
+  for (const [t, prompt] of Object.entries(FIRST_PROMPTS)) {
+    assert.ok(readme.includes(prompt), `README 의 ${t} 첫 프롬프트가 setup 안내와 다릅니다`);
+  }
+  // mcp 실습의 첫 프롬프트는 codegen MCP 서버를 쓰라고 하고, nomcp 의 첫 프롬프트는 MCP 를 말하지 않는다.
+  assert.ok(FIRST_PROMPTS.mcp.includes('egovframe-mcp-codegen'));
+  assert.ok(!FIRST_PROMPTS.nomcp.includes('MCP'));
   assert.ok(readme.includes('.mcp-servers/egovframe-mcp-codegen/package/build/index.js'), 'README 에 codegen MCP 서버의 실행 파일 경로가 없습니다');
   assert.ok(!/\bnpx\b/.test(readme), 'README 에 npx 안내가 남아 있습니다');
   // gh 로그인은 토큰(read:org, repo 권한의 classic 토큰)으로 한다.
@@ -270,7 +278,7 @@ test('tool docs cover each step', () => {
     for (const s of DOC_SECTIONS) {
       assert.ok(hs.some((h) => h.includes(s)), `${row.doc} 에 '${s}' 절이 없습니다`);
     }
-    for (const s of [`--tool ${row.tool}`, TOOLS[row.tool].instruction, 'egovframe-codegen', ...MCP_TOOLS, FIRST_PROMPT, 'nomcp', '](../README.md']) {
+    for (const s of [`--tool ${row.tool}`, TOOLS[row.tool].instruction, 'egovframe-codegen', ...MCP_TOOLS, FIRST_PROMPTS.nomcp, FIRST_PROMPTS.mcp, 'nomcp', '](../README.md']) {
       assert.ok(md.includes(s), `${row.doc} 에 ${s} 가 없습니다`);
     }
     // MCP 연결 설정은 .mcp-servers/ 에 푼 codegen 패키지를 node 로 바로 실행한다 (npx 로 tgz 를 실행하지 않는다).

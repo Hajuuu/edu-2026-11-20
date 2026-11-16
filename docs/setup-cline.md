@@ -27,7 +27,7 @@ Cline 은 폴더 단위 MCP 설정이 없습니다. 그래서 setup 명령은 �
 
 | 위치 | 파일 | 역할 |
 |---|---|---|
-| 실습 워크스페이스 (nomcp, mcp) | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 한 줄이 붙습니다 |
+| 실습 워크스페이스 (nomcp, mcp) | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 안내가 붙고, mcp 실습에서는 egovframe-mcp-codegen MCP 서버의 도구를 사용해 프로젝트를 만들라는 안내도 붙습니다 |
 | 실습 워크스페이스 (nomcp, mcp) | `.clinerules/workspace-boundary.md` | 작업 범위 지침. Cline 이 자동으로 읽습니다 |
 | 전역 설정 | `~/.cline/data/settings/cline_mcp_settings.json` | `egovframe-codegen` 서버 항목. Windows 에서는 `%USERPROFILE%\.cline\data\settings\cline_mcp_settings.json` 입니다 |
 
@@ -61,8 +61,16 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 2. MCP Servers 화면에서 `egovframe-codegen` 서버가 꺼져 있는지 확인합니다.
 3. Cline 에서 새 작업(New Task)을 시작하고 첫 프롬프트를 입력합니다.
 
+   nomcp 실습에서는 다음 문장을 입력합니다.
+
    ```text
    TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.
+   ```
+
+   mcp 실습에서는 egovframe-mcp-codegen MCP 를 사용하라는 말이 더해진 다음 문장을 입력합니다.
+
+   ```text
+   TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.
    ```
 
 4. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.

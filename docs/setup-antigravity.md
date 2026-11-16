@@ -21,7 +21,7 @@ Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise 요금제 가�
 
 | 실습 | 파일 | 역할 |
 |---|---|---|
-| nomcp, mcp | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 한 줄이 붙습니다 |
+| nomcp, mcp | `TASK.md` | 과제. 맨 위에 실습 종류를 알리는 안내가 붙고, mcp 실습에서는 egovframe-mcp-codegen MCP 서버의 도구를 사용해 프로젝트를 만들라는 안내도 붙습니다 |
 | nomcp, mcp | `GEMINI.md` | 작업 범위 지침. Antigravity 가 자동으로 읽습니다 |
 | mcp | `.agents/mcp_config.json` | 작업 영역의 MCP 설정. `mcpServers` 에 `egovframe-codegen` 서버를 등록합니다 |
 
@@ -58,8 +58,16 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
    - 앱: 왼쪽 사이드바의 New Project 아이콘(더하기 표시가 있는 폴더)을 누르고, Add Folder 로 실습 워크스페이스 하나만 선택한 뒤 Create 를 누릅니다. 앱을 쓸 때의 주의는 이 문서의 첫 부분에 있습니다.
 2. 모델이 Claude Opus 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다. 앱에서 실행 방식을 물으면 Local mode 를 선택합니다.
 
+   nomcp 실습에서는 다음 문장을 입력합니다.
+
    ```text
    TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.
+   ```
+
+   mcp 실습에서는 egovframe-mcp-codegen MCP 를 사용하라는 말이 더해진 다음 문장을 입력합니다.
+
+   ```text
+   TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.
    ```
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.

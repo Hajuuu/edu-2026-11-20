@@ -35,10 +35,18 @@ import { safePath } from './lib/safe-path.mjs';
 
 // 서버는 보통 1초 안에 뜨지만, 처음 실행하는 PC 에서는 백신 검사 등으로 더 걸릴 수 있다.
 const PROBE_TIMEOUT_MS = 60000;
-const FIRST_PROMPT = 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.';
+// 실습별 첫 프롬프트. mcp 실습은 codegen MCP 서버를 쓰라고 함께 알린다 (README 와 도구 문서의 예시와 같아야 한다).
+const FIRST_PROMPTS = {
+  nomcp: 'TASK.md 를 읽고 이 폴더에 board-app 프로젝트를 만들어 줘.',
+  mcp: 'TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.',
+};
+// 실습 워크스페이스의 TASK.md 맨 위에 붙이는 안내 (줄마다 하나). mcp 실습에는 codegen MCP 서버를 쓰라는 문장을 더한다.
 const TASK_HEADERS = {
-  nomcp: '> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.',
-  mcp: `> 이 폴더의 AI 도구에는 eGovFrame 코드 생성 MCP(\`${MCP_SERVER_NAME}\`)가 연결되어 있습니다.`,
+  nomcp: ['> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.'],
+  mcp: [
+    `> 이 폴더의 AI 도구에는 eGovFrame 코드 생성 MCP(\`${MCP_SERVER_NAME}\`)가 연결되어 있습니다.`,
+    `> 이 실습에서는 egovframe-mcp-codegen MCP 서버(\`${MCP_SERVER_NAME}\`)의 도구를 사용해 프로젝트를 만듭니다.`,
+  ],
 };
 
 const setupCommand = (test, id, tool) => `npm run setup --test ${test} --id ${id} --tool ${tool}`;
@@ -225,7 +233,7 @@ function writeRel(dir, rel, content) {
 function prepareRunFolder({ test, id, tool }, runDir, template) {
   fs.mkdirSync(runDir, { recursive: true });
   const eol = template.includes('\r\n') ? '\r\n' : '\n';
-  fs.writeFileSync(path.join(runDir, 'TASK.md'), `${TASK_HEADERS[test]}${eol}${eol}${template}`);
+  fs.writeFileSync(path.join(runDir, 'TASK.md'), `${TASK_HEADERS[test].join(eol)}${eol}${eol}${template}`);
   const inst = instructionFile(tool, { id, test });
   writeRel(runDir, inst.path, inst.content);
   log.ok(`TASK.md 와 작업 범위 지침 파일(${inst.path})을 썼습니다.`);
@@ -297,7 +305,7 @@ function printNext({ test, id, tool }, runDir, now) {
     log.info(`     처음 열 때 폴더 신뢰나 MCP 서버 사용을 묻는 창이 나오면 허용하고, ${MCP_SERVER_NAME} 서버가 연결되었는지 확인합니다.`);
   }
   log.info('  3. 첫 프롬프트로 다음 문장을 입력합니다.');
-  log.info(`     ${FIRST_PROMPT}`);
+  log.info(`     ${FIRST_PROMPTS[test]}`);
   log.info(`  4. 제한 시간은 ${limit}분입니다. 지금 시작하면 예상 종료 시각은 ${hhmm(end)} 입니다.`);
   log.info(`  5. 작업을 마치면 저장소 폴더(${REPO_ROOT})에서 npm run submit 을 실행합니다.`);
   if (test === 'nomcp') {

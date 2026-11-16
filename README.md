@@ -278,11 +278,16 @@ CREATE TABLE BOARD (
    npm run setup --test mcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}
    ```
 
-   이번에는 setup 명령이 실습 워크스페이스 `submissions/{id}/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, 명령 `node` 와 인자 `"<저장소 폴더>/.mcp-servers/egovframe-mcp-codegen/package/build/index.js"`(절대 경로)로 서버를 실행합니다. 서버 패키지는 저장소에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로, AI 도구가 서버를 띄우자마자 연결됩니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다).
+   이번에는 setup 명령이 실습 워크스페이스 `submissions/{id}/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, 명령 `node` 와 인자 `"<저장소 폴더>/.mcp-servers/egovframe-mcp-codegen/package/build/index.js"`(절대 경로)로 서버를 실행합니다. 서버 패키지는 저장소에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로, AI 도구가 서버를 띄우자마자 연결됩니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다). 실습 워크스페이스의 `TASK.md` 맨 위에는 egovframe-mcp-codegen MCP 서버의 도구를 사용해 프로젝트를 만들라는 안내가 붙습니다.
 
 2. nomcp 작업에 쓰던 창이나 세션을 닫고, 새 창이나 새 세션에서 `submissions/{id}/mcp` 를 엽니다. 앞 실습의 대화를 이어서 쓰지 않습니다.
 3. 처음 열 때 폴더 신뢰나 MCP 서버 사용을 묻는 창이 나오면 허용합니다. 그리고 도구 문서의 '연결 확인' 절에 따라 `egovframe-codegen` 서버와 도구 4개가 보이는지 확인합니다.
-4. 첫 프롬프트는 nomcp 실습과 같습니다.
+4. 첫 프롬프트로 다음 문장을 입력합니다. nomcp 실습의 첫 프롬프트에 egovframe-mcp-codegen MCP 를 사용하라는 말이 더해진 문장입니다. 그다음에는 평소처럼 AI 와 대화하며 작업합니다.
+
+   ```text
+   TASK.md 를 읽고 egovframe-mcp-codegen MCP 를 사용해서 이 폴더에 board-app 프로젝트를 만들어 줘.
+   ```
+
 5. 작업을 마치거나 제한 시간이 되면 저장소 폴더에서 `npm run submit` 을 실행합니다. 이번 제출은 첫 번째 제출에서 만든 PR 에 더해지고, PR 본문의 실습 기록 표에도 mcp 실습의 준비 시각, 제출 시각, 소요 시간이 채워집니다.
 
 ## 4. 지킬 것
