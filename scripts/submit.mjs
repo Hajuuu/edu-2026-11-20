@@ -1,4 +1,5 @@
-// 제출(npm run submit): 마지막으로 준비한 실습을 기록하고 커밋한 뒤 Fork(origin)에 push 하고 원본 저장소에 PR 을 만든다.
+// 제출(npm run submit): 제출에 쓸 GitHub 계정을 고른 뒤, 마지막으로 준비한 실습을 기록하고 커밋해 Fork(origin)에 push 하고
+// 원본 저장소에 PR 을 만든다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT, IS_WIN, log, fail, upstreamConfig } from './lib/env.mjs';
@@ -21,6 +22,7 @@ import {
 import { LIMIT_MINUTES, participantPath, loadParticipant, saveParticipant, recordSubmit, lastSetupTest } from './lib/participant.mjs';
 import { readGlobalChanges } from './lib/mcp-config.mjs';
 import { ghInfo } from './lib/versions.mjs';
+import { chooseAccount } from './lib/gh-account.mjs';
 
 const BIG_FILE_BYTES = 20 * 1024 * 1024;
 const OWNER_PLACEHOLDER = '<GitHub계정>';
@@ -597,7 +599,7 @@ function printNext(ctx, link, dryRun) {
   }
 }
 
-function main() {
+async function main() {
   const opts = readArgs();
   const { upstream, base } = readUpstream();
   log.step('제출을 준비합니다.');
@@ -606,9 +608,17 @@ function main() {
   const { p, test, tool } = readRecord(id, opts);
   log.ok(`참가자 ${id} 의 ${test} 실습을 제출합니다. (도구 ${tool}, 브랜치 ${branch})`);
   if (opts.dryRun) {
-    log.warn('--dry-run 옵션에 따라 커밋, push, PR 명령을 실행하지 않고 보여 주기만 합니다. 참가자 기록과 제외 목록도 바꾸지 않습니다.');
+    log.warn('--dry-run 옵션에 따라 커밋, push, PR 명령과 활성 계정 바꾸기를 실행하지 않고 보여 주기만 합니다. 참가자 기록과 제외 목록도 바꾸지 않습니다.');
   }
   const ctx = { id, test, tool, p, upstream, base, branch };
+
+  // push 와 PR 은 gh 의 활성 계정으로 진행되므로 커밋하기 전에 계정을 정한다. 터미널에서 실행했을 때만 묻는다.
+  const account = await chooseAccount({
+    dryRun: opts.dryRun,
+    interactive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
+    originOwner: remoteSlug('origin')?.split('/')[0] ?? null,
+  });
+  if (!account.ok) process.exit(1);
 
   checkRunFolder(ctx);
   const collected = collectChanges(ctx, opts.dryRun);
@@ -619,9 +629,7 @@ function main() {
   printNext(ctx, link, opts.dryRun);
 }
 
-try {
-  main();
-} catch (e) {
+main().catch((e) => {
   log.err(`제출 중 예기치 않은 오류가 발생했습니다: ${e.message}`);
   process.exit(1);
-}
+});

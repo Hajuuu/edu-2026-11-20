@@ -178,7 +178,7 @@ gh auth login
 | `How would you like to authenticate GitHub CLI?` | `Paste an authentication token` |
 | `Paste your authentication token:` | 복사한 토큰을 붙여 넣고 Enter (붙여 넣은 토큰은 화면에 그대로 보이지 않습니다) |
 
-로그인을 마치면 다음 명령으로 확인합니다. 출력에 `Logged in to github.com account <본인 계정>` 과 `Active account: true` 가 보이고, `Token scopes` 에 `repo` 와 `read:org` 가 있어야 합니다.
+로그인을 마치면 다음 명령으로 확인합니다. 출력에 `Logged in to github.com account <본인 계정>` 과 `Active account: true` 가 보이고, `Token scopes` 에 `repo` 와 `read:org` 가 있어야 합니다. gh 에 여러 계정으로 로그인했다면 `Active account: true` 인 계정이 지금 쓰는 계정이며, 제출할 때 `npm run submit` 이 쓸 계정을 고르게 합니다([3.1 첫 번째 실습](#31-첫-번째-실습-nomcp-30분)의 5번).
 
 ```bash
 gh auth status
@@ -266,7 +266,9 @@ CREATE TABLE BOARD (
    npm run submit
    ```
 
-   submit 명령은 실습 워크스페이스와 참가자 기록을 커밋하고, 본인의 Fork 에 push 한 뒤, 원본 저장소에 PR 을 만듭니다. 출력의 마지막 부분에 PR 주소가 나옵니다. 제출에는 실습 워크스페이스의 파일과 `participant.json` 만 들어갑니다. 다만 빌드 결과(`target/`)는 빌드하면 다시 생기므로 제출하지 않습니다. 실습 워크스페이스 바로 아래의 도구 설정(`.mcp.json`, `.claude/`, `.codex/`, `.agents/`, `.cursor/`)도 이 PC 에서만 쓰는 설정이고 절대 경로가 들어 있을 수 있어 제출하지 않습니다. 20MB 를 넘는 파일은 자동으로 제출에서 빠집니다.
+   submit 명령은 먼저 gh 에 로그인된 GitHub 계정과 계정마다의 `Active account` 값을 보여 줍니다. 계정이 둘 이상이면 화살표 키로 제출에 쓸 계정에 커서를 두고 Enter 를 누릅니다. 고른 계정이 활성 계정이 아니면 submit 명령이 그 계정의 `Active account` 를 `true` 로 바꾼 뒤(`gh auth switch`) 제출을 이어 갑니다. 처음에는 커서가 지금의 활성 계정에 있으므로 그 계정으로 제출하려면 Enter 만 누르면 됩니다. 로그인에 실패한 계정은 고를 수 없고, Esc 를 누르면 아무것도 바꾸지 않고 제출을 그만둡니다. 계정이 하나뿐이면 묻지 않고 그 계정으로 제출합니다.
+
+   그다음 submit 명령은 실습 워크스페이스와 참가자 기록을 커밋하고, 본인의 Fork 에 push 한 뒤, 원본 저장소에 PR 을 만듭니다. 출력의 마지막 부분에 PR 주소가 나옵니다. 제출에는 실습 워크스페이스의 파일과 `participant.json` 만 들어갑니다. 다만 빌드 결과(`target/`)는 빌드하면 다시 생기므로 제출하지 않습니다. 실습 워크스페이스 바로 아래의 도구 설정(`.mcp.json`, `.claude/`, `.codex/`, `.agents/`, `.cursor/`)도 이 PC 에서만 쓰는 설정이고 절대 경로가 들어 있을 수 있어 제출하지 않습니다. 20MB 를 넘는 파일은 자동으로 제출에서 빠집니다.
 
 ### 3.2 두 번째 실습: mcp (20분)
 
@@ -344,6 +346,15 @@ AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음
 
 ### 제출 단계 (submit)
 
+**`gh 에 로그인된 github.com 계정이 없어` 또는 `활성 계정(...)의 로그인을 확인하지 못해` 라는 주의가 나옵니다.**
+gh 에 로그인하지 않았거나 활성 계정의 토큰이 만료되었거나 잘못된 경우입니다. 이대로 진행하면 push 나 PR 만들기가 실패할 수 있습니다. [1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)에 따라 토큰으로 `gh auth login` 을 다시 실행한 뒤 `npm run submit` 을 다시 실행합니다.
+
+**`... 계정을 활성 계정으로 바꾸지 못했습니다` 가 나옵니다.**
+고른 계정으로 바꾸는 `gh auth switch` 가 실패한 경우입니다. 이때는 아직 커밋이나 push 를 하지 않았습니다. `gh auth status` 로 계정 상태를 확인하고, 문제가 있는 계정은 1.2 절에 따라 다시 로그인한 뒤 `npm run submit` 을 다시 실행합니다.
+
+**`계정 선택을 그만두어 제출하지 않았습니다` 가 나옵니다.**
+계정을 고르는 중에 Esc 나 Ctrl+C 를 누른 경우입니다. 아무것도 커밋하거나 push 하지 않았으므로 `npm run submit` 을 다시 실행해 계정을 고릅니다.
+
 **`제출 브랜치(submit/참가자ID)가 아닙니다` 가 나옵니다.**
 다른 브랜치로 전환된 상태입니다. 출력에 나온 명령(`git switch submit/{id}` 형태)으로 제출 브랜치로 돌아간 뒤 `npm run submit` 을 다시 실행합니다.
 
@@ -363,7 +374,7 @@ AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음
 걸린 시간이 제한 시간보다 길다는 뜻입니다. 기록만 남고 제출은 그대로 진행됩니다.
 
 **`origin 에 push 하지 못했습니다` 가 나옵니다.**
-[1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)에 따라 토큰으로 `gh auth login` 을 실행해 로그인하고 `gh auth setup-git` 을 한 번 실행한 뒤 다시 제출합니다. 인터넷 연결과 프록시 설정도 확인합니다. 커밋은 PC 에 남아 있으므로 다시 실행하면 이어서 push 합니다. 원격 브랜치에 PC 에 없는 커밋이 있어 push 가 거부되었다는 안내가 나오면 진행자에게 알립니다.
+[1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)에 따라 토큰으로 `gh auth login` 을 실행해 로그인하고 `gh auth setup-git` 을 한 번 실행한 뒤 다시 제출합니다. 계정을 고를 때 Fork 를 만든 계정(목록에서 `origin 저장소의 계정` 으로 표시됩니다)을 골랐는지도 확인합니다. 인터넷 연결과 프록시 설정도 확인합니다. 커밋은 PC 에 남아 있으므로 다시 실행하면 이어서 push 합니다. 원격 브랜치에 PC 에 없는 커밋이 있어 push 가 거부되었다는 안내가 나오면 진행자에게 알립니다.
 
 **`Fork 를 만들거나 origin 을 Fork 로 바꾸지 못했습니다` 가 나옵니다.**
 원본 저장소를 직접 clone 한 경우 submit 명령은 본인 계정에 Fork 를 만들어 `origin` 을 Fork 로 바꿉니다. 이 과정이 실패한 경우이므로, gh 가 설치되어 있는지와 `gh auth login` 으로 로그인했는지 확인한 뒤 다시 실행합니다.
@@ -372,7 +383,7 @@ AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음
 gh 를 찾지 못했거나 PR 을 만드는 데 실패한 경우입니다. 출력의 `PR 만들기 주소` 를 브라우저에서 열고 `Create pull request` 를 눌러 PR 을 만듭니다. 주소에 `<GitHub계정>` 이 있으면 본인의 GitHub 계정 이름으로 바꿉니다.
 
 **`PR 본문의 실습 기록을 바꾸지 못했습니다` 라는 주의가 나옵니다.**
-제출(커밋과 push)은 끝난 상태이며, 최신 기록은 `participant.json` 에 있습니다. `gh auth status` 로 지금 쓰는 GitHub 계정이 PR 을 만든 계정과 같은지 확인하고 `npm run submit` 을 다시 실행하면 PR 본문을 다시 고칩니다. 그래도 같은 주의가 나오면 진행자에게 알립니다.
+제출(커밋과 push)은 끝난 상태이며, 최신 기록은 `participant.json` 에 있습니다. `npm run submit` 을 다시 실행하고 계정을 고를 때 PR 을 만든 계정을 고르면 PR 본문을 다시 고칩니다. 그래도 같은 주의가 나오면 진행자에게 알립니다.
 
 **`바뀐 것이 없어 새 커밋을 만들지 않습니다` 가 나옵니다.**
 이미 제출한 뒤로 실습 워크스페이스에 바뀐 파일이 없다는 뜻입니다. submit 명령은 앞서 만든 커밋을 다시 push 하고 PR 을 확인합니다.

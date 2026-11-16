@@ -454,6 +454,7 @@ test('a failed commit puts the record back so the next run stays blocked', () =>
 });
 
 // 인자와 표준 입력을 기록하고 정해진 응답을 돌려주는 가짜 gh (셸 없이 실행되도록 shebang 사용)
+// auth status 는 FAKE_GH_ACCOUNTS(없으면 활성 계정 kim 하나)로 --json 형식에 답한다.
 const FAKE_GH = `
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
@@ -462,7 +463,13 @@ const call = { args: a };
 if (a[0] === 'pr' && (a[1] === 'create' || a[1] === 'edit')) call.body = fs.readFileSync(0, 'utf8');
 fs.appendFileSync(process.env.FAKE_GH_LOG, JSON.stringify(call) + '\\n');
 const out = (v) => process.stdout.write(typeof v === 'string' ? v + '\\n' : JSON.stringify(v));
+const accounts = JSON.parse(process.env.FAKE_GH_ACCOUNTS || '[{"login":"kim","active":true}]');
 if (a[0] === '--version') out('gh version 2.76.2 (2025-07-30)');
+else if (a[0] === 'auth' && a[1] === 'status' && a.includes('--json')) {
+  const list = accounts.filter((x) => !a.includes('--active') || x.active)
+    .map((x) => ({ state: x.state || 'success', active: Boolean(x.active), host: 'github.com', login: x.login, tokenSource: 'keyring', gitProtocol: 'https' }));
+  out({ hosts: list.length ? { 'github.com': list } : {} });
+}
 else if (a[0] === 'api' && a[1] === 'user') out({ login: 'kim', id: 42 });
 else if (a[0] === 'api' && a[1].startsWith('repos/')) out({ permissions: { push: process.env.FAKE_GH_PUSH === '1' } });
 else if (a[0] === 'pr' && a[1] === 'list') out(JSON.parse(process.env.FAKE_GH_PRS || '[]'));
@@ -521,6 +528,29 @@ test('opens a pr with gh and reuses the open pr', { skip: !canFake }, () => {
   assert.ok(r.out.includes(`https://github.com/${UPSTREAM}/pull/5`), r.out);
   assert.equal(prCreates(gh).length, 0);
   assert.ok(remoteFiles(ctx.remote, 'submit/T04').includes('submissions/T04/nomcp/board-app/README.md'));
+});
+
+// gh 에 계정이 여럿이면 커밋하기 전에 계정 목록과 Active account 값을 보여 준다.
+// 이 시험처럼 터미널이 아닌 곳에서 실행하면 묻지 않고 지금의 활성 계정으로 제출하며 활성 계정을 바꾸지 않는다.
+test('shows the gh accounts and submits with the active one outside a terminal', { skip: !canFake }, () => {
+  const ctx = prepared('T08');
+  githubRemote(ctx, 'https://github.com/kim/edu-2026-11-20.git', ctx.remote);
+  const accounts = [{ login: 'kim', active: true }, { login: 'old-bad', state: 'error' }, { login: 'lee' }];
+  const gh = fakeGh({ FAKE_GH_ACCOUNTS: JSON.stringify(accounts) });
+  const r = submit(ctx, [], gh.env);
+  assert.equal(r.code, 0, r.out);
+  const step = r.out.indexOf('▶ 제출에 쓸 GitHub 계정을 확인합니다.');
+  assert.ok(step !== -1 && step < r.out.indexOf('▶ 실습 워크스페이스를 점검합니다'), r.out);
+  for (const s of [
+    '    kim      Active account: true   (origin 저장소의 계정)',
+    '    old-bad  Active account: false  (로그인 실패)',
+    '    lee      Active account: false',
+    '[완료] 활성 계정(kim)으로 제출합니다.',
+  ]) {
+    assert.ok(r.out.includes(s), `${s}\n${r.out}`);
+  }
+  assert.ok(!gh.calls().some((c) => c.args[0] === 'auth' && c.args[1] === 'switch'));
+  assert.equal(prCreates(gh).length, 1);
 });
 
 // mcp 를 제출하면 열려 있는 PR 의 본문(실습 기록 표)도 두 실습의 시각과 소요 시간으로 다시 쓴다.
