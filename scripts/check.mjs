@@ -7,6 +7,7 @@ import { parseArgs } from './lib/cli.mjs';
 import { codegenServer } from './lib/bundle.mjs';
 import { scaffoldBoard, listTools } from './lib/mcp-client.mjs';
 import { remoteSlug, repoRootStatus, NOT_REPO_ROOT } from './lib/git.mjs';
+import { listAccounts, LOGIN_HELP } from './lib/gh-account.mjs';
 import { scanGlobalMcp, removalHint } from './lib/guard.mjs';
 import { MCP_SERVER_NAME } from './lib/mcp-config.mjs';
 import { TOOL_NAMES } from './lib/tools.mjs';
@@ -72,13 +73,20 @@ function checkGit() {
   return g.found;
 }
 
+// gh auth status 는 계정 하나만 로그인에 실패해도 실패로 끝나므로, 계정마다 상태를 읽어 활성 계정과 실패한 계정을 나눠 알린다.
 function checkGh() {
   const h = ghInfo();
   if (!h.found) return err('GitHub CLI(gh) 를 찾지 못했습니다. gh 를 설치하고 터미널을 다시 열어 주세요.');
   ok(`GitHub CLI 를 확인했습니다. (${h.line})`);
-  const a = run('gh', ['auth', 'status']);
-  if (a.status === 0) ok('GitHub 로그인 상태를 확인했습니다.');
-  else warn('GitHub 에 로그인되어 있지 않습니다. gh auth login 을 실행해 로그인해 주세요.');
+  const { accounts } = listAccounts();
+  if (!accounts.length) return warn(`GitHub 에 로그인되어 있지 않습니다. ${LOGIN_HELP}`);
+  const active = accounts.find((a) => a.active);
+  if (active?.ok) ok(`GitHub 로그인 상태를 확인했습니다. (활성 계정 ${active.login})`);
+  else warn(`gh 의 활성 계정${active ? `(${active.login})` : ''}으로 GitHub 에 로그인하지 못했습니다. ${LOGIN_HELP}`);
+  const failed = accounts.filter((a) => !a.ok && a !== active).map((a) => a.login);
+  if (failed.length) {
+    warn(`gh 에 로그인에 실패한 다른 계정(${failed.join(', ')})이 있습니다. npm run submit 은 제출에 쓸 계정을 고르게 하므로 그대로 두어도 됩니다. 쓰지 않는 계정이면 gh auth logout --hostname github.com --user <계정> 으로 지울 수 있습니다.`);
+  }
 }
 
 const FORK_SECTION = 'README 의 1.2 GitHub 로그인과 Fork 절';

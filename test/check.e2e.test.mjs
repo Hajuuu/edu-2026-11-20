@@ -64,3 +64,28 @@ test('codegen servers left in global settings are reported the day before', () =
   assert.ok(!r.out.includes(NO_LEFTOVER), r.out);
   assert.match(r.out, /확인이 필요한 항목[\s\S]*codex mcp remove egovframe-codegen/);
 });
+
+// gh auth status 는 계정 하나만 로그인에 실패해도 실패로 끝난다. check 는 활성 계정의 로그인은 완료로,
+// 로그인에 실패한 다른 계정은 주의로 나눠 알린다. 가짜 gh 는 --json 형식으로 답한다.
+const canFake = process.platform !== 'win32' && !/\s/.test(process.execPath);
+test('a failed extra gh account is reported apart from the active account', { skip: !canFake }, () => {
+  const dir = tempDir('edu-fake-gh-');
+  const gh = path.join(dir, 'gh');
+  const accounts = [
+    { state: 'success', active: true, host: 'github.com', login: 'kim', tokenSource: 'keyring' },
+    { state: 'error', active: false, host: 'github.com', login: 'old-bad', tokenSource: 'keyring' },
+  ];
+  fs.writeFileSync(
+    gh,
+    `#!${process.execPath}\nconst a = process.argv.slice(2);\n` +
+      `if (a[0] === '--version') console.log('gh version 2.104.0 (2026-11-12)');\n` +
+      `else if (a[0] === 'auth' && a.includes('--json')) process.stdout.write(${JSON.stringify(JSON.stringify({ hosts: { 'github.com': accounts } }))});\n` +
+      `else process.exit(1);\n`,
+  );
+  fs.chmodSync(gh, 0o755);
+  const ctx = workRepo();
+  const r = runScript(ctx, 'check.mjs', ['--skip-warmup'], { env: { EDU_GH: gh } });
+  assert.ok(r.out.includes('[완료] GitHub 로그인 상태를 확인했습니다. (활성 계정 kim)'), r.out);
+  assert.match(r.out, /\[주의\] gh 에 로그인에 실패한 다른 계정\(old-bad\)이 있습니다[^\n]*npm run submit/);
+  assert.doesNotMatch(r.out, /GitHub 에 로그인되어 있지 않습니다/);
+});

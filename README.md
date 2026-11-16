@@ -203,7 +203,7 @@ npm run check
 
 이 명령은 다음 일을 합니다.
 
-- JDK, Maven, Node.js, Git, gh 의 버전과 GitHub 로그인 상태를 확인합니다. Maven 이 JDK 17 로 실행되는지(`mvn -version` 출력의 `Java version`)도 확인합니다.
+- JDK, Maven, Node.js, Git, gh 의 버전과 GitHub 로그인 상태를 확인합니다. Maven 이 JDK 17 로 실행되는지(`mvn -version` 출력의 `Java version`)도 확인합니다. gh 에 여러 계정으로 로그인했다면 활성 계정(`Active account: true`)의 로그인을 확인하고, 로그인에 실패한 다른 계정은 `[주의]` 로 따로 알려 줍니다.
 - git 으로 clone 한 저장소 폴더에서 실행했는지와, `origin` 이 원본 저장소가 아니라 본인의 Fork 인지 확인합니다.
 - 여섯 AI 도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있는지 확인합니다. 켜져 있으면 지우는 방법을 `[주의]` 로 알려 줍니다. 실습에 쓰는 도구의 서버라면 교육 전에 지웁니다.
 - `.mcp-servers` 폴더에 풀린 채로 들어 있는 `egovframe-codegen` MCP 서버(`egovframe-mcp-codegen` 패키지)를 MCP 연결 설정과 같은 `node` 명령으로 한 번 실행해 동작을 확인합니다.
@@ -326,6 +326,9 @@ Node.js 가 18 보다 낮은 경우입니다. [1.1 운영체제별 설치](#11-�
 
 **`codegen MCP 서버 파일에 문제가 있습니다` 또는 `node 로 codegen MCP 서버를 실행하지 못했습니다` 가 나옵니다.**
 앞의 오류는 `.mcp-servers` 폴더의 파일이 바뀌거나 지워진 경우입니다. `git status` 로 확인하고 `git restore .mcp-servers` 로 되돌린 뒤 다시 실행합니다. `.mcp-servers` 폴더가 아예 없다면 진행자에게 알립니다. 뒤의 오류는 node 로 서버를 띄우지 못한 경우입니다. 새 터미널에서 `node --version` 이 22 이상의 버전을 보여 주는지 확인합니다. 해결하기 어려우면 출력 내용과 함께 진행자에게 알립니다.
+
+**`npm run check` 에서 `gh 에 로그인에 실패한 다른 계정(...)이 있습니다` 라는 주의가 나옵니다.**
+gh 에 여러 계정으로 로그인했고, 그 가운데 지금 쓰지 않는 계정의 토큰이 만료되었거나 잘못된 경우입니다. 제출할 때 `npm run submit` 이 제출에 쓸 계정을 고르게 하므로 그대로 두어도 됩니다. 그 계정을 쓰지 않는다면 `gh auth logout --hostname github.com --user <계정>` 으로 지우고, 그 계정으로 제출해야 한다면 [1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)에 따라 토큰으로 다시 로그인합니다.
 
 **`Maven 로컬 저장소(~/.m2)에 eGovFrame Boot 라이브러리가 없어` 라는 주의가 나옵니다.**
 Maven 의존성을 아직 내려받지 않아 첫 빌드가 느릴 수 있다는 뜻입니다. 교육 전에 `npm run check` 를 실행해 둡니다.
