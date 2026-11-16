@@ -8,12 +8,12 @@ Cline 은 실습 전에 v4.1 이상의 최신 버전으로 업데이트하고, V
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 OpenRouter 의 **GPT-OSS-120B**(`openai/gpt-oss-120b`) 모델과 Reasoning Effort **Medium** 을 씁니다.
+두 실습 모두 OpenRouter 의 **Qwen3.8 Flash**(`qwen/qwen3.8-flash`) 모델과 Reasoning Effort **Medium** 을 씁니다.
 
 1. Cline 패널에서 설정(⚙)을 엽니다.
 2. API Provider 로 OpenRouter 를 선택합니다.
 3. 센터가 실습 중에 나눠 주는 OpenRouter API Key 를 붙여 넣습니다. 이 키는 Cline 설정 밖의 다른 곳에 저장하지 않습니다.
-4. Model 에서 `openai/gpt-oss-120b` 를 선택합니다.
+4. Model 에서 `qwen/qwen3.8-flash` 를 선택합니다. 이름이 비슷한 `qwen/qwen3.8-omni-flash` 나 `qwen/qwen3.7-flash` 를 고르지 않도록 주의합니다.
 5. Reasoning Effort 를 Medium 으로 선택합니다. Cline v4.1.26 은 Default, None, Low, Medium, High, Xhigh 를 보여 주며, None 과 Xhigh 는 선택하지 않습니다.
 6. Plan 모드와 Act 모드에 같은 모델과 설정을 씁니다.
 

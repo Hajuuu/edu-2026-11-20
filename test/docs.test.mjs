@@ -25,7 +25,7 @@ const TOOL_ROWS = [
   {
     tool: 'Cline',
     label: '상용 AI 를 쓸 수 없는 경우',
-    model: 'VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **GPT-OSS-120B**',
+    model: 'VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **Qwen3.8 Flash**',
     doc: 'docs/setup-cline.md',
   },
 ];

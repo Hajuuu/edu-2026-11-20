@@ -6,7 +6,7 @@ export const TOOLS = {
   Antigravity: { aliases: ['antigravity', 'agy'], doc: 'docs/setup-antigravity.md', model: 'Claude Opus 5.5 (Thinking)', instruction: 'GEMINI.md' },
   Cursor: { aliases: ['cursor'], doc: 'docs/setup-cursor.md', model: 'Claude Opus 5.5 · medium', instruction: '.cursor/rules/workspace-boundary.mdc' },
   'GitHub-Copilot': { aliases: ['githubcopilot', 'copilot', 'ghcopilot'], doc: 'docs/setup-github-copilot.md', model: 'Claude Opus 5.5 · medium', instruction: '.github/copilot-instructions.md' },
-  Cline: { aliases: ['cline'], doc: 'docs/setup-cline.md', model: 'openai/gpt-oss-120b (OpenRouter) · Reasoning Effort medium', instruction: '.clinerules/workspace-boundary.md' },
+  Cline: { aliases: ['cline'], doc: 'docs/setup-cline.md', model: 'qwen/qwen3.8-flash (OpenRouter) · Reasoning Effort medium', instruction: '.clinerules/workspace-boundary.md' },
 };
 
 export const TOOL_NAMES = Object.keys(TOOLS);

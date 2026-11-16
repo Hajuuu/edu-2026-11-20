@@ -39,7 +39,7 @@ AI 코딩 도구는 다음 중 하나를 준비하고, 모델과 노력 수준�
 | Antigravity (IDE) | **Claude Opus 5.5 (Thinking)** | [docs/setup-antigravity.md](docs/setup-antigravity.md) |
 | Cursor | **Claude Opus 5.5 · medium** | [docs/setup-cursor.md](docs/setup-cursor.md) |
 | GitHub Copilot | **Claude Opus 5.5 · medium** | [docs/setup-github-copilot.md](docs/setup-github-copilot.md) |
-| 상용 AI 를 쓸 수 없는 경우 | VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **GPT-OSS-120B** | [docs/setup-cline.md](docs/setup-cline.md) |
+| 상용 AI 를 쓸 수 없는 경우 | VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **Qwen3.8 Flash** | [docs/setup-cline.md](docs/setup-cline.md) |
 
 `npm run setup` 명령의 `--tool` 에는 아래 표의 값을 넣습니다. 위 모델을 쓰려면 각 도구에서 다음 요금제가 필요합니다. 자세한 조건과 모델 설정 방법은 도구별 문서에 있습니다.
 
