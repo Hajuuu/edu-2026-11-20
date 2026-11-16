@@ -247,6 +247,10 @@ test('readme prerequisites and commands', () => {
   assert.ok(readme.includes(FIRST_PROMPT), 'README 의 첫 프롬프트가 setup 안내와 다릅니다');
   assert.ok(readme.includes('.mcp-servers/egovframe-mcp-codegen/package/build/index.js'), 'README 에 codegen MCP 서버의 실행 파일 경로가 없습니다');
   assert.ok(!/\bnpx\b/.test(readme), 'README 에 npx 안내가 남아 있습니다');
+  // gh 로그인은 토큰(read:org, repo 권한의 classic 토큰)으로 한다.
+  for (const s of ['https://github.com/settings/tokens', 'Generate new token (classic)', '`repo`', '`read:org`', 'Paste an authentication token']) {
+    assert.ok(readme.includes(s), `README 의 gh 로그인 안내에 ${s} 가 없습니다`);
+  }
 });
 
 test('task section matches TASK.md', () => {

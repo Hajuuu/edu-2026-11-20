@@ -152,10 +152,36 @@ nvm alias default 22
 
 ### 1.2 GitHub 로그인과 Fork
 
-먼저 gh 로 GitHub 에 로그인합니다. 질문에는 `GitHub.com`, `HTTPS` 를 선택하고, `Authenticate Git with your GitHub credentials?` 에는 `Yes` 로 답합니다.
+gh 로그인에는 직접 만든 GitHub 토큰(Personal access token (classic))을 씁니다. 브라우저로 로그인하는 방법(`Login with a web browser`)으로 로그인한 PC 에서 `npm run submit` 이 제대로 진행되지 않은 사례가 있으므로 쓰지 않습니다. 이미 브라우저 방법으로 로그인했다면 아래 방법으로 다시 로그인합니다.
+
+먼저 토큰을 만듭니다. 토큰에는 `repo` 와 `read:org` 권한이 반드시 있어야 하며, `read:org` 가 없으면 gh 가 토큰을 받아들이지 않습니다.
+
+1. 브라우저에서 GitHub 에 로그인한 뒤 <https://github.com/settings/tokens> 를 엽니다. Personal access tokens (classic) 화면이 열립니다.
+2. `Generate new token` 토글을 펼치면 `Generate new token` 과 `Generate new token (classic)` 이 나옵니다. 이 가운데 `Generate new token (classic)` 을 선택합니다.
+3. `Note` 에 토큰 이름(예: `edu-2026-11-20`)을 적고, `Expiration` 에서 교육이 끝날 때까지 쓸 수 있는 기간을 고릅니다.
+4. `Select scopes` 에서 `repo` 와 `read:org` 체크박스를 반드시 체크합니다. `read:org` 는 `admin:org` 아래에 있으며, `admin:org` 전체가 아니라 `read:org` 만 체크합니다.
+5. 화면 아래의 `Generate token` 을 누르고, 화면에 나온 토큰(`ghp_` 로 시작)을 복사합니다. 토큰은 이 화면에서 한 번만 보이므로 창을 닫기 전에 복사해 둡니다. 토큰은 비밀번호와 같으므로 다른 사람에게 보여 주거나 공개된 곳에 붙여 넣지 않습니다.
+
+그다음 터미널에서 gh 로 로그인합니다.
 
 ```bash
 gh auth login
+```
+
+질문마다 화살표 키로 아래 답을 고르고 Enter 를 누릅니다. gh 버전에 따라 질문의 순서가 다를 수 있습니다.
+
+| 질문 | 답 |
+|---|---|
+| `Where do you use GitHub?` | `GitHub.com` |
+| `What is your preferred protocol for Git operations on this host?` | `HTTPS` |
+| `Authenticate Git with your GitHub credentials?` (나올 때만) | `Yes` |
+| `How would you like to authenticate GitHub CLI?` | `Paste an authentication token` |
+| `Paste your authentication token:` | 복사한 토큰을 붙여 넣고 Enter (붙여 넣은 토큰은 화면에 그대로 보이지 않습니다) |
+
+로그인을 마치면 다음 명령으로 확인합니다. 출력에 `Logged in to github.com account <본인 계정>` 과 `Active account: true` 가 보이고, `Token scopes` 에 `repo` 와 `read:org` 가 있어야 합니다.
+
+```bash
+gh auth status
 ```
 
 다음 명령은 원본 저장소를 본인 계정으로 Fork 하고 그 Fork 를 본인 PC 로 clone 합니다. clone 한 저장소의 `origin` 은 본인의 Fork 를 가리킵니다. `--default-branch-only` 는 원본 저장소의 기본 브랜치(`main`)만 Fork 에 복사해, 원본 저장소에 있는 다른 브랜치가 Fork 에 섞이지 않게 합니다. 이 문서에서는 clone 한 `edu-2026-11-20` 폴더를 저장소 폴더라고 부릅니다.
@@ -337,7 +363,7 @@ AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음
 걸린 시간이 제한 시간보다 길다는 뜻입니다. 기록만 남고 제출은 그대로 진행됩니다.
 
 **`origin 에 push 하지 못했습니다` 가 나옵니다.**
-`gh auth login` 으로 로그인하고 `gh auth setup-git` 을 한 번 실행한 뒤 다시 제출합니다. 인터넷 연결과 프록시 설정도 확인합니다. 커밋은 PC 에 남아 있으므로 다시 실행하면 이어서 push 합니다. 원격 브랜치에 PC 에 없는 커밋이 있어 push 가 거부되었다는 안내가 나오면 진행자에게 알립니다.
+[1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)에 따라 토큰으로 `gh auth login` 을 실행해 로그인하고 `gh auth setup-git` 을 한 번 실행한 뒤 다시 제출합니다. 인터넷 연결과 프록시 설정도 확인합니다. 커밋은 PC 에 남아 있으므로 다시 실행하면 이어서 push 합니다. 원격 브랜치에 PC 에 없는 커밋이 있어 push 가 거부되었다는 안내가 나오면 진행자에게 알립니다.
 
 **`Fork 를 만들거나 origin 을 Fork 로 바꾸지 못했습니다` 가 나옵니다.**
 원본 저장소를 직접 clone 한 경우 submit 명령은 본인 계정에 Fork 를 만들어 `origin` 을 Fork 로 바꿉니다. 이 과정이 실패한 경우이므로, gh 가 설치되어 있는지와 `gh auth login` 으로 로그인했는지 확인한 뒤 다시 실행합니다.
@@ -361,6 +387,7 @@ gh 를 찾지 못했거나 PR 을 만드는 데 실패한 경우입니다. 출�
   ```
 
 - Cline 에 넣은 OpenRouter API Key 는 지웁니다.
+- 1.2 절에서 만든 GitHub 토큰이 더 필요 없으면 <https://github.com/settings/tokens> 에서 지웁니다. 토큰을 지워도 이미 만든 PR 은 그대로 남습니다.
 
 ## 7. 저장소 구성
 
