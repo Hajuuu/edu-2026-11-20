@@ -9,7 +9,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const COPY = ['package.json', '.gitignore', '.gitattributes', 'scripts', 'task', path.join('mcp', 'egovframe-mcp-codegen')];
+const COPY = ['package.json', '.gitignore', '.gitattributes', 'scripts', 'task'];
+// codegen MCP 서버 패키지(파일 4천여 개)는 복사하지 않고 이 저장소의 폴더를 가리키는 링크로 둔다.
+export const CODEGEN_REL = path.join('.mcp-servers', 'egovframe-mcp-codegen');
 const STRIP_ENV = ['CODEX_HOME', 'COPILOT_HOME', 'CLINE_MCP_SETTINGS_PATH', 'CLINE_DATA_DIR', 'CLINE_DIR', 'APPDATA', 'XDG_CONFIG_HOME', 'EMAIL'];
 
 const temps = [];
@@ -73,9 +75,24 @@ export function commitAll(cwd, message) {
   git(cwd, '-c', 'user.name=t', '-c', 'user.email=t@example.invalid', '-c', 'commit.gpgsign=false', 'commit', '-q', '-m', message);
 }
 
+// dir 의 .mcp-servers/egovframe-mcp-codegen 을 이 저장소의 codegen 패키지 폴더를 가리키는 링크로 만든다.
+// Windows 에서도 권한 없이 만들 수 있도록 디렉터리 정션을 쓴다. 링크를 지워도 이 저장소의 파일은 지워지지 않는다.
+export function linkCodegen(dir) {
+  const link = path.join(dir, CODEGEN_REL);
+  fs.mkdirSync(path.dirname(link), { recursive: true });
+  fs.symlinkSync(path.join(SRC, CODEGEN_REL), link, 'junction');
+  return link;
+}
+
+// 링크로 둔 패키지는 작업 저장소의 git 이 다루지 않게 한다 (clone 한 쪽에는 linkCodegen 으로 다시 만든다).
+export function excludeCodegen(repo) {
+  fs.appendFileSync(path.join(repo, '.git', 'info', 'exclude'), '/.mcp-servers/\n');
+}
+
 // 명령 실행에 필요한 이 저장소의 파일을 dir 에 복사한다 (git 저장소는 만들지 않는다).
 export function copySources(dir) {
   for (const rel of COPY) fs.cpSync(path.join(SRC, rel), path.join(dir, rel), { recursive: true });
+  linkCodegen(dir);
   return dir;
 }
 
@@ -83,8 +100,18 @@ export function copySources(dir) {
 export function workRepo() {
   const repo = copySources(tempDir('edu-repo-'));
   git(repo, 'init', '-q', '-b', 'main');
+  excludeCodegen(repo);
   commitAll(repo, 'init');
   return { repo, home: tempDir('edu-home-') };
+}
+
+// 작업 저장소의 codegen 패키지 링크를 실제 폴더로 바꿔 files({ 패키지 기준 상대 경로: 내용 })만 둔다.
+// 이 저장소의 패키지를 건드리지 않고 깨진 패키지를 흉내 낼 때 쓴다.
+export function fakeCodegen(repo, files) {
+  const dir = path.join(repo, CODEGEN_REL);
+  fs.rmSync(dir, { recursive: true, force: true });
+  for (const [rel, text] of Object.entries(files)) put(path.join(dir, 'package', ...rel.split('/')), text);
+  return dir;
 }
 
 // scripts/<script> 를 작업 저장소에서 실행한다. gh 는 기본적으로 없는 명령으로 둔다.

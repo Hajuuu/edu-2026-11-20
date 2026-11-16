@@ -45,7 +45,7 @@ Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계�
 | mcp | `.claude/settings.json` | `.mcp.json` 의 `egovframe-codegen` 서버 사용 허용(`enabledMcpjsonServers`) |
 | mcp | `.mcp.json` | `egovframe-codegen` 서버 연결 설정 |
 
-nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있고 `.claude/` 는 이 PC 에서만 쓰는 도구 설정이라서, 둘 다 제출에서 빠집니다. MCP 연결 설정은 `node` 명령으로 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 를 절대 경로로 실행합니다(Windows 도 같습니다). 서버 패키지는 이 폴더에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로 바로 연결됩니다. 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 4. 처음 한 번 확인할 것
 
@@ -90,7 +90,7 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 `claude` 를 `submissions/{id}/mcp` 폴더에서 시작했는지 확인합니다(macOS 는 `pwd`, Windows 는 `Get-Location`). 그 폴더에 `.mcp.json` 이 있는지도 확인합니다. 폴더 신뢰를 선택하지 않았다면 `claude` 를 다시 실행해 신뢰를 선택합니다.
 
 **`egovframe-codegen` 서버가 연결에 실패한 상태로 보입니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Claude-Code`)을 다시 실행한 뒤 Claude Code 를 다시 시작합니다.
+대개 AI 도구가 `node` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `node --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Claude-Code`)을 다시 실행한 뒤 Claude Code 를 다시 시작합니다.
 
 **nomcp 실습인데 `/mcp` 에 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 사용자 범위나 로컬 범위에 같은 서버가 등록된 경우이므로 `claude mcp list` 로 확인하고, setup 명령이 알려 주는 명령(`claude mcp remove egovframe-codegen -s user` 또는 `-s local`)으로 지운 뒤 nomcp setup 명령을 다시 실행합니다.

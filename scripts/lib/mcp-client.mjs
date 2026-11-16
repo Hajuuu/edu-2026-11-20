@@ -1,5 +1,5 @@
 // 최소 stdio MCP 클라이언트: 서버를 띄워 초기화한 뒤 요청 하나를 보내고 결과를 돌려준다. Node 내장 모듈만 사용한다.
-// server 는 MCP 연결 설정과 같은 { command, args } 이다 (bundle.mjs 의 npxServer).
+// server 는 MCP 연결 설정과 같은 { command, args } 이다 (bundle.mjs 의 codegenServer, npxServer).
 import { spawn } from 'node:child_process';
 import os from 'node:os';
 
@@ -15,7 +15,7 @@ export const BOARD_DDL = `CREATE TABLE BOARD (
 function request(server, method, params, opts = {}) {
   const timeoutMs = opts.timeoutMs ?? 300000;
   return new Promise((resolve, reject) => {
-    // 저장소 안에서 띄우면 npx 가 저장소의 package.json 을 프로젝트로 읽으므로 임시 폴더에서 띄운다.
+    // 저장소 안에서 npx 로 띄우면 npx 가 저장소의 package.json 을 프로젝트로 읽으므로 임시 폴더에서 띄운다.
     const child = spawn(server.command, server.args, {
       cwd: opts.cwd ?? os.tmpdir(),
       stdio: ['pipe', 'pipe', 'pipe'],

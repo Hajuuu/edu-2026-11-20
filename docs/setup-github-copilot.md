@@ -24,7 +24,7 @@ Copilot Pro+, Max, Business, Enterprise 요금제 가운데 하나가 필요합�
 | nomcp, mcp | `.github/copilot-instructions.md` | 작업 범위 지침. Copilot 이 자동으로 읽습니다 |
 | mcp | `.mcp.json` | `egovframe-codegen` 서버 연결 설정. 실습 워크스페이스의 루트에 둡니다 |
 
-기본 Copilot 에이전트(하네스)는 `.vscode/mcp.json` 이 아니라 작업 영역 루트의 `.mcp.json` 을 읽습니다. nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+기본 Copilot 에이전트(하네스)는 `.vscode/mcp.json` 이 아니라 작업 영역 루트의 `.mcp.json` 을 읽습니다. nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.mcp.json` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정은 `node` 명령으로 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 를 절대 경로로 실행합니다(Windows 도 같습니다). 서버 패키지는 이 폴더에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로 바로 연결됩니다. 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 4. 처음 한 번 확인할 것
 
@@ -65,7 +65,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 연 폴더가 `submissions/{id}/mcp` 인지, 그 폴더의 루트에 `.mcp.json` 이 있는지 확인합니다. 작업 영역을 신뢰했는지도 확인합니다. 그다음 명령 팔레트에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 AI 도구가 `node` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `node --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. VS Code 사용자 프로필의 `mcp.json`(macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json`)이나 Copilot 사용자 파일 `mcp-config.json`(macOS `~/.copilot/mcp-config.json`, Windows `%USERPROFILE%\.copilot\mcp-config.json`) 에 같은 서버가 있는 경우입니다. 파일을 복사해 둔 뒤(예: `mcp.json.bak`) 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. VS Code 화면에서 끄기만 하면 파일에 남아 setup 명령이 계속 멈춥니다.

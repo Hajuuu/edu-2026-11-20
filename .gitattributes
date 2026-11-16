@@ -1,6 +1,9 @@
 # 텍스트 파일은 저장소와 작업 폴더 모두 LF 로 통일한다 (core.autocrlf 설정보다 우선)
 * text=auto eol=lf
 
+# codegen MCP 서버 패키지는 tgz 에서 푼 그대로 둔다 (의존성 파일의 줄바꿈을 바꾸지 않는다)
+/.mcp-servers/** -text
+
 # 바이너리는 줄바꿈을 바꾸지 않는다
 *.tgz binary
 *.jar binary

@@ -25,7 +25,7 @@ Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise 요금제 가�
 | nomcp, mcp | `GEMINI.md` | 작업 범위 지침. Antigravity 가 자동으로 읽습니다 |
 | mcp | `.agents/mcp_config.json` | 작업 영역의 MCP 설정. `mcpServers` 에 `egovframe-codegen` 서버를 등록합니다 |
 
-nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.agents/` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정은 `npx` 명령으로 저장소 폴더 안의 `mcp/egovframe-mcp-codegen/egovframe-mcp-codegen-<버전>.tgz` 를 절대 경로로 실행합니다(Windows 는 `cmd /c npx`). 이 파일은 저장소 안에 풀지 않으며, npx 가 처음 실행할 때 npm 캐시에 풀어 씁니다. 따라서 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
+nomcp 실습 워크스페이스에는 MCP 연결 설정을 쓰지 않습니다. `.agents/` 에는 이 PC 의 절대 경로가 들어 있어 제출에서 빠집니다. MCP 연결 설정은 `node` 명령으로 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 를 절대 경로로 실행합니다(Windows 도 같습니다). 서버 패키지는 이 폴더에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로 바로 연결됩니다. 저장소 폴더를 옮겼다면 setup 명령을 다시 실행합니다.
 
 ## 4. 처음 한 번 확인할 것
 
@@ -74,7 +74,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 작업 영역으로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 저장소 폴더나 `submissions` 폴더를 열면 실습 워크스페이스의 설정을 읽지 않습니다. 그 폴더에 `.agents/mcp_config.json` 이 있는지 확인하고 MCP 서버 목록을 새로 고칩니다. 앱을 쓰고 있다면 IDE 로 바꿔 같은 폴더를 엽니다. 앱이 작업 영역의 MCP 설정을 읽는지는 공식 문서에 나와 있지 않습니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
+대개 AI 도구가 `node` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `node --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.gemini/config/mcp_config.json` 에 같은 서버가 켜져 있는 경우이므로, 그 항목에 `"disabled": true` 를 넣거나 항목을 지운 뒤 nomcp setup 명령을 다시 실행합니다.

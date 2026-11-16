@@ -7,9 +7,13 @@ import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { REPO_ROOT, IS_WIN } from '../scripts/lib/env.mjs';
 import zlib from 'node:zlib';
-import { extractTar, extractTgz, bundlePath, npxServer, verifyBundle } from '../scripts/lib/bundle.mjs';
+import { extractTar, extractTgz, bundlePath, npxServer, verifyBundle, codegenServer, codegenPackageDir } from '../scripts/lib/bundle.mjs';
 
-const CODEGEN_TGZ = path.join(REPO_ROOT, 'mcp', 'egovframe-mcp-codegen', 'egovframe-mcp-codegen-1.0.0.tgz');
+// 저장소에 남아 있는 실제 tgz 는 check 번들뿐이다 (codegen 은 .mcp-servers/ 에 푼 채로 들어 있다).
+const CHECK_DIR = path.join(REPO_ROOT, 'mcp', 'egovframe-mcp-check');
+const CHECK_TGZ = fs.existsSync(CHECK_DIR)
+  ? fs.readdirSync(CHECK_DIR).filter((f) => f.endsWith('.tgz')).map((f) => path.join(CHECK_DIR, f))[0]
+  : undefined;
 
 function tmp() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'bundle-test-'));
@@ -67,11 +71,11 @@ function walk(dir, base = dir, out = {}) {
   return out;
 }
 
-test('matches system tar', { skip: IS_WIN || !fs.existsSync(CODEGEN_TGZ) }, () => {
+test('matches system tar', { skip: IS_WIN || !CHECK_TGZ }, () => {
   const a = tmp();
   const b = tmp();
-  const { files } = extractTgz(CODEGEN_TGZ, a);
-  const r = spawnSync('tar', ['-xzf', CODEGEN_TGZ, '-C', b]);
+  const { files } = extractTgz(CHECK_TGZ, a);
+  const r = spawnSync('tar', ['-xzf', CHECK_TGZ, '-C', b]);
   assert.equal(r.status, 0);
   const wa = walk(a);
   const wb = walk(b);
@@ -118,23 +122,42 @@ test('rejects traversal', () => {
   }
 });
 
-test('npxServer runs the codegen bundle tgz through npx without extracting it', { skip: !fs.existsSync(CODEGEN_TGZ) }, () => {
+// MCP 연결 설정의 명령: node 로 저장소의 .mcp-servers/ 에 푼 codegen 패키지의 실행 파일(package.json 의 bin)을 띄운다.
+test('codegenServer runs the unpacked codegen package with node', () => {
+  const entry = path.join(REPO_ROOT, '.mcp-servers', 'egovframe-mcp-codegen', 'package', 'build', 'index.js');
+  assert.equal(codegenPackageDir(), path.dirname(path.dirname(entry)));
+  assert.deepEqual(codegenServer(), { command: 'node', args: [entry] });
+  const pkg = JSON.parse(fs.readFileSync(path.join(codegenPackageDir(), 'package.json'), 'utf8'));
+  assert.equal(pkg.bin['egovframe-mcp-codegen'], './build/index.js');
+  assert.ok(fs.existsSync(path.join(codegenPackageDir(), 'node_modules', '@modelcontextprotocol', 'sdk', 'package.json')));
+});
+
+test('codegenServer rejects a missing or broken package', () => {
   const repoRoot = tmp();
-  const dir = path.join(repoRoot, 'mcp', 'egovframe-mcp-codegen');
-  fs.mkdirSync(dir, { recursive: true });
-  const bundle = path.join(dir, path.basename(CODEGEN_TGZ));
-  fs.copyFileSync(CODEGEN_TGZ, bundle);
-  const args = ['-y', '--package', bundle, 'egovframe-mcp-codegen'];
-  assert.deepEqual(npxServer('codegen', { repoRoot, win: false }), { command: 'npx', args });
-  // Windows 의 npx 는 npx.cmd 이므로 셸 없이 띄우는 도구를 위해 cmd /c 로 감싼다.
-  assert.deepEqual(npxServer('codegen', { repoRoot, win: true }), { command: 'cmd', args: ['/c', 'npx', ...args] });
-  assert.deepEqual(fs.readdirSync(repoRoot), ['mcp']);
+  assert.throws(() => codegenServer({ repoRoot }), /codegen MCP 서버 패키지[^\n]*파일이 없습니다/);
+  const dir = path.join(repoRoot, '.mcp-servers', 'egovframe-mcp-codegen', 'package');
+  fs.mkdirSync(path.join(dir, 'build'), { recursive: true });
+  const writePkg = (pkg) => fs.writeFileSync(path.join(dir, 'package.json'), typeof pkg === 'string' ? pkg : JSON.stringify(pkg));
+  writePkg('{ broken');
+  assert.throws(() => codegenServer({ repoRoot }), /읽을 수 없습니다/);
+  writePkg({ name: 'egovframe-mcp-codegen' });
+  assert.throws(() => codegenServer({ repoRoot }), /실행 파일 정보가 없습니다/);
+  writePkg({ bin: { 'egovframe-mcp-codegen': './build/index.js' } });
+  assert.throws(() => codegenServer({ repoRoot }), /build\/index\.js\)이 없습니다/);
+  writePkg({ bin: { 'egovframe-mcp-codegen': '../outside.js' } });
+  fs.writeFileSync(path.join(dir, '..', 'outside.js'), '');
+  assert.throws(() => codegenServer({ repoRoot }), /없습니다/);
+  writePkg({ bin: { 'egovframe-mcp-codegen': './build/index.js' } });
+  fs.writeFileSync(path.join(dir, 'build', 'index.js'), '');
+  assert.deepEqual(codegenServer({ repoRoot }), { command: 'node', args: [path.join(dir, 'build', 'index.js')] });
 });
 
 test('missing bundle throws a Korean error', () => {
   const repoRoot = tmp();
   assert.throws(() => bundlePath('check', { repoRoot, platform: 'linux-x64' }), /linux-x64/);
-  assert.throws(() => npxServer('codegen', { repoRoot }), /번들/);
+  assert.throws(() => npxServer('check', { repoRoot, platform: 'linux-x64' }), /번들/);
+  // codegen 은 tgz 번들로 찾지 않는다.
+  assert.throws(() => bundlePath('codegen', { repoRoot }), /알 수 없는 번들 종류/);
 });
 
 test('corrupt or truncated tar throws', () => {
@@ -197,7 +220,7 @@ test('win32-arm64 falls back to the win32-x64 bundle', () => {
 });
 
 test('verifyBundle accepts the real bundles and rejects broken ones', () => {
-  if (fs.existsSync(CODEGEN_TGZ)) verifyBundle('codegen', CODEGEN_TGZ);
+  if (CHECK_TGZ) verifyBundle('check', CHECK_TGZ);
   const { file } = fakeCheckRepo([]);
   assert.throws(() => verifyBundle('check', file), /실행 파일 정보가 없습니다/);
   fs.writeFileSync(file, 'not a bundle');

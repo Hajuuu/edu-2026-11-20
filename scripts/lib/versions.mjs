@@ -2,7 +2,7 @@
 import { run, mvnInvocation } from './env.mjs';
 import { gh } from './git.mjs';
 
-// setup 은 자신을 실행한 Node 로 codegen MCP 서버를 띄우고, 번들의 MCP SDK 는 Node.js 18 이상을 요구한다.
+// MCP 연결 설정은 node 로 codegen MCP 서버를 띄우고, 서버의 MCP SDK 는 Node.js 18 이상을 요구한다.
 export const NODE_MIN_MAJOR = 18;
 export const NODE_RECOMMENDED_MAJOR = 22;
 export const JDK_MAJOR = 17;

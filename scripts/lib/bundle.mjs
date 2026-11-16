@@ -1,4 +1,5 @@
-// MCP 번들(.tgz)을 찾아 npx 로 띄우는 명령을 만들고, 외부 tar 없이 tar 를 푼다(채점 수집이 쓴다). Node 내장 모듈만 사용한다.
+// MCP 서버를 띄우는 명령을 만든다. codegen 은 저장소의 .mcp-servers/ 에 풀어 둔 패키지를 node 로 바로 실행하고,
+// check 번들(.tgz)은 npx 로 실행한다. 외부 tar 없이 tar 를 푸는 함수는 채점 수집이 쓴다. Node 내장 모듈만 사용한다.
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -120,10 +121,39 @@ function checkHeader(h) {
 export function extractTgz(file, dest) {
   return extractTar(zlib.gunzipSync(fs.readFileSync(file)), dest);
 }
-// MCP 번들은 mcp/<이름>/ 의 tgz 를 그대로 쓴다. 저장소 안에 풀지 않고, npx 가 tgz 를 npm 캐시에 풀어 실행한다.
+
+// codegen MCP 서버는 패키지(tgz)를 푼 그대로 저장소의 .mcp-servers/egovframe-mcp-codegen/package/ 에 들어 있다.
+// npx 로 tgz 를 실행하면 실행할 때마다 tgz 를 확인하고 풀어서 AI 도구의 MCP 연결 제한 시간을 넘길 수 있으므로,
+// MCP 연결 설정은 node 로 패키지의 실행 파일을 바로 띄운다. 의존성(node_modules)도 패키지 안에 들어 있다.
+export const CODEGEN_NAME = 'egovframe-mcp-codegen';
+
+export function codegenPackageDir(repoRoot = REPO_ROOT) {
+  return path.join(repoRoot, '.mcp-servers', CODEGEN_NAME, 'package');
+}
+
+// MCP 연결 설정에 쓰는 명령: node <패키지의 실행 파일 절대 경로>. 실행 파일은 package.json 의 bin 에서 찾는다.
+// node 는 Windows 에서도 실행 파일(node.exe)이므로 셸 없이 띄울 수 있다.
+export function codegenServer({ repoRoot = REPO_ROOT } = {}) {
+  const dir = codegenPackageDir(repoRoot);
+  const shown = path.relative(repoRoot, dir).split(path.sep).join('/');
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
+  } catch (e) {
+    throw new Error(`codegen MCP 서버 패키지(${shown}/package.json)를 읽을 수 없습니다: ${e.code === 'ENOENT' ? '파일이 없습니다.' : e.message}`);
+  }
+  const bin = pkg?.bin?.[CODEGEN_NAME];
+  if (typeof bin !== 'string' || !bin) throw new Error(`codegen MCP 서버 패키지(${shown})에 ${CODEGEN_NAME} 실행 파일 정보가 없습니다.`);
+  const entry = path.resolve(dir, bin);
+  if (!entry.startsWith(dir + path.sep) || !fs.existsSync(entry)) {
+    throw new Error(`codegen MCP 서버의 실행 파일(${shown}/${bin.replace(/^\.\//, '')})이 없습니다.`);
+  }
+  return { command: 'node', args: [entry] };
+}
+
+// check 번들(채점용)은 mcp/egovframe-mcp-check/ 의 tgz 를 그대로 쓴다. 저장소 안에 풀지 않고 npx 가 npm 캐시에 풀어 실행한다.
 // 번들에는 의존성이 함께 들어 있어(bundleDependencies) 처음 실행할 때도 npm 레지스트리에 접속하지 않는다.
 const KINDS = {
-  codegen: { name: 'egovframe-mcp-codegen', dir: 'egovframe-mcp-codegen' },
   check: { name: 'egovframe-mcp-check', dir: 'egovframe-mcp-check' },
 };
 
@@ -142,13 +172,8 @@ export function bundlePath(kind, { repoRoot = REPO_ROOT, platform = platformKey(
     const hit = names.filter((n) => n.startsWith(`${name}-`) && n.endsWith(suffix));
     return hit.length ? path.join(folder, hit[hit.length - 1]) : null;
   };
-  let found;
-  if (kind === 'codegen') {
-    found = pick('.tgz');
-  } else {
-    found = pick(`-${platform}.tgz`);
-    if (!found && platform === 'win32-arm64') found = pick('-win32-x64.tgz');
-  }
+  let found = pick(`-${platform}.tgz`);
+  if (!found && platform === 'win32-arm64') found = pick('-win32-x64.tgz');
   if (!found) {
     throw new Error(
       `MCP 번들을 찾을 수 없습니다: 폴더 ${folder} 에 ${platform} 용 ${name} 번들(.tgz)이 없습니다.`,
@@ -157,7 +182,7 @@ export function bundlePath(kind, { repoRoot = REPO_ROOT, platform = platformKey(
   return found;
 }
 
-// MCP 연결 설정에 쓰는 명령: npx 로 번들 tgz 의 실행 파일(번들 이름과 같음)을 띄운다.
+// check 번들을 띄우는 명령: npx 로 번들 tgz 의 실행 파일(번들 이름과 같음)을 띄운다.
 // Windows 의 npx 는 npx.cmd 라서 셸 없이 띄우는 도구가 많으므로 cmd /c 로 감싼다.
 export function npxServer(kind, { repoRoot = REPO_ROOT, platform = platformKey(), win = IS_WIN } = {}) {
   const args = ['-y', '--package', bundlePath(kind, { repoRoot, platform }), KINDS[kind].name];
@@ -182,7 +207,7 @@ function readTarText(buf, wanted) {
 }
 
 // 번들 tgz 가 풀리고 package/package.json 에 실행 파일(bin)이 있는지 확인한다.
-// 깨진 번들을 시간 제한이 있는 mcp 실습에서 npx 로 띄우기 전에 알아내기 위해서다.
+// 깨진 번들을 npx 로 띄우기 전에 알아내기 위해서다.
 export function verifyBundle(kind, file) {
   const label = path.basename(file);
   let pkg = null;

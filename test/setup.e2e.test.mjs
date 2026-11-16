@@ -4,7 +4,21 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { SRC, removeTemps, tempDir, git, gitRun, commitAll, workRepo, runScript, put, readParticipant } from './helpers.mjs';
+import {
+  SRC,
+  removeTemps,
+  tempDir,
+  git,
+  gitRun,
+  commitAll,
+  workRepo,
+  runScript,
+  put,
+  readParticipant,
+  linkCodegen,
+  excludeCodegen,
+  fakeCodegen,
+} from './helpers.mjs';
 
 const NOMCP_HEADER = '> 이 폴더에서는 MCP 없이 AI 도구의 기본 기능만 사용합니다.';
 const MCP_HEADER = '> 이 폴더의 AI 도구에는 eGovFrame 코드 생성 MCP(`egovframe-codegen`)가 연결되어 있습니다.';
@@ -15,14 +29,10 @@ after(removeTemps);
 const runSetup = (ctx, nodeArgs, args) => runScript(ctx, 'setup.mjs', args, { nodeArgs });
 const setup = (ctx, ...args) => runSetup(ctx, [], args);
 const runDir = (ctx, id, t) => path.join(ctx.repo, 'submissions', id, t);
-// MCP 연결 설정은 npx 로 작업 저장소의 codegen 번들(tgz)을 그대로 실행한다. 저장소 안에 풀지 않는다.
-function assertNpxServer(ctx, server) {
-  const dir = path.join(ctx.repo, 'mcp', 'egovframe-mcp-codegen');
-  const bundle = path.join(dir, fs.readdirSync(dir).find((f) => f.endsWith('.tgz')));
-  const args = ['-y', '--package', bundle, 'egovframe-mcp-codegen'];
-  const expected = process.platform === 'win32' ? { command: 'cmd', args: ['/c', 'npx', ...args] } : { command: 'npx', args };
-  assert.deepEqual({ command: server.command, args: server.args }, expected);
-  assert.ok(!fs.existsSync(path.join(ctx.repo, '.mcp-servers')));
+// MCP 연결 설정은 node 로 작업 저장소의 .mcp-servers/ 에 푼 codegen 패키지의 실행 파일을 절대 경로로 띄운다 (Windows 도 같다).
+function assertNodeServer(ctx, server) {
+  const entry = path.join(ctx.repo, '.mcp-servers', 'egovframe-mcp-codegen', 'package', 'build', 'index.js');
+  assert.deepEqual({ command: server.command, args: server.args }, { command: 'node', args: [entry] });
 }
 const branch = (ctx) => git(ctx.repo, 'symbolic-ref', '--short', 'HEAD');
 const firstLine = (file) => fs.readFileSync(file, 'utf8').split(/\r?\n/)[0];
@@ -39,10 +49,9 @@ test('nomcp codex', () => {
   assert.equal(fs.readFileSync(path.join(run, 'TASK.md'), 'utf8'), `${NOMCP_HEADER}${eol}${eol}${original}`);
   assert.ok(fs.existsSync(path.join(run, 'AGENTS.md')));
   assert.ok(!fs.existsSync(path.join(run, '.codex')));
-  // nomcp 는 번들 파일만 확인하고 서버를 띄우지 않으며, 저장소 안에 번들을 풀지 않는다.
-  assert.match(r.out, /codegen MCP 서버 번들을 확인했습니다/);
-  assert.doesNotMatch(r.out, /npx 로 codegen MCP 서버를 실행/);
-  assert.ok(!fs.existsSync(path.join(ctx.repo, '.mcp-servers')));
+  // nomcp 는 codegen 패키지 파일만 확인하고 서버를 띄우지 않는다.
+  assert.match(r.out, /codegen MCP 서버 파일을 확인했습니다\. \(\.mcp-servers\/egovframe-mcp-codegen\/package\/build\/index\.js\)/);
+  assert.doesNotMatch(r.out, /codegen MCP 서버를 실행/);
 
   const p = readParticipant(ctx, 'T01');
   assert.equal(p.id, 'T01');
@@ -92,8 +101,9 @@ test('mcp claude', () => {
   assert.equal(r.code, 0, r.out);
   const run = runDir(ctx, 'T02', 'mcp');
   const server = JSON.parse(fs.readFileSync(path.join(run, '.mcp.json'), 'utf8')).mcpServers['egovframe-codegen'];
-  assertNpxServer(ctx, server);
-  assert.match(r.out, /npx 로 codegen MCP 서버를 실행해 도구 \d+개를 확인했습니다/);
+  assertNodeServer(ctx, server);
+  assert.equal(server.type, 'stdio');
+  assert.match(r.out, /node 로 codegen MCP 서버를 실행해 도구 4개를 확인했습니다/);
   assert.ok(fs.existsSync(path.join(run, 'CLAUDE.md')));
   assert.deepEqual(readJson(path.join(run, '.claude', 'settings.json')), { enabledMcpjsonServers: ['egovframe-codegen'] });
   assert.equal(firstLine(path.join(run, 'TASK.md')), MCP_HEADER);
@@ -158,7 +168,7 @@ test('cline toggles global', () => {
   assert.equal(r.code, 0, r.out);
   let doc = JSON.parse(fs.readFileSync(settings, 'utf8'));
   assert.equal(doc.mcpServers['egovframe-codegen'].disabled, true);
-  assertNpxServer(ctx, doc.mcpServers['egovframe-codegen']);
+  assertNodeServer(ctx, doc.mcpServers['egovframe-codegen']);
   assert.deepEqual(doc.mcpServers.mine, { command: 'x' });
   // 개인 MCP 서버는 실습에 써도 되므로 [주의] 없이 참가자 기록에만 남긴다.
   assert.doesNotMatch(r.out, /\[주의\][^\n]*mine/);
@@ -173,7 +183,7 @@ test('cline toggles global', () => {
   doc = JSON.parse(fs.readFileSync(settings, 'utf8'));
   const entry = doc.mcpServers['egovframe-codegen'];
   assert.equal(entry.disabled, false);
-  assertNpxServer(ctx, entry);
+  assertNodeServer(ctx, entry);
   assert.deepEqual(doc.mcpServers.mine, { command: 'x' });
   for (const f of ['.mcp.json', '.claude', '.codex', '.agents', '.cursor']) {
     assert.ok(!fs.existsSync(path.join(runDir(ctx, 'T04', 'mcp'), f)), f);
@@ -212,14 +222,13 @@ test('broken cline settings stop before writing', () => {
   assert.ok(!fs.existsSync(path.join(ctx.repo, '.edu', 'global-changes.json')));
 });
 
-test('broken bundle stops nomcp before writing', () => {
+// 실행 파일이 빠진 codegen 패키지는 nomcp 준비에서도 파일을 쓰기 전에 알린다.
+test('broken codegen package stops nomcp before writing', () => {
   const ctx = workRepo();
-  const dir = path.join(ctx.repo, 'mcp', 'egovframe-mcp-codegen');
-  const tgz = fs.readdirSync(dir).find((f) => f.endsWith('.tgz'));
-  fs.writeFileSync(path.join(dir, tgz), 'not a bundle');
+  fakeCodegen(ctx.repo, { 'package.json': JSON.stringify({ bin: { 'egovframe-mcp-codegen': './build/index.js' } }) });
   const r = setup(ctx, '--test', 'nomcp', '--id', 'T09', '--tool', 'codex');
   assert.equal(r.code, 1, r.out);
-  assert.match(r.out, /\[오류\][^\n]*codegen/);
+  assert.match(r.out, /\[오류\] codegen MCP 서버 파일에 문제가 있습니다[^\n]*build\/index\.js[^\n]*git restore \.mcp-servers/);
   assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions', 'T09')));
 });
 
@@ -235,7 +244,6 @@ test('node below 18 stops before the branch', () => {
   assert.match(r.out, /\[오류\][^\n]*Node\.js 16\.20\.2[^\n]*18/);
   assert.equal(branch(ctx), 'main');
   assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions')));
-  assert.ok(!fs.existsSync(path.join(ctx.repo, '.mcp-servers')));
 });
 
 test('codex leftover blocks nomcp', () => {
@@ -268,6 +276,8 @@ test('branch from origin main without upstream', () => {
   const base = workRepo();
   const clone = path.join(tempDir('setup-clone-'), 'work');
   git(base.repo, 'clone', '-q', base.repo, clone);
+  linkCodegen(clone);
+  excludeCodegen(clone);
   git(clone, 'switch', '-q', '-c', 'scratch');
   git(clone, 'branch', '-q', '-D', 'main');
   const ctx = { repo: clone, home: base.home };
@@ -299,23 +309,26 @@ test('blocked branch switch writes nothing', () => {
   assert.ok(!fs.existsSync(path.join(ctx.repo, 'submissions', 'T06')));
 });
 
-test('missing codegen bundle stops setup', () => {
+test('missing codegen package stops setup', () => {
   const ctx = workRepo();
-  fs.rmSync(path.join(ctx.repo, 'mcp'), { recursive: true, force: true });
+  // 작업 저장소의 .mcp-servers 는 이 저장소를 가리키는 링크만 들어 있으므로 지워도 원본은 남는다.
+  fs.rmSync(path.join(ctx.repo, '.mcp-servers'), { recursive: true, force: true });
   const r = setup(ctx, '--test', 'nomcp', '--id', 'T20', '--tool', 'codex');
   assert.equal(r.code, 1, r.out);
-  assert.match(r.out, /\[오류\][^\n]*번들/);
+  assert.match(r.out, /\[오류\] codegen MCP 서버 파일에 문제가 있습니다[^\n]*package\.json[^\n]*진행자에게 알려 주세요/);
   assert.ok(!fs.existsSync(runDir(ctx, 'T20', 'nomcp')));
+  assert.ok(fs.existsSync(path.join(SRC, '.mcp-servers', 'egovframe-mcp-codegen', 'package', 'build', 'index.js')));
 });
 
-// PATH 에 npx 가 없으면 mcp 준비는 MCP 연결 설정을 쓰기 전에 멈춘다. git 만 있는 폴더를 PATH 로 쓴다.
+// PATH 에 node 가 없으면 mcp 준비는 MCP 연결 설정을 쓰기 전에 멈춘다. git 만 있는 폴더를 PATH 로 쓴다.
+// setup 자체는 절대 경로의 Node 로 실행되고, 서버는 AI 도구처럼 PATH 의 node 로 띄운다.
 const gitDir = (process.env.PATH || '').split(path.delimiter).find((d) => d && fs.existsSync(path.join(d, 'git')));
-const noNpx = process.platform !== 'win32' && gitDir && !fs.existsSync(path.join(gitDir, 'npx'));
-test('mcp setup stops when npx cannot run', { skip: !noNpx }, () => {
+const noNode = process.platform !== 'win32' && gitDir && !fs.existsSync(path.join(gitDir, 'node'));
+test('mcp setup stops when node cannot run', { skip: !noNode }, () => {
   const ctx = workRepo();
   assert.equal(setup(ctx, '--test', 'nomcp', '--id', 'T21', '--tool', 'claude').code, 0);
   const r = runScript(ctx, 'setup.mjs', ['--test', 'mcp', '--id', 'T21', '--tool', 'claude', '--force'], { env: { PATH: gitDir } });
   assert.equal(r.code, 1, r.out);
-  assert.match(r.out, /\[오류\][^\n]*npx 로 codegen MCP 서버를 실행하지 못했습니다/);
+  assert.match(r.out, /\[오류\][^\n]*node 로 codegen MCP 서버를 실행하지 못했습니다/);
   assert.ok(!fs.existsSync(path.join(runDir(ctx, 'T21', 'mcp'), '.mcp.json')));
 });

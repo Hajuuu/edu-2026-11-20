@@ -4,21 +4,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { REPO_ROOT } from '../scripts/lib/env.mjs';
-import { npxServer } from '../scripts/lib/bundle.mjs';
+import { codegenServer } from '../scripts/lib/bundle.mjs';
 import { callTool, listTools, scaffoldBoard, BOARD_DDL } from '../scripts/lib/mcp-client.mjs';
 import { parseSlug } from '../scripts/lib/git.mjs';
 
 function tmp(p) {
   return fs.mkdtempSync(path.join(os.tmpdir(), p));
-}
-
-function fakeRepo() {
-  const root = tmp('mcp-client-repo-');
-  const src = path.join(REPO_ROOT, 'mcp', 'egovframe-mcp-codegen');
-  const dst = path.join(root, 'mcp', 'egovframe-mcp-codegen');
-  fs.mkdirSync(dst, { recursive: true });
-  for (const f of fs.readdirSync(src)) if (f.endsWith('.tgz')) fs.copyFileSync(path.join(src, f), path.join(dst, f));
-  return root;
 }
 
 function findFile(dir, pred) {
@@ -32,15 +23,16 @@ function findFile(dir, pred) {
   return null;
 }
 
-const root = fakeRepo();
-// MCP 연결 설정과 같은 npx 명령으로 번들 tgz 를 띄운다.
-const server = npxServer('codegen', { repoRoot: root });
+// MCP 연결 설정과 같은 node 명령으로 저장소의 .mcp-servers/ 에 푼 codegen 패키지를 띄운다.
+const server = codegenServer();
 const nodeScript = (file) => ({ command: process.execPath, args: [file] });
 
-test('list tools through npx', { timeout: 120000 }, async () => {
-  const tools = await listTools(server, { timeoutMs: 120000 });
-  assert.ok(tools.includes('egov_scaffold_project'), tools.join(', '));
-  assert.ok(!fs.existsSync(path.join(root, '.mcp-servers')));
+test('list tools through node', { timeout: 60000 }, async () => {
+  const tools = await listTools(server, { timeoutMs: 60000 });
+  assert.deepEqual(
+    [...tools].sort(),
+    ['egov_add_attach_file_infrastructure', 'egov_add_entity', 'egov_add_query_view', 'egov_scaffold_project'],
+  );
 });
 
 test('scaffold board', { timeout: 120000 }, async () => {

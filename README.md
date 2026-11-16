@@ -148,7 +148,7 @@ nvm install 22
 nvm alias default 22
 ```
 
-설치를 마치면 새 터미널에서 위 표의 확인 명령을 실행합니다. `mvn -version` 출력의 `Java version` 이 17 인지도 확인합니다. AI 도구는 `npx` 로 MCP 서버를 띄우므로, Node.js 를 설치한 뒤에는 열려 있던 AI 도구도 다시 시작합니다.
+설치를 마치면 새 터미널에서 위 표의 확인 명령을 실행합니다. `mvn -version` 출력의 `Java version` 이 17 인지도 확인합니다. AI 도구는 `node` 로 MCP 서버를 띄우므로, Node.js 를 설치한 뒤에는 열려 있던 AI 도구도 다시 시작합니다.
 
 ### 1.2 GitHub 로그인과 Fork
 
@@ -180,7 +180,7 @@ npm run check
 - JDK, Maven, Node.js, Git, gh 의 버전과 GitHub 로그인 상태를 확인합니다. Maven 이 JDK 17 로 실행되는지(`mvn -version` 출력의 `Java version`)도 확인합니다.
 - git 으로 clone 한 저장소 폴더에서 실행했는지와, `origin` 이 원본 저장소가 아니라 본인의 Fork 인지 확인합니다.
 - 여섯 AI 도구의 전역 설정에 `egovframe-codegen` 서버가 켜져 있는지 확인합니다. 켜져 있으면 지우는 방법을 `[주의]` 로 알려 줍니다. 실습에 쓰는 도구의 서버라면 교육 전에 지웁니다.
-- `mcp` 폴더의 `egovframe-codegen` MCP 서버 묶음 파일(`.tgz`)을 MCP 연결 설정과 같은 `npx` 명령으로 한 번 실행해 동작을 확인합니다. 묶음 파일은 저장소 안에 풀지 않으며, npx 가 npm 캐시에 풀어 두므로 당일 AI 도구가 서버를 처음 띄울 때 빨라집니다.
+- `.mcp-servers` 폴더에 풀린 채로 들어 있는 `egovframe-codegen` MCP 서버(`egovframe-mcp-codegen` 패키지)를 MCP 연결 설정과 같은 `node` 명령으로 한 번 실행해 동작을 확인합니다.
 - 임시 폴더에 예제 프로젝트를 만들어 한 번 빌드한 뒤 지웁니다. 이때 내려받은 Maven 의존성은 Maven 로컬 저장소(`~/.m2`)에 남으므로 당일 첫 빌드가 빨라집니다.
 
 점검하는 동안에는 항목마다 `[완료]`, `[주의]`, `[오류]` 가 붙어 나옵니다. 마지막의 점검 결과에는 `[오류]` 였던 항목이 `해결해야 할 항목` 아래에, `[주의]` 였던 항목이 `확인이 필요한 항목` 아래에 모여 나옵니다. 해결해야 할 항목은 안내에 따라 해결한 뒤 `npm run check` 를 다시 실행하고, 확인이 필요한 항목도 읽고 가능한 한 해결합니다. 해결해야 할 항목이 없으면 마지막 줄에 `모든 점검을 통과했습니다.` 또는 `필수 점검은 통과했습니다. 위 항목을 확인해 주세요.` 가 나옵니다.
@@ -250,7 +250,7 @@ CREATE TABLE BOARD (
    npm run setup --test mcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}
    ```
 
-   이번에는 setup 명령이 실습 워크스페이스 `submissions/{id}/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, `npx` 로 저장소 폴더의 묶음 파일(`mcp/egovframe-mcp-codegen/*.tgz`)을 실행합니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다).
+   이번에는 setup 명령이 실습 워크스페이스 `submissions/{id}/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, 명령 `node` 와 인자 `"<저장소 폴더>/.mcp-servers/egovframe-mcp-codegen/package/build/index.js"`(절대 경로)로 서버를 실행합니다. 서버 패키지는 저장소에 풀린 채로 들어 있어 실행할 때 압축을 풀지 않으므로, AI 도구가 서버를 띄우자마자 연결됩니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다).
 
 2. nomcp 작업에 쓰던 창이나 세션을 닫고, 새 창이나 새 세션에서 `submissions/{id}/mcp` 를 엽니다. 앞 실습의 대화를 이어서 쓰지 않습니다.
 3. 처음 열 때 폴더 신뢰나 MCP 서버 사용을 묻는 창이 나오면 허용합니다. 그리고 도구 문서의 '연결 확인' 절에 따라 `egovframe-codegen` 서버와 도구 4개가 보이는지 확인합니다.
@@ -296,8 +296,8 @@ mcp 실습은 nomcp 실습을 제출한 뒤에만 준비할 수 있습니다. no
 **`Node.js ... 에서는 codegen MCP 서버를 실행할 수 없습니다` 가 나옵니다.**
 Node.js 가 18 보다 낮은 경우입니다. [1.1 운영체제별 설치](#11-운영체제별-설치)에 따라 nvm 으로 Node.js 22 를 설치하고 기본 버전으로 정한 뒤(macOS 는 `nvm alias default 22`, Windows 는 `nvm use 22`), 터미널을 다시 열고 실행합니다.
 
-**`codegen MCP 서버 번들에 문제가 있습니다` 또는 `npx 로 codegen MCP 서버를 실행하지 못했습니다` 가 나옵니다.**
-앞의 오류는 `mcp` 폴더의 묶음 파일(`.tgz`)이 바뀌거나 지워진 경우입니다. `git status` 로 확인하고 `git restore mcp` 로 되돌린 뒤 다시 실행합니다. 뒤의 오류는 npx 로 서버를 띄우지 못한 경우입니다. npx 는 Node.js 와 함께 설치되므로, 새 터미널에서 `npx --version` 이 실행되는지 확인합니다(PowerShell 에서 `npx.ps1` 오류가 나면 `npx.cmd --version`). 해결하기 어려우면 출력 내용과 함께 진행자에게 알립니다.
+**`codegen MCP 서버 파일에 문제가 있습니다` 또는 `node 로 codegen MCP 서버를 실행하지 못했습니다` 가 나옵니다.**
+앞의 오류는 `.mcp-servers` 폴더의 파일이 바뀌거나 지워진 경우입니다. `git status` 로 확인하고 `git restore .mcp-servers` 로 되돌린 뒤 다시 실행합니다. `.mcp-servers` 폴더가 아예 없다면 진행자에게 알립니다. 뒤의 오류는 node 로 서버를 띄우지 못한 경우입니다. 새 터미널에서 `node --version` 이 22 이상의 버전을 보여 주는지 확인합니다. 해결하기 어려우면 출력 내용과 함께 진행자에게 알립니다.
 
 **`Maven 로컬 저장소(~/.m2)에 eGovFrame Boot 라이브러리가 없어` 라는 주의가 나옵니다.**
 Maven 의존성을 아직 내려받지 않아 첫 빌드가 느릴 수 있다는 뜻입니다. 교육 전에 `npm run check` 를 실행해 둡니다.
@@ -311,7 +311,7 @@ Maven 4 가 설치되어 있으면 [1.1 운영체제별 설치](#11-운영체제
 ### 작업 단계 (AI 도구)
 
 **mcp 실습인데 AI 도구에 `egovframe-codegen` 서버가 보이지 않습니다.**
-AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정은 `npx` 로 저장소 폴더의 묶음 파일을 절대 경로로 실행하므로, AI 도구가 `npx` 를 찾을 수 있어야 하고 저장소 폴더를 옮기지 않아야 합니다. 새 터미널에서 `npx --version` 이 실행되는지 확인하고, 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 작업 중에 다시 실행하면 걸린 시간이 다시 계산되므로, 처음 시작한 시각을 진행자에게 알립니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
+AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정은 `node` 로 저장소 폴더의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js` 를 절대 경로로 실행하므로, AI 도구가 `node` 를 찾을 수 있어야 하고 저장소 폴더를 옮기지 않아야 합니다. 새 터미널에서 `node --version` 이 실행되는지 확인하고, 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 작업 중에 다시 실행하면 걸린 시간이 다시 계산되므로, 처음 시작한 시각을 진행자에게 알립니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 대개 도구의 전역 설정에 서버가 남아 있는 경우이므로, 도구 문서의 '문제 해결' 절에 따라 전역 설정에서 서버를 끄거나 지운 뒤 nomcp setup 명령을 다시 실행합니다. 이때 걸린 시간이 다시 계산되므로, 처음 시작한 시각도 진행자에게 함께 알립니다.
@@ -369,6 +369,7 @@ gh 를 찾지 못했거나 PR 을 만드는 데 실패한 경우입니다. 출�
 | `scripts/` | `npm run check`, `npm run setup`, `npm run submit`, `npm run cleanup` 명령의 스크립트 |
 | `docs/` | 도구별 설정 문서 (`setup-<도구>.md`) |
 | `task/` | 과제 원본 (`TASK.md`) |
-| `mcp/` | MCP 서버 묶음 파일(`.tgz`). 저장소 안에 풀지 않고 MCP 연결 설정이 `npx` 로 바로 실행합니다 |
+| `.mcp-servers/` | codegen MCP 서버(`egovframe-mcp-codegen` 패키지)를 푼 폴더. MCP 연결 설정이 `node` 로 `egovframe-mcp-codegen/package/build/index.js` 를 바로 실행합니다 |
+| `mcp/` | 실습에서는 쓰지 않는 다른 MCP 서버 묶음 파일(`.tgz`) |
 | `submissions/` | 제출 폴더. setup 명령이 `submissions/{id}/` 아래에 실습 워크스페이스를 만듭니다 |
 | `test/` | 스크립트 시험 코드 (`npm test`) |

@@ -15,10 +15,10 @@ import {
   undoClineChange,
 } from '../scripts/lib/mcp-config.mjs';
 
-// Windows 에서 setup 이 쓰는 모양: cmd /c npx 로 저장소의 번들 tgz 를 실행한다.
+// Windows 에서 setup 이 쓰는 모양: node 로 저장소의 .mcp-servers/ 에 푼 codegen 패키지의 실행 파일을 띄운다.
 const SERVER = {
-  command: 'cmd',
-  args: ['/c', 'npx', '-y', '--package', 'C:\\Users\\홍 길동\\edu\\mcp\\egovframe-mcp-codegen\\egovframe-mcp-codegen-1.0.0.tgz', 'egovframe-mcp-codegen'],
+  command: 'node',
+  args: ['C:\\Users\\홍 길동\\edu\\.mcp-servers\\egovframe-mcp-codegen\\package\\build\\index.js'],
 };
 const temps = [];
 after(() => {

@@ -245,6 +245,8 @@ test('readme prerequisites and commands', () => {
   }
   assert.ok(FIRST_PROMPT, 'scripts/setup.mjs 에서 첫 프롬프트를 찾지 못했습니다');
   assert.ok(readme.includes(FIRST_PROMPT), 'README 의 첫 프롬프트가 setup 안내와 다릅니다');
+  assert.ok(readme.includes('.mcp-servers/egovframe-mcp-codegen/package/build/index.js'), 'README 에 codegen MCP 서버의 실행 파일 경로가 없습니다');
+  assert.ok(!/\bnpx\b/.test(readme), 'README 에 npx 안내가 남아 있습니다');
 });
 
 test('task section matches TASK.md', () => {
@@ -267,6 +269,9 @@ test('tool docs cover each step', () => {
     for (const s of [`--tool ${row.tool}`, TOOLS[row.tool].instruction, 'egovframe-codegen', ...MCP_TOOLS, FIRST_PROMPT, 'nomcp', '](../README.md']) {
       assert.ok(md.includes(s), `${row.doc} 에 ${s} 가 없습니다`);
     }
+    // MCP 연결 설정은 .mcp-servers/ 에 푼 codegen 패키지를 node 로 바로 실행한다 (npx 로 tgz 를 실행하지 않는다).
+    assert.ok(md.includes('`node` 명령으로 저장소 폴더 안의 `.mcp-servers/egovframe-mcp-codegen/package/build/index.js`'), `${row.doc} 에 node 실행 안내가 없습니다`);
+    assert.ok(!/\bnpx\b/.test(md), `${row.doc} 에 npx 안내가 남아 있습니다`);
   }
 });
 
