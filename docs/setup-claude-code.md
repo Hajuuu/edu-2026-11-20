@@ -61,7 +61,7 @@ mcp 실습에서는 실습 워크스페이스에서 Claude Code 를 시작한 �
 - `egov_add_query_view`
 - `egov_add_attach_file_infrastructure`
 
-nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다.ai 커넥터는 연결되어 있지 않아야 합니다.
+nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니다.
 
 ## 6. 작업 방법
 
