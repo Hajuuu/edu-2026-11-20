@@ -20,6 +20,7 @@ test('ignored paths', () => {
   const paths = [
     'grading/rubric.md',
     'README-local.md',
+    'task/TASK-local.md',
     'docs/superpowers/x.md',
     '.superpowers/x.md',
     '.superpowers/sdd/x/ledger.md',
