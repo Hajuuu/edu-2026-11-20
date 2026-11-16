@@ -57,7 +57,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 
 ## 6. 작업 방법
 
-1. nomcp setup 명령을 실행한 뒤, VS Code 에서 실습 워크스페이스(`submissions/P01/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
+1. nomcp setup 명령을 실행한 뒤, VS Code 에서 실습 워크스페이스(`submissions/{id}/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
 2. MCP Servers 화면에서 `egovframe-codegen` 서버가 꺼져 있는지 확인합니다.
 3. Cline 에서 새 작업(New Task)을 시작하고 첫 프롬프트를 입력합니다.
 
@@ -67,7 +67,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 
 4. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
 5. 작업을 마치면 저장소 폴더에서 연 터미널(PowerShell 또는 macOS 터미널)에서 `npm run submit` 을 실행합니다.
-6. mcp 실습에서는 mcp setup 명령을 실행한 뒤 nomcp 창을 닫고, 새 창에서 `submissions/P01/mcp` 를 엽니다. MCP Servers 화면에서 `egovframe-codegen` 서버가 켜졌는지 확인하고, 새 작업으로 시작합니다. nomcp 실습의 작업을 이어 가지 않습니다.
+6. mcp 실습에서는 mcp setup 명령을 실행한 뒤 nomcp 창을 닫고, 새 창에서 `submissions/{id}/mcp` 를 엽니다. MCP Servers 화면에서 `egovframe-codegen` 서버가 켜졌는지 확인하고, 새 작업으로 시작합니다. nomcp 실습의 작업을 이어 가지 않습니다.
 7. 두 실습을 모두 제출한 뒤에는 저장소 폴더에서 `npm run cleanup` 을 실행할 수 있습니다. 이 명령은 setup 명령이 Cline 전역 설정에 넣은 `egovframe-codegen` 항목을 setup 이전 상태로 되돌립니다. 저장소 폴더를 지울 생각이라면 지우기 전에 이 명령을 먼저 실행합니다. 저장소 폴더를 먼저 지우면 Cline 전역 설정에 지운 폴더를 가리키는 항목이 남습니다. Cline 설정에 넣은 OpenRouter API Key 도 지웁니다.
 
 ## 7. 문제 해결
@@ -81,7 +81,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 목록에 있어도 꺼져 �
 setup 명령이 전역 설정 파일을 읽지 못해 멈춘 경우입니다. 출력에 나온 파일의 JSON 문법을 고치거나 파일을 다른 이름으로 옮긴 뒤 setup 명령을 다시 실행합니다.
 
 **`egovframe-codegen` 서버가 오류 상태이거나 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Cline`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 켜져 있습니다.**
 작업을 멈추고 진행자에게 알립니다. MCP Servers 화면에서 서버를 끄거나, 저장소 폴더에서 nomcp setup 명령을 다시 실행해 서버를 끕니다.

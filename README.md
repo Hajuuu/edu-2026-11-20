@@ -8,10 +8,10 @@
 
 | 순서 | 실습 | MCP 연결 | 제한 시간 | 실습 워크스페이스 |
 |---|---|---|---|---|
-| 1 | nomcp | 연결하지 않음 | 30분 | `submissions/<ID>/nomcp` |
-| 2 | mcp | `egovframe-codegen` 연결 | 20분 | `submissions/<ID>/mcp` |
+| 1 | nomcp | 연결하지 않음 | 30분 | `submissions/{id}/nomcp` |
+| 2 | mcp | `egovframe-codegen` 연결 | 20분 | `submissions/{id}/mcp` |
 
-- `<ID>` 는 진행자가 알려 주는 참가자 ID(예: `P01`)입니다.
+- `{id}` 는 진행자가 알려 주는 참가자 ID(예: `P01`)입니다.
 - 실습 순서는 모든 교육생이 같습니다. nomcp 실습을 제출해야 mcp 실습을 준비할 수 있습니다.
 - 실습마다 `npm run setup` 명령으로 실습 워크스페이스를 준비하고, AI 도구로 그 폴더를 열어 작업한 뒤, `npm run submit` 명령으로 제출합니다.
 - 제출은 이 저장소(원본 저장소)로 보내는 Pull Request(PR)로 이루어집니다. 두 번째 제출은 첫 번째 제출에서 만든 PR 에 더해집니다.
@@ -201,32 +201,32 @@ CREATE TABLE BOARD (
 
 ## 3. 실습 절차
 
-명령은 모두 저장소 폴더에서 실행합니다. 아래 예의 `P01` 자리에는 진행자가 알려 준 참가자 ID 를, `Claude-Code` 자리에는 사용하는 도구의 `--tool` 값을 넣습니다.
+명령은 모두 저장소 폴더에서 실행합니다. 아래 명령의 `{id}` 에는 진행자가 알려 준 참가자 ID(예: `P01`)를 넣고, `{Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}` 에는 사용하는 도구의 `--tool` 값 하나(예: `Claude-Code`)를 넣습니다. 중괄호(`{}`)와 `|` 는 입력하지 않습니다. 예를 들어 참가자 ID 가 `P01` 이고 Claude Code 를 쓰면 `npm run setup --test nomcp --id P01 --tool Claude-Code` 를 실행합니다.
 
 ### 3.1 첫 번째 실습: nomcp (30분)
 
 1. 진행자의 안내에 따라 실습을 준비합니다.
 
    ```bash
-   npm run setup --test nomcp --id P01 --tool Claude-Code
+   npm run setup --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}
    ```
 
    다음과 같이 `--` 를 넣은 형태도 같은 뜻입니다. 앞의 형태에서 인자 오류가 나면 이 형태로 실행합니다.
 
    ```bash
-   npm run setup -- --test nomcp --id P01 --tool Claude-Code
+   npm run setup -- --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}
    ```
 
    npm 11 이상에서는 `--` 가 없는 형태를 실행할 때 `Unknown cli config` 같은 경고가 나올 수 있습니다. 이 경고는 결과에 영향을 주지 않으며, `--` 를 넣은 형태로 실행하면 나오지 않습니다.
 
    setup 명령은 다음 일을 합니다.
 
-   - 제출용 로컬 브랜치 `submit/P01` 을 만들고 그 브랜치로 전환합니다.
-   - 실습 워크스페이스 `submissions/P01/nomcp` 를 만들고 `TASK.md` 와 작업 범위 지침 파일을 씁니다. 지침 파일은 AI 도구에게 이 폴더 밖을 참고하지 말라고 알리는 파일이며, 파일 이름은 도구마다 다릅니다.
-   - 참가자 기록 `submissions/P01/participant.json` 에 도구, 모델, 운영체제, 도구 버전, 준비 시각을 남깁니다. 켜져 있는 개인 MCP 서버의 이름과 AI 도구가 자동으로 읽는 지침 파일의 위치도 함께 남깁니다. 이 기록은 PR 과 함께 공개되며, PC 의 절대 경로와 사용자 이름은 넣지 않습니다.
+   - 제출용 로컬 브랜치 `submit/{id}` 을 만들고 그 브랜치로 전환합니다.
+   - 실습 워크스페이스 `submissions/{id}/nomcp` 를 만들고 `TASK.md` 와 작업 범위 지침 파일을 씁니다. 지침 파일은 AI 도구에게 이 폴더 밖을 참고하지 말라고 알리는 파일이며, 파일 이름은 도구마다 다릅니다.
+   - 참가자 기록 `submissions/{id}/participant.json` 에 도구, 모델, 운영체제, 도구 버전, 준비 시각을 남깁니다. 켜져 있는 개인 MCP 서버의 이름과 AI 도구가 자동으로 읽는 지침 파일의 위치도 함께 남깁니다. 이 기록은 PR 과 함께 공개되며, PC 의 절대 경로와 사용자 이름은 넣지 않습니다.
    - 마지막에 열 폴더의 경로, 도구 문서, 첫 프롬프트, 제한 시간과 예상 종료 시각을 보여 줍니다.
 
-2. AI 도구로 실습 워크스페이스 `submissions/P01/nomcp` 를 엽니다. 저장소 폴더 전체를 열지 않습니다. 여는 방법은 도구 문서의 '작업 방법' 절에 있습니다.
+2. AI 도구로 실습 워크스페이스 `submissions/{id}/nomcp` 를 엽니다. 저장소 폴더 전체를 열지 않습니다. 여는 방법은 도구 문서의 '작업 방법' 절에 있습니다.
 3. 도구 문서의 '연결 확인' 절에 따라 `egovframe-codegen` 서버가 연결되어 있지 않은지 확인합니다.
 4. 첫 프롬프트로 다음 문장을 입력합니다. 그다음에는 평소처럼 AI 와 대화하며 작업합니다.
 
@@ -247,23 +247,23 @@ CREATE TABLE BOARD (
 1. nomcp 실습을 제출한 뒤 진행자의 안내에 따라 mcp 실습을 준비합니다. `--tool` 값은 첫 번째 실습과 같아야 합니다.
 
    ```bash
-   npm run setup --test mcp --id P01 --tool Claude-Code
+   npm run setup --test mcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}
    ```
 
-   이번에는 setup 명령이 실습 워크스페이스 `submissions/P01/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, `npx` 로 저장소 폴더의 묶음 파일(`mcp/egovframe-mcp-codegen/*.tgz`)을 실행합니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다).
+   이번에는 setup 명령이 실습 워크스페이스 `submissions/{id}/mcp` 에 MCP 연결 설정도 씁니다. 이 설정은 이 폴더를 연 AI 도구에만 `egovframe-codegen` 서버를 연결하며, `npx` 로 저장소 폴더의 묶음 파일(`mcp/egovframe-mcp-codegen/*.tgz`)을 실행합니다. setup 명령은 설정을 쓰기 전에 같은 명령으로 서버를 한 번 띄워 확인합니다. Cline 은 폴더 단위 설정이 없으므로, setup 명령이 Cline 전역 설정에 `egovframe-codegen` 항목을 넣고 켭니다(nomcp 실습에서는 꺼 둡니다).
 
-2. nomcp 작업에 쓰던 창이나 세션을 닫고, 새 창이나 새 세션에서 `submissions/P01/mcp` 를 엽니다. 앞 실습의 대화를 이어서 쓰지 않습니다.
+2. nomcp 작업에 쓰던 창이나 세션을 닫고, 새 창이나 새 세션에서 `submissions/{id}/mcp` 를 엽니다. 앞 실습의 대화를 이어서 쓰지 않습니다.
 3. 처음 열 때 폴더 신뢰나 MCP 서버 사용을 묻는 창이 나오면 허용합니다. 그리고 도구 문서의 '연결 확인' 절에 따라 `egovframe-codegen` 서버와 도구 4개가 보이는지 확인합니다.
 4. 첫 프롬프트는 nomcp 실습과 같습니다.
 5. 작업을 마치거나 제한 시간이 되면 저장소 폴더에서 `npm run submit` 을 실행합니다. 이번 제출은 첫 번째 제출에서 만든 PR 에 더해지고, PR 본문의 실습 기록 표에도 mcp 실습의 준비 시각, 제출 시각, 소요 시간이 채워집니다.
 
 ## 4. 지킬 것
 
-- AI 도구에는 실습 워크스페이스(`submissions/<ID>/nomcp` 또는 `submissions/<ID>/mcp`) 하나만 엽니다. 저장소 폴더나 그 상위 폴더를 열지 않습니다.
+- AI 도구에는 실습 워크스페이스(`submissions/{id}/nomcp` 또는 `submissions/{id}/mcp`) 하나만 엽니다. 저장소 폴더나 그 상위 폴더를 열지 않습니다.
 - AI 에게 저장소의 다른 파일, 다른 실습의 폴더, 다른 사람의 PR 이나 Fork 를 보여 주지 않습니다. 교육생도 다른 사람의 PR 과 Fork 를 열어 보지 않습니다.
 - 두 실습은 같은 도구, 같은 모델, 같은 노력 수준으로 진행합니다.
 - 실습 순서(nomcp 다음 mcp)를 지킵니다.
-- `submissions/<ID>` 밖의 파일을 고치지 않습니다. setup 명령이 실습 워크스페이스에 쓴 `TASK.md`, 작업 범위 지침 파일, MCP 연결 설정 같은 도구 설정도 고치거나 지우지 않습니다.
+- `submissions/{id}` 밖의 파일을 고치지 않습니다. setup 명령이 실습 워크스페이스에 쓴 `TASK.md`, 작업 범위 지침 파일, MCP 연결 설정 같은 도구 설정도 고치거나 지우지 않습니다.
 - AI 에게 `TASK.md` 밖의 자료(다른 프로젝트의 코드, 예제, 설계 문서 등)를 붙여 넣거나 첨부하지 않습니다.
 - AI 도구의 개인 설정(전역 지침 파일, 개인 MCP 서버, 커넥터, 스킬, 플러그인, 규칙)은 실습에 그대로 써도 됩니다. 다만 전역 설정의 `egovframe-codegen` 서버는 nomcp 실습에서 쓰지 않으므로, 켜져 있으면 setup 명령이 nomcp 준비를 멈춥니다.
 
@@ -279,12 +279,12 @@ CREATE TABLE BOARD (
 PowerShell 의 실행 정책이 npm 으로 설치한 명령의 `.ps1` 파일을 막아서 생기는 오류입니다. 명령 이름 뒤에 `.cmd` 를 붙여 실행합니다(예: `npm.cmd run check`, `codex.cmd`).
 
 **`도구와 ID 를 구분할 수 없습니다` 또는 `어느 값이 --id 인지 알 수 없습니다` 가 나옵니다.**
-참가자 ID 가 도구 이름이나 실습 이름과 비슷할 때 생깁니다. `--` 를 넣은 형태(`npm run setup -- --test nomcp --id P01 --tool Claude-Code`)로 다시 실행합니다.
+참가자 ID 가 도구 이름이나 실습 이름과 비슷할 때 생깁니다. `--` 를 넣은 형태(`npm run setup -- --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}`)로 다시 실행합니다.
 
 **`git 으로 clone 한 저장소의 루트가 아닙니다` 가 나옵니다.**
 ZIP 으로 받은 폴더나 다른 폴더에서 명령을 실행한 경우입니다. [1.2 GitHub 로그인과 Fork](#12-github-로그인과-fork)의 방법으로 clone 한 저장소 폴더에서 실행합니다.
 
-**`submit/P01 브랜치로 바꾸지 못했습니다` 가 나옵니다.**
+**`submit/{id} 브랜치로 바꾸지 못했습니다` 가 나옵니다.**
 커밋하지 않은 변경이 있어 브랜치를 전환할 수 없는 경우입니다. `git status` 로 바뀐 파일을 확인하고, 필요한 변경은 커밋하고 필요 없는 변경은 되돌린 뒤 다시 실행합니다.
 
 **`실습 순서는 nomcp 다음 mcp 입니다` 또는 `nomcp 실습을 아직 제출하지 않았습니다` 가 나옵니다.**
@@ -311,7 +311,7 @@ Maven 4 가 설치되어 있으면 [1.1 운영체제별 설치](#11-운영체제
 ### 작업 단계 (AI 도구)
 
 **mcp 실습인데 AI 도구에 `egovframe-codegen` 서버가 보이지 않습니다.**
-AI 도구로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정은 `npx` 로 저장소 폴더의 묶음 파일을 절대 경로로 실행하므로, AI 도구가 `npx` 를 찾을 수 있어야 하고 저장소 폴더를 옮기지 않아야 합니다. 새 터미널에서 `npx --version` 이 실행되는지 확인하고, 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 작업 중에 다시 실행하면 걸린 시간이 다시 계산되므로, 처음 시작한 시각을 진행자에게 알립니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
+AI 도구로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 처음 열 때 나온 폴더 신뢰나 MCP 서버 사용 확인을 허용했는지도 확인합니다. MCP 연결 설정은 `npx` 로 저장소 폴더의 묶음 파일을 절대 경로로 실행하므로, AI 도구가 `npx` 를 찾을 수 있어야 하고 저장소 폴더를 옮기지 않아야 합니다. 새 터미널에서 `npx --version` 이 실행되는지 확인하고, 저장소 폴더를 옮겼다면 mcp setup 명령을 다시 실행합니다. 작업 중에 다시 실행하면 걸린 시간이 다시 계산되므로, 처음 시작한 시각을 진행자에게 알립니다. 그 밖의 확인 방법은 도구 문서의 '문제 해결' 절에 있습니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 대개 도구의 전역 설정에 서버가 남아 있는 경우이므로, 도구 문서의 '문제 해결' 절에 따라 전역 설정에서 서버를 끄거나 지운 뒤 nomcp setup 명령을 다시 실행합니다. 이때 걸린 시간이 다시 계산되므로, 처음 시작한 시각도 진행자에게 함께 알립니다.
@@ -319,7 +319,7 @@ AI 도구로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 처음
 ### 제출 단계 (submit)
 
 **`제출 브랜치(submit/참가자ID)가 아닙니다` 가 나옵니다.**
-다른 브랜치로 전환된 상태입니다. 출력에 나온 명령(예: `git switch submit/P01`)으로 제출 브랜치로 돌아간 뒤 `npm run submit` 을 다시 실행합니다.
+다른 브랜치로 전환된 상태입니다. 출력에 나온 명령(`git switch submit/{id}` 형태)으로 제출 브랜치로 돌아간 뒤 `npm run submit` 을 다시 실행합니다.
 
 **`실습 워크스페이스 안에 별도의 git 저장소가 있어` 라는 오류가 나옵니다.**
 실습 워크스페이스 안의 폴더(예: `board-app`)에서 `git init` 이 실행되어 별도의 git 저장소가 생긴 경우입니다. 이대로 제출하면 그 폴더가 파일 없이 빈 링크로만 올라갑니다. 출력에 나온 명령을 그대로 실행한 뒤 `npm run submit` 을 다시 실행합니다. macOS 는 `rm -rf "<폴더>/.git"`, Windows 는 `Remove-Item -Recurse -Force "<폴더>\.git"` 형태의 명령이며, 경우에 따라 `git -C "<저장소 폴더>" rm --cached -f -q -- "<폴더>"` 도 함께 나옵니다. 이 명령은 그 폴더의 git 기록(`.git`)만 지우고 작업한 파일은 그대로 둡니다.
@@ -370,5 +370,5 @@ gh 를 찾지 못했거나 PR 을 만드는 데 실패한 경우입니다. 출�
 | `docs/` | 도구별 설정 문서 (`setup-<도구>.md`) |
 | `task/` | 과제 원본 (`TASK.md`) |
 | `mcp/` | MCP 서버 묶음 파일(`.tgz`). 저장소 안에 풀지 않고 MCP 연결 설정이 `npx` 로 바로 실행합니다 |
-| `submissions/` | 제출 폴더. setup 명령이 `submissions/<ID>/` 아래에 실습 워크스페이스를 만듭니다 |
+| `submissions/` | 제출 폴더. setup 명령이 `submissions/{id}/` 아래에 실습 워크스페이스를 만듭니다 |
 | `test/` | 스크립트 시험 코드 (`npm test`) |

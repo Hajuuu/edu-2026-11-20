@@ -87,10 +87,10 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **`/mcp` 에 `egovframe-codegen` 서버가 없습니다.**
-`claude` 를 `submissions/<ID>/mcp` 폴더에서 시작했는지 확인합니다(macOS 는 `pwd`, Windows 는 `Get-Location`). 그 폴더에 `.mcp.json` 이 있는지도 확인합니다. 폴더 신뢰를 선택하지 않았다면 `claude` 를 다시 실행해 신뢰를 선택합니다.
+`claude` 를 `submissions/{id}/mcp` 폴더에서 시작했는지 확인합니다(macOS 는 `pwd`, Windows 는 `Get-Location`). 그 폴더에 `.mcp.json` 이 있는지도 확인합니다. 폴더 신뢰를 선택하지 않았다면 `claude` 를 다시 실행해 신뢰를 선택합니다.
 
 **`egovframe-codegen` 서버가 연결에 실패한 상태로 보입니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Claude-Code`)을 다시 실행한 뒤 Claude Code 를 다시 시작합니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Claude-Code`)을 다시 실행한 뒤 Claude Code 를 다시 시작합니다.
 
 **nomcp 실습인데 `/mcp` 에 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 사용자 범위나 로컬 범위에 같은 서버가 등록된 경우이므로 `claude mcp list` 로 확인하고, setup 명령이 알려 주는 명령(`claude mcp remove egovframe-codegen -s user` 또는 `-s local`)으로 지운 뒤 nomcp setup 명령을 다시 실행합니다.

@@ -46,7 +46,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 
 ## 6. 작업 방법
 
-1. VS Code 의 File 메뉴에서 New Window 로 새 창을 열고, Open Folder 로 실습 워크스페이스(`submissions/P01/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
+1. VS Code 의 File 메뉴에서 New Window 로 새 창을 열고, Open Folder 로 실습 워크스페이스(`submissions/{id}/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
 2. 채팅 보기에서 Agent 모드와 Claude Opus 5.5 모델, Medium 노력 수준을 확인하고 첫 프롬프트를 입력합니다.
 
    ```text
@@ -55,17 +55,17 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
 4. 작업을 마치면 저장소 폴더에서 연 터미널(PowerShell 또는 macOS 터미널)에서 `npm run submit` 을 실행합니다.
-5. mcp 실습에서는 nomcp 창을 닫고, 새 창에서 `submissions/P01/mcp` 를 연 뒤 새 채팅으로 시작합니다. nomcp 실습의 채팅을 이어 가지 않습니다.
+5. mcp 실습에서는 nomcp 창을 닫고, 새 창에서 `submissions/{id}/mcp` 를 연 뒤 새 채팅으로 시작합니다. nomcp 실습의 채팅을 이어 가지 않습니다.
 
 ## 7. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **`MCP: List Servers` 에 `egovframe-codegen` 서버가 없습니다.**
-연 폴더가 `submissions/<ID>/mcp` 인지, 그 폴더의 루트에 `.mcp.json` 이 있는지 확인합니다. 작업 영역을 신뢰했는지도 확인합니다. 그다음 명령 팔레트에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
+연 폴더가 `submissions/{id}/mcp` 인지, 그 폴더의 루트에 `.mcp.json` 이 있는지 확인합니다. 작업 영역을 신뢰했는지도 확인합니다. 그다음 명령 팔레트에서 `Developer: Reload Window` 를 실행해 창을 다시 불러옵니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool GitHub-Copilot`)을 다시 실행한 뒤 창을 다시 불러옵니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. VS Code 사용자 프로필의 `mcp.json`(macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json`)이나 Copilot 사용자 파일 `mcp-config.json`(macOS `~/.copilot/mcp-config.json`, Windows `%USERPROFILE%\.copilot\mcp-config.json`) 에 같은 서버가 있는 경우입니다. 파일을 복사해 둔 뒤(예: `mcp.json.bak`) 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. VS Code 화면에서 끄기만 하면 파일에 남아 setup 명령이 계속 멈춥니다.

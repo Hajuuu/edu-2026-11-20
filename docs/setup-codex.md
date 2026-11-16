@@ -74,10 +74,10 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **`/mcp` 에 `egovframe-codegen` 서버가 없습니다.**
-`codex` 를 `submissions/<ID>/mcp` 폴더에서 시작했는지, 그 폴더에 `.codex/config.toml` 이 있는지 확인합니다. 폴더를 신뢰하지 않았다면 프로젝트 설정을 읽지 않습니다. `~/.codex/config.toml` 에 저장소 폴더의 항목이 `trust_level = "untrusted"` 로 남아 있으면 `"trusted"` 로 바꾸고 Codex 를 다시 시작합니다. 설정 이름은 버전에 따라 다를 수 있습니다.
+`codex` 를 `submissions/{id}/mcp` 폴더에서 시작했는지, 그 폴더에 `.codex/config.toml` 이 있는지 확인합니다. 폴더를 신뢰하지 않았다면 프로젝트 설정을 읽지 않습니다. `~/.codex/config.toml` 에 저장소 폴더의 항목이 `trust_level = "untrusted"` 로 남아 있으면 `"trusted"` 로 바꾸고 Codex 를 다시 시작합니다. 설정 이름은 버전에 따라 다를 수 있습니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Codex`)을 다시 실행한 뒤 Codex 를 다시 시작합니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Codex`)을 다시 실행한 뒤 Codex 를 다시 시작합니다.
 
 **nomcp 실습인데 `/mcp` 에 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.codex/config.toml` 에 같은 서버가 남아 있는 경우이므로 `codex mcp remove egovframe-codegen` 으로 지운 뒤 nomcp setup 명령을 다시 실행합니다.

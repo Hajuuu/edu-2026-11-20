@@ -53,7 +53,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 
 ## 6. 작업 방법
 
-1. 실습 워크스페이스(`submissions/P01/nomcp`)를 작업 영역으로 엽니다. 저장소 폴더 전체를 열지 않습니다.
+1. 실습 워크스페이스(`submissions/{id}/nomcp`)를 작업 영역으로 엽니다. 저장소 폴더 전체를 열지 않습니다.
    - IDE (권장): 편집기에서 실습 워크스페이스를 엽니다(File 메뉴의 Open Folder, 메뉴 이름은 버전에 따라 다를 수 있습니다). 그다음 제목 표시줄의 Toggle Agent 로 에이전트 패널을 엽니다.
    - 앱: 왼쪽 사이드바의 New Project 아이콘(더하기 표시가 있는 폴더)을 누르고, Add Folder 로 실습 워크스페이스 하나만 선택한 뒤 Create 를 누릅니다. 앱을 쓸 때의 주의는 이 문서의 첫 부분에 있습니다.
 2. 모델이 Claude Opus 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다. 앱에서 실행 방식을 물으면 Local mode 를 선택합니다.
@@ -64,17 +64,17 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 
 3. 파일 수정이나 명령 실행 승인을 물으면 평소처럼 판단해 응답합니다.
 4. 작업을 마치면 저장소 폴더에서 연 터미널(PowerShell 또는 macOS 터미널)에서 `npm run submit` 을 실행합니다.
-5. mcp 실습에서는 nomcp 작업 영역을 닫고, 1번과 같은 방법으로 `submissions/P01/mcp` 를 새 작업 영역(앱에서는 새 프로젝트)으로 연 뒤 새 대화로 시작합니다. nomcp 실습의 대화를 이어 가지 않습니다.
+5. mcp 실습에서는 nomcp 작업 영역을 닫고, 1번과 같은 방법으로 `submissions/{id}/mcp` 를 새 작업 영역(앱에서는 새 프로젝트)으로 연 뒤 새 대화로 시작합니다. nomcp 실습의 대화를 이어 가지 않습니다.
 
 ## 7. 문제 해결
 
 아래 해결 방법 가운데에는 setup 명령을 다시 실행하는 방법이 있습니다. 아직 제출하지 않은 실습에서 setup 명령을 다시 실행하면 그 실습의 준비 시각이 새로 기록되어, 걸린 시간이 다시 실행한 때부터 계산됩니다. 그러므로 작업 중에 다시 실행했다면 처음 시작한 시각을 진행자에게 알립니다.
 
 **MCP 서버 목록에 `egovframe-codegen` 서버가 없습니다.**
-작업 영역으로 연 폴더가 `submissions/<ID>/mcp` 인지 확인합니다. 저장소 폴더나 `submissions` 폴더를 열면 실습 워크스페이스의 설정을 읽지 않습니다. 그 폴더에 `.agents/mcp_config.json` 이 있는지 확인하고 MCP 서버 목록을 새로 고칩니다. 앱을 쓰고 있다면 IDE 로 바꿔 같은 폴더를 엽니다. 앱이 작업 영역의 MCP 설정을 읽는지는 공식 문서에 나와 있지 않습니다.
+작업 영역으로 연 폴더가 `submissions/{id}/mcp` 인지 확인합니다. 저장소 폴더나 `submissions` 폴더를 열면 실습 워크스페이스의 설정을 읽지 않습니다. 그 폴더에 `.agents/mcp_config.json` 이 있는지 확인하고 MCP 서버 목록을 새로 고칩니다. 앱을 쓰고 있다면 IDE 로 바꿔 같은 폴더를 엽니다. 앱이 작업 영역의 MCP 설정을 읽는지는 공식 문서에 나와 있지 않습니다.
 
 **`egovframe-codegen` 서버가 시작되지 않습니다.**
-대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id P01 --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
+대개 AI 도구가 `npx` 를 찾지 못했거나 저장소 폴더를 옮긴 경우입니다. 새 터미널에서 `npx --version` 이 실행되는지 확인합니다. 저장소 폴더를 옮겼다면 저장소 폴더에서 mcp setup 명령(`npm run setup --test mcp --id {id} --tool Antigravity`)을 다시 실행한 뒤 MCP 서버 목록을 새로 고칩니다.
 
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.gemini/config/mcp_config.json` 에 같은 서버가 켜져 있는 경우이므로, 그 항목에 `"disabled": true` 를 넣거나 항목을 지운 뒤 nomcp setup 명령을 다시 실행합니다.
