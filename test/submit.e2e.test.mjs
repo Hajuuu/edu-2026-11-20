@@ -514,7 +514,7 @@ test('opens a pr with gh and reuses the open pr', { skip: !canFake }, () => {
   assert.equal(flagOf(create, '--base'), 'main');
   assert.equal(flagOf(create, '--head'), 'kim:submit/T04');
   assert.equal(flagOf(create, '--title'), '[제출] T04 (Codex)');
-  for (const s of ['Codex', 'GPT-6.1 Sol', `${process.platform}-${process.arch}`, '| nomcp |', '| mcp |']) {
+  for (const s of ['Codex', 'GPT-6.1 Terra', `${process.platform}-${process.arch}`, '| nomcp |', '| mcp |']) {
     assert.ok(create.body.includes(s), `${s}\n${create.body}`);
   }
   for (const p of [ctx.repo, ctx.home, os.homedir()]) assert.ok(!create.body.includes(p), create.body);

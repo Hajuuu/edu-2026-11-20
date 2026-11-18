@@ -6,16 +6,16 @@ Codex 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명�
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 **GPT-6.1 Sol**(`gpt-6.1-sol`) 모델과 추론 노력 수준(reasoning effort) **medium** 을 씁니다. GPT-6.1 Sol 은 OpenAI 의 최상위 모델(Astra)이 아니라 Opus 5.5 에 대응하는 등급의 모델이며, Codex CLI v0.161.0 부터 기본 모델입니다.
+두 실습 모두 **GPT-6.1 Terra**(`gpt-6.1-terra`) 모델과 추론 노력 수준(reasoning effort) **medium** 을 씁니다. GPT-6.1 Terra 는 OpenAI 의 중간 등급 모델로, 다른 도구에서 쓰는 Claude Sonnet 5.5 에 대응합니다. Codex CLI v0.159.0 이상에서 쓸 수 있으며, Codex CLI 의 기본 모델은 GPT-6.1 Sol 이므로 아래 방법으로 직접 선택해야 합니다.
 
 다음 방법 가운데 하나로 모델과 노력 수준을 맞춥니다.
 
-- 화면에서 선택하기: Codex 에서 `/model` 을 입력하고 GPT-6.1 Sol 을 선택한 뒤 Medium 을 선택합니다.
-- 시작할 때 정하기: `codex -m gpt-6.1-sol` 로 시작하면 모델이 정해집니다. 노력 수준은 `/model` 이나 설정 파일로 맞춥니다.
+- 화면에서 선택하기: Codex 에서 `/model` 을 입력하고 GPT-6.1 Terra 를 선택한 뒤 Medium 을 선택합니다.
+- 시작할 때 정하기: `codex -m gpt-6.1-terra` 로 시작하면 모델이 정해집니다. 노력 수준은 `/model` 이나 설정 파일로 맞춥니다.
 - 설정 파일로 정하기: `~/.codex/config.toml` 에 다음 두 줄을 넣습니다. 이 두 줄은 파일의 맨 위, 즉 첫 번째 `[...]` 머리보다 앞에 둡니다. Codex IDE 확장도 같은 파일을 읽습니다.
 
   ```toml
-  model = "gpt-6.1-sol"
+  model = "gpt-6.1-terra"
   model_reasoning_effort = "medium"
   ```
 

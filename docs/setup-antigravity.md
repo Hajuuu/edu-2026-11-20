@@ -8,14 +8,14 @@ Antigravity 로 실습하는 교육생을 위한 안내입니다. `npm run setup
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 **Claude Opus 5.5 (Thinking)** 을 씁니다. 프롬프트 입력창 아래의 모델 메뉴에서 선택합니다. Antigravity 에서는 Claude 모델의 노력 수준을 선택할 수 없으므로 노력 수준은 Thinking 으로 고정됩니다.
+두 실습 모두 **Claude Sonnet 5.5 (Thinking)** 을 씁니다. 프롬프트 입력창 아래의 모델 메뉴에서 선택합니다. Antigravity 에서는 Claude 모델의 노력 수준을 선택할 수 없으므로 노력 수준은 Thinking 으로 고정됩니다.
 
-- 목록에 다른 Claude 모델이 보여도 Claude Opus 5.5 (Thinking) 을 선택합니다. Claude Sonnet 4.6, Claude Opus 4.6, GPT-OSS 120B 는 2026년 11월 18일에 목록에서 빠집니다.
-- Claude Opus 5.5 (Thinking) 을 선택할 수 없으면 다른 모델로 바꾸지 말고 교육 전에 진행자에게 알립니다.
+- 목록에 Claude Opus 5.5 (Thinking) 같은 다른 Claude 모델이 보여도 Claude Sonnet 5.5 (Thinking) 을 선택합니다. Claude Sonnet 4.6, Claude Opus 4.6, GPT-OSS 120B 는 2026년 11월 18일에 목록에서 빠집니다.
+- Claude Sonnet 5.5 (Thinking) 을 선택할 수 없으면 다른 모델로 바꾸지 말고 교육 전에 진행자에게 알립니다.
 
 ## 2. 요금제
 
-Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise 요금제 가운데 하나가 필요합니다. Free 와 Plus 요금제에서는 Claude Opus 5.5 를 선택할 수 없습니다.
+Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise 요금제 가운데 하나가 필요합니다. Free 와 Plus 요금제에서는 Claude Sonnet 5.5 를 선택할 수 없습니다.
 
 ## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
@@ -56,7 +56,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 1. 실습 워크스페이스(`submissions/{id}/nomcp`)를 작업 영역으로 엽니다. 저장소 폴더 전체를 열지 않습니다.
    - IDE (권장): 편집기에서 실습 워크스페이스를 엽니다(File 메뉴의 Open Folder, 메뉴 이름은 버전에 따라 다를 수 있습니다). 그다음 제목 표시줄의 Toggle Agent 로 에이전트 패널을 엽니다.
    - 앱: 왼쪽 사이드바의 New Project 아이콘(더하기 표시가 있는 폴더)을 누르고, Add Folder 로 실습 워크스페이스 하나만 선택한 뒤 Create 를 누릅니다. 앱을 쓸 때의 주의는 이 문서의 첫 부분에 있습니다.
-2. 모델이 Claude Opus 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다. 앱에서 실행 방식을 물으면 Local mode 를 선택합니다.
+2. 모델이 Claude Sonnet 5.5 (Thinking) 인지 확인하고 첫 프롬프트를 입력합니다. 앱에서 실행 방식을 물으면 Local mode 를 선택합니다.
 
    nomcp 실습에서는 다음 문장을 입력합니다.
 
@@ -87,7 +87,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.gemini/config/mcp_config.json` 에 같은 서버가 켜져 있는 경우이므로, 그 항목에 `"disabled": true` 를 넣거나 항목을 지운 뒤 nomcp setup 명령을 다시 실행합니다.
 
-**Claude Opus 5.5 (Thinking) 이 모델 목록에 없습니다.**
+**Claude Sonnet 5.5 (Thinking) 이 모델 목록에 없습니다.**
 요금제가 Google AI Pro(유료 구독) 이상인지 확인합니다. 그래도 선택할 수 없으면 다른 모델로 바꾸지 말고 진행자에게 알립니다.
 
 공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.

@@ -34,11 +34,11 @@ AI 코딩 도구는 다음 중 하나를 준비하고, 모델과 노력 수준�
 
 | 사용 도구 | 모델 · 노력 수준 | 문서 |
 |---|---|---|
-| Claude Code (권장) | **Opus 5.5 · medium** | [docs/setup-claude-code.md](docs/setup-claude-code.md) |
-| Codex (권장) | **GPT-6.1 Sol · medium** | [docs/setup-codex.md](docs/setup-codex.md) |
-| Antigravity (IDE) | **Claude Opus 5.5 (Thinking)** | [docs/setup-antigravity.md](docs/setup-antigravity.md) |
-| Cursor | **Claude Opus 5.5 · medium** | [docs/setup-cursor.md](docs/setup-cursor.md) |
-| GitHub Copilot | **Claude Opus 5.5 · medium** | [docs/setup-github-copilot.md](docs/setup-github-copilot.md) |
+| Claude Code (권장) | **Sonnet 5.5 · medium** | [docs/setup-claude-code.md](docs/setup-claude-code.md) |
+| Codex (권장) | **GPT-6.1 Terra · medium** | [docs/setup-codex.md](docs/setup-codex.md) |
+| Antigravity (IDE) | **Claude Sonnet 5.5 (Thinking)** | [docs/setup-antigravity.md](docs/setup-antigravity.md) |
+| Cursor | **Claude Sonnet 5.5 · medium** | [docs/setup-cursor.md](docs/setup-cursor.md) |
+| GitHub Copilot | **Claude Sonnet 5.5 · medium** | [docs/setup-github-copilot.md](docs/setup-github-copilot.md) |
 | 상용 AI 를 쓸 수 없는 경우 | VS Code **Cline** + OpenRouter(API Key 는 실습 중 센터 제공) · **Qwen3.8 Flash** | [docs/setup-cline.md](docs/setup-cline.md) |
 
 `npm run setup` 명령의 `--tool` 에는 아래 표의 값을 넣습니다. 위 모델을 쓰려면 각 도구에서 다음 요금제가 필요합니다. 자세한 조건과 모델 설정 방법은 도구별 문서에 있습니다.
@@ -49,7 +49,7 @@ AI 코딩 도구는 다음 중 하나를 준비하고, 모델과 노력 수준�
 | Codex | `Codex` | ChatGPT Plus, Pro, Business, Enterprise, Edu |
 | Antigravity | `Antigravity` | Google AI Pro(유료 구독, 체험판 제외), Ultra, Enterprise |
 | Cursor | `Cursor` | Premium 이상, 이전 요금제(Pro, Pro+, Ultra), Teams, Enterprise |
-| GitHub Copilot | `GitHub-Copilot` | Copilot Pro+, Max, Business, Enterprise (Free, Pro 제외) |
+| GitHub Copilot | `GitHub-Copilot` | Copilot Pro, Pro+, Max, Business, Enterprise (Free, Student 제외) |
 | Cline | `Cline` | 필요 없음 (OpenRouter API Key 는 실습 중 센터 제공) |
 
 AI 도구의 설치와 로그인 방법은 도구별 문서의 첫 부분에 있습니다. 두 실습은 같은 도구, 같은 모델, 같은 노력 수준으로 진행합니다. 정해진 모델을 선택할 수 없으면 다른 모델로 바꾸지 말고 교육 전에 진행자에게 알립니다.

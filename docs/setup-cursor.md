@@ -6,18 +6,18 @@ Cursor 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 **Claude Opus 5.5** 모델과 노력 수준 **Medium** 을 씁니다.
+두 실습 모두 **Claude Sonnet 5.5** 모델과 노력 수준 **Medium** 을 씁니다.
 
-1. Cursor Settings 의 Models 에서 Claude Opus 5.5 를 켭니다.
-2. Agent 채팅의 모델 선택 메뉴에서 Auto 를 쓰지 않고 Claude Opus 5.5 를 직접 선택합니다.
-3. 노력 수준을 Medium 으로 맞춥니다. 모델 목록에는 `Claude Opus 5.5 Medium` 처럼 보이며, Windows 는 Ctrl+Shift+/, macOS 는 Cmd+Shift+/ 로 노력 수준을 바꿀 수 있습니다. 이 표기와 단축키는 사용자 게시판에서 확인한 내용이라 버전에 따라 다를 수 있습니다.
-4. Fast 모드는 끕니다. 모델 목록에 Fast 판(예: `claude-opus-5-5-fast`)이 따로 보이면 선택하지 않습니다.
+1. Cursor Settings 의 Models 에서 Claude Sonnet 5.5 를 켭니다.
+2. Agent 채팅의 모델 선택 메뉴에서 Auto 를 쓰지 않고 Claude Sonnet 5.5 를 직접 선택합니다. Claude Opus 5.5 와 헷갈리지 않도록 주의합니다.
+3. 노력 수준을 Medium 으로 맞춥니다. 모델 목록에는 `Claude Sonnet 5.5 Medium` 처럼 보이며, Windows 는 Ctrl+Shift+/, macOS 는 Cmd+Shift+/ 로 노력 수준을 바꿀 수 있습니다. 이 표기와 단축키는 사용자 게시판에서 확인한 내용이라 버전에 따라 다를 수 있습니다.
+4. Fast 모드는 끕니다. 모델 목록에 이름 끝이 `-fast` 인 판이 따로 보이면 선택하지 않습니다.
 
 이전 요금제를 쓰고 있다면 Max Mode 를 켜야 할 수 있으므로 2절을 확인합니다.
 
 ## 2. 요금제
 
-Premium(월 30달러) 이상의 요금제가 필요합니다. 이 문서에서 이전 요금제는 Pro, Pro+, Ultra 를 가리킵니다. 이전 요금제와 Teams, Enterprise 에서도 Claude Opus 5.5 를 쓸 수 있으며, 이전 요금제 가운데 요청 수로 과금하는 요금제에서는 Max Mode 를 켜야 합니다. Free 와 Plus 요금제에는 Claude Opus 5.5 같은 외부 모델이 들어 있지 않습니다.
+Premium(월 30달러) 이상의 요금제가 필요합니다. 이 문서에서 이전 요금제는 Pro, Pro+, Ultra 를 가리킵니다. 이전 요금제와 Teams, Enterprise 에서도 Claude Sonnet 5.5 를 쓸 수 있으며, 이전 요금제 가운데 요청 수로 과금하는 요금제에서는 Max Mode 를 켜야 합니다. Free 와 Plus 요금제에는 Claude Sonnet 5.5 같은 외부 모델이 들어 있지 않습니다.
 
 ## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
@@ -51,7 +51,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 ## 6. 작업 방법
 
 1. File 메뉴의 New Window 로 새 창을 열고, Open Folder 로 실습 워크스페이스(`submissions/{id}/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
-2. Agent 채팅에서 모델이 Claude Opus 5.5 이고 노력 수준이 Medium 인지 확인한 뒤 첫 프롬프트를 입력합니다.
+2. Agent 채팅에서 모델이 Claude Sonnet 5.5 이고 노력 수준이 Medium 인지 확인한 뒤 첫 프롬프트를 입력합니다.
 
    nomcp 실습에서는 다음 문장을 입력합니다.
 
@@ -82,7 +82,7 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 파일(`~/.cursor/mcp.json`, Windows 는 `%USERPROFILE%\.cursor\mcp.json`)에 같은 서버가 있는 경우입니다. 파일을 복사해 둔 뒤(예: `mcp.json.bak`) 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. 화면에서 끄기만 하면 파일에 서버가 남아 setup 명령이 계속 멈출 수 있습니다.
 
-**모델 목록에 Claude Opus 5.5 가 없습니다.**
-Cursor Settings 의 Models 에서 Claude Opus 5.5 를 켰는지 확인합니다. 요금제가 Premium 이상인지, 요청 수로 과금하는 이전 요금제라면 Max Mode 를 켰는지도 확인합니다.
+**모델 목록에 Claude Sonnet 5.5 가 없습니다.**
+Cursor Settings 의 Models 에서 Claude Sonnet 5.5 를 켰는지 확인합니다. 요금제가 Premium 이상인지, 요청 수로 과금하는 이전 요금제라면 Max Mode 를 켰는지도 확인합니다.
 
 공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.

@@ -6,7 +6,7 @@ Claude Code 로 실습하는 교육생을 위한 안내입니다. `npm run setup
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 **Claude Opus 5.5**(`claude-opus-5-5`) 모델과 노력 수준(effort) **medium** 을 씁니다. medium 은 Opus 5.5 의 기본 노력 수준입니다. Opus 5.5 는 Claude Code v2.1.280 이상에서 쓸 수 있으므로 먼저 Claude Code 를 업데이트하고 버전을 확인합니다.
+두 실습 모두 **Claude Sonnet 5.5**(`claude-sonnet-5-5`) 모델과 노력 수준(effort) **medium** 을 씁니다. medium 은 Claude Code 에서 Sonnet 5.5 의 기본 노력 수준입니다. Sonnet 5.5 는 Claude Code v2.1.284 이상에서 쓸 수 있으므로 먼저 Claude Code 를 업데이트하고 버전을 확인합니다.
 
 ```bash
 claude update
@@ -15,26 +15,26 @@ claude --version
 
 다음 세 방법 가운데 하나로 모델과 노력 수준을 맞춥니다.
 
-- 화면에서 선택하기: Claude Code 에서 `/model` 을 입력하고 Opus 를 선택합니다. 그다음 왼쪽과 오른쪽 방향키로 노력 수준을 medium 에 맞추고 Enter 를 누릅니다. 이 선택은 기본값으로 저장됩니다.
-- 명령으로 정하기: `/model claude-opus-5-5` 를 입력한 뒤 `/effort medium` 을 입력합니다.
+- 화면에서 선택하기: Claude Code 에서 `/model` 을 입력하고 Sonnet 을 선택합니다. 그다음 왼쪽과 오른쪽 방향키로 노력 수준을 medium 에 맞추고 Enter 를 누릅니다. 이 선택은 기본값으로 저장됩니다.
+- 명령으로 정하기: `/model claude-sonnet-5-5` 를 입력한 뒤 `/effort medium` 을 입력합니다.
 - 설정 파일로 정하기: `~/.claude/settings.json` 에 다음 두 항목을 넣습니다(v2.1.251 이상). 파일이 이미 있으면 기존 내용에 두 항목을 더합니다.
 
   ```json
   {
-    "model": "claude-opus-5-5",
+    "model": "claude-sonnet-5-5",
     "modelSettings": {
-      "claude-opus-5-5": { "effortLevel": "medium" }
+      "claude-sonnet-5-5": { "effortLevel": "medium" }
     }
   }
   ```
 
-  설정 파일의 최상위 `effortLevel` 은 Opus 5.5 에 적용되지 않습니다. 그래서 위와 같이 모델별 설정(`modelSettings`) 안에 적습니다.
+  설정 파일의 최상위 `effortLevel` 은 Opus 5.5 와 그 뒤에 나온 Sonnet 5.5 에 적용되지 않습니다. 그래서 위와 같이 모델별 설정(`modelSettings`) 안에 적습니다.
 
 환경 변수 `CLAUDE_CODE_EFFORT_LEVEL` 은 위 설정보다 먼저 적용되므로 설정되어 있지 않아야 합니다. macOS 에서는 `echo $CLAUDE_CODE_EFFORT_LEVEL` 의 결과가, Windows PowerShell 에서는 `echo $env:CLAUDE_CODE_EFFORT_LEVEL` 의 결과가 비어 있는지 확인합니다.
 
 ## 2. 요금제
 
-Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계정으로 쓸 수 있으며, 이 요금제에서는 Opus 5.5 가 기본 모델입니다. 무료(Free) 요금제로는 Claude Code 를 쓸 수 없습니다.
+Claude Code 는 Pro, Max, Ultra, Team, Enterprise 요금제나 API(Console) 계정으로 쓸 수 있으며, 이 요금제에서는 Opus 5.5 가 기본 모델입니다. 따라서 1절의 방법으로 Sonnet 5.5 를 직접 선택해야 합니다. 무료(Free) 요금제로는 Claude Code 를 쓸 수 없습니다.
 
 ## 3. setup 이 실습 워크스페이스에 쓰는 파일
 

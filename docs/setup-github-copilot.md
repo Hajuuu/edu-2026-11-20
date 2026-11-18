@@ -6,15 +6,15 @@ VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/downlo
 
 ## 1. 모델과 노력 수준
 
-두 실습 모두 **Claude Opus 5.5** 모델과 노력 수준 **Medium** 을 씁니다. Claude Opus 5.5 는 2026년 9월 22일부터 Copilot 에서 정식으로 제공됩니다.
+두 실습 모두 **Claude Sonnet 5.5** 모델과 노력 수준 **Medium** 을 씁니다. Claude Sonnet 5.5 는 2026년 9월 28일부터 Copilot 에서 정식으로 제공됩니다.
 
 1. 채팅(Chat) 보기를 열고 모드를 Agent 로 선택합니다.
-2. 모델 선택 메뉴에서 Auto 가 아니라 Claude Opus 5.5 를 직접 선택합니다.
+2. 모델 선택 메뉴에서 Auto 가 아니라 Claude Sonnet 5.5 를 직접 선택합니다. Claude Opus 5.5 와 헷갈리지 않도록 주의합니다.
 3. 모델 이름 옆의 `›` 를 눌러 노력 수준을 Medium 으로 선택합니다. 노력 수준의 이름과 위치는 공식 문서로 확인하지 못한 내용이라 버전에 따라 다를 수 있습니다.
 
 ## 2. 요금제
 
-Copilot Pro+, Max, Business, Enterprise 요금제 가운데 하나가 필요합니다. Free 와 Pro 요금제에서는 Claude Opus 5.5 를 쓸 수 없습니다. Business 와 Enterprise 요금제는 조직 관리자가 이 모델을 허용해야 합니다.
+Copilot Pro, Pro+, Max, Business, Enterprise 요금제 가운데 하나가 필요합니다. Free 와 Student 요금제에서는 Claude Sonnet 5.5 를 직접 선택할 수 없습니다. Business 와 Enterprise 요금제는 조직 관리자가 이 모델을 허용해야 합니다.
 
 ## 3. setup 이 실습 워크스페이스에 쓰는 파일
 
@@ -47,7 +47,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 ## 6. 작업 방법
 
 1. VS Code 의 File 메뉴에서 New Window 로 새 창을 열고, Open Folder 로 실습 워크스페이스(`submissions/{id}/nomcp`)를 엽니다. 저장소 폴더 전체를 열지 않습니다.
-2. 채팅 보기에서 Agent 모드와 Claude Opus 5.5 모델, Medium 노력 수준을 확인하고 첫 프롬프트를 입력합니다.
+2. 채팅 보기에서 Agent 모드와 Claude Sonnet 5.5 모델, Medium 노력 수준을 확인하고 첫 프롬프트를 입력합니다.
 
    nomcp 실습에서는 다음 문장을 입력합니다.
 
@@ -78,7 +78,7 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 **nomcp 실습인데 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. VS Code 사용자 프로필의 `mcp.json`(macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json`)이나 Copilot 사용자 파일 `mcp-config.json`(macOS `~/.copilot/mcp-config.json`, Windows `%USERPROFILE%\.copilot\mcp-config.json`) 에 같은 서버가 있는 경우입니다. 파일을 복사해 둔 뒤(예: `mcp.json.bak`) 그 서버 항목을 지우고 nomcp setup 명령을 다시 실행합니다. VS Code 화면에서 끄기만 하면 파일에 남아 setup 명령이 계속 멈춥니다.
 
-**모델 목록에 Claude Opus 5.5 가 없습니다.**
-VS Code 와 Copilot 확장이 최신 버전인지 확인합니다. 요금제가 Pro+ 이상인지, Business 나 Enterprise 라면 조직 관리자가 모델을 허용했는지도 확인합니다.
+**모델 목록에 Claude Sonnet 5.5 가 없습니다.**
+VS Code 와 Copilot 확장이 최신 버전인지 확인합니다. 요금제가 Pro 이상인지, Business 나 Enterprise 라면 조직 관리자가 모델을 허용했는지도 확인합니다.
 
 공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.

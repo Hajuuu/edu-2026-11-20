@@ -16,12 +16,12 @@ const read = (rel) => fs.readFileSync(abs(rel), 'utf8');
 
 // README 의 AI 도구 표 (진행자가 정한 순서와 표기)
 const TOOL_ROWS = [
-  { tool: 'Claude-Code', label: 'Claude Code (권장)', model: '**Opus 5.5 · medium**', doc: 'docs/setup-claude-code.md' },
-  { tool: 'Codex', label: 'Codex (권장)', model: '**GPT-6.1 Sol · medium**', doc: 'docs/setup-codex.md' },
+  { tool: 'Claude-Code', label: 'Claude Code (권장)', model: '**Sonnet 5.5 · medium**', doc: 'docs/setup-claude-code.md' },
+  { tool: 'Codex', label: 'Codex (권장)', model: '**GPT-6.1 Terra · medium**', doc: 'docs/setup-codex.md' },
   // 작업 영역의 MCP 설정을 공식 문서가 설명하는 IDE 로 진행한다 (docs/setup-antigravity.md).
-  { tool: 'Antigravity', label: 'Antigravity (IDE)', model: '**Claude Opus 5.5 (Thinking)**', doc: 'docs/setup-antigravity.md' },
-  { tool: 'Cursor', label: 'Cursor', model: '**Claude Opus 5.5 · medium**', doc: 'docs/setup-cursor.md' },
-  { tool: 'GitHub-Copilot', label: 'GitHub Copilot', model: '**Claude Opus 5.5 · medium**', doc: 'docs/setup-github-copilot.md' },
+  { tool: 'Antigravity', label: 'Antigravity (IDE)', model: '**Claude Sonnet 5.5 (Thinking)**', doc: 'docs/setup-antigravity.md' },
+  { tool: 'Cursor', label: 'Cursor', model: '**Claude Sonnet 5.5 · medium**', doc: 'docs/setup-cursor.md' },
+  { tool: 'GitHub-Copilot', label: 'GitHub Copilot', model: '**Claude Sonnet 5.5 · medium**', doc: 'docs/setup-github-copilot.md' },
   {
     tool: 'Cline',
     label: '상용 AI 를 쓸 수 없는 경우',

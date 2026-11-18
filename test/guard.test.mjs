@@ -51,7 +51,7 @@ test('codex toml: other valid forms of the codegen server', () => {
     'spaced table header': '[ mcp_servers . egovframe-codegen ]\ncommand = "node"\nargs = ["/x/index.js"]\n',
     'dotted keys under [mcp_servers]': '[mcp_servers]\negovframe-codegen.command = "node"\negovframe-codegen.args = ["/x/index.js"]\n',
     'inline table under [mcp_servers]': '[mcp_servers]\nfoo = { command = "node", args = ["/x/egovframe-mcp-codegen/build/index.js"] }\n',
-    'inline table at the top level': 'model = "gpt-6.1-sol"\nmcp_servers = { egovframe-codegen = { command = "node", args = ["/x/index.js"] } }\n',
+    'inline table at the top level': 'model = "gpt-6.1-terra"\nmcp_servers = { egovframe-codegen = { command = "node", args = ["/x/index.js"] } }\n',
     'dotted key at the top level over several lines': 'mcp_servers.foo.command = "node"\nmcp_servers.foo.args = [\n  "/x/egovframe-mcp-codegen/build/index.js",\n]\n[projects."/w"]\ntrust_level = "trusted"\n',
   };
   for (const [name, text] of Object.entries(forms)) {
