@@ -304,7 +304,7 @@ function printNext({ test, id, tool }, runDir, now) {
   if (test === 'mcp') {
     log.info(`     처음 열 때 폴더 신뢰나 MCP 서버 사용을 묻는 창이 나오면 허용하고, ${MCP_SERVER_NAME} 서버가 연결되었는지 확인합니다.`);
   }
-  log.info('  3. 첫 프롬프트로 다음 문장을 입력합니다.');
+  log.info('  3. 첫 프롬프트로 다음 문장을 입력합니다(예시).');
   log.info(`     ${FIRST_PROMPTS[test]}`);
   log.info(`  4. 제한 시간은 ${limit}분입니다. 지금 시작하면 예상 종료 시각은 ${hhmm(end)} 입니다.`);
   log.info(`  5. 작업을 마치면 저장소 폴더(${REPO_ROOT})에서 npm run submit 을 실행합니다.`);
