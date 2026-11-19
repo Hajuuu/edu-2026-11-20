@@ -5,6 +5,9 @@
 /docs/superpowers/
 /.superpowers/
 /references/
+/slide-deck/md/
+/slide-deck/pptx/
+/slide-deck/script/
 
 # 도구와 로컬 상태
 /node_modules/
