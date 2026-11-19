@@ -1,6 +1,6 @@
 # Claude Code 설정
 
-Claude Code 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Claude-Code` 를 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 Claude Code 에서 할 일을 설명합니다.
+Claude Code 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Claude-Code` 를 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 Claude Code 에서 할 일을 설명합니다.
 
 설치와 로그인은 [Claude Code 공식 안내](https://code.claude.com/docs/en/setup)를 따릅니다. 예를 들어 macOS 에서는 `curl -fsSL https://claude.ai/install.sh | bash` 로, Windows PowerShell 에서는 `irm https://claude.ai/install.ps1 | iex` 로 설치합니다.
 
@@ -106,4 +106,4 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 **노력 수준이 medium 으로 바뀌지 않습니다.**
 환경 변수 `CLAUDE_CODE_EFFORT_LEVEL` 이 설정되어 있는지 확인하고, 설정되어 있으면 지운 뒤 터미널을 다시 엽니다. 설정 파일에는 최상위 `effortLevel` 이 아니라 `modelSettings` 안에 적어야 합니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

@@ -82,7 +82,7 @@ test('mvn -version java line', () => {
   assert.equal(mavenJavaWarning(parseMaven('')), null);
 });
 
-// README 1.1 은 Maven 4 를 쓰지 않는다고 안내하므로, Maven 4 에게는 올리라고 하지 않는다.
+// docs/install.md 는 Maven 4 를 쓰지 않는다고 안내하므로, Maven 4 에게는 올리라고 하지 않는다.
 test('maven advice', () => {
   const four = mavenAdvice(parseMaven('Apache Maven 4.0.0-rc-2 (x)'));
   assert.match(four, /교육 기준은 Maven 3\.9\.x 입니다\. Maven 4 는 쓰지 않습니다\./);

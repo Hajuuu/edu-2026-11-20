@@ -1,6 +1,6 @@
 # Cursor 설정
 
-Cursor 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Cursor` 를 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 Cursor 에서 할 일을 설명합니다.
+Cursor 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Cursor` 를 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 Cursor 에서 할 일을 설명합니다.
 
 설치는 [Cursor 공식 다운로드 페이지](https://cursor.com/download)를 따릅니다. Cursor 는 화면 구성이 자주 바뀌므로 아래의 메뉴 이름과 단축키는 버전에 따라 다를 수 있습니다.
 
@@ -85,4 +85,4 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 **모델 목록에 Claude Sonnet 5.5 가 없습니다.**
 Cursor Settings 의 Models 에서 Claude Sonnet 5.5 를 켰는지 확인합니다. 요금제가 Premium 이상인지, 요청 수로 과금하는 이전 요금제라면 Max Mode 를 켰는지도 확인합니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

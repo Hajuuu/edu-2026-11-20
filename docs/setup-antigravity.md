@@ -1,6 +1,6 @@
 # Antigravity 설정
 
-Antigravity 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Antigravity` 를 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 Antigravity 에서 할 일을 설명합니다.
+Antigravity 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Antigravity` 를 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 Antigravity 에서 할 일을 설명합니다.
 
 설치는 [Antigravity 공식 다운로드 페이지](https://antigravity.google/download)를 따릅니다. Antigravity 는 앱(App), IDE, CLI 로 제공되며, 두 실습 모두 **Antigravity IDE** 로 진행하는 것을 권장합니다. setup 명령은 mcp 실습 워크스페이스에 작업 영역(workspace)의 MCP 설정(`.agents/mcp_config.json`)을 쓰는데, [Antigravity 의 MCP 안내](https://antigravity.google/docs/mcp)는 이 파일을 IDE 와 CLI 에 대해서만 설명하고 앱에 대해서는 설명하지 않습니다. 이 문서는 실습 워크스페이스를 작업 영역으로 여는 IDE 를 기준으로 설명하며, 화면 표기는 버전에 따라 다를 수 있습니다.
 
@@ -90,4 +90,4 @@ nomcp 실습에서는 켜진 `egovframe-codegen` 서버가 없어야 합니다.
 **Claude Sonnet 5.5 (Thinking) 이 모델 목록에 없습니다.**
 요금제가 Google AI Pro(유료 구독) 이상인지 확인합니다. 그래도 선택할 수 없으면 다른 모델로 바꾸지 말고 진행자에게 알립니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

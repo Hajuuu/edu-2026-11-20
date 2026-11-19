@@ -1,4 +1,4 @@
-// 공개 문서 시험: README.md 와 도구별 설정 문서(docs/*.md)의 링크, 도구 표, 스크립트와 맞는 안내,
+// 공개 문서 시험: README.md 와 docs/*.md(교육 당일에 읽을 문서와 도구별 설정 문서)의 링크, 도구 표, 스크립트와 맞는 안내,
 // 공개 파일의 평가 내용 유출, 쓰지 않기로 한 문장 부호를 확인한다.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
@@ -223,6 +223,7 @@ test('tools table', () => {
 
 test('readme prerequisites and commands', () => {
   const readme = read('README.md');
+  const practice = read('docs/practice.md');
   const rows = readme.split(/\r?\n/).map(cells).filter(Boolean);
   assert.ok(readme.includes('## 1. 사전 준비 (교육 전날까지)'));
   for (const [name, version, command] of PREREQ_ROWS) {
@@ -231,44 +232,63 @@ test('readme prerequisites and commands', () => {
       `사전 준비 표에 ${name} ${version} ${command} 행이 없습니다`,
     );
   }
+  // 사전 준비는 README 에, 실습 당일의 명령은 실습 절차 문서(docs/practice.md)와 실습 후 문서에 있다.
   for (const s of [
     // setup 과 submit 이 쓰는 Fork 처럼 원본 저장소의 기본 브랜치만 복사해야 한다.
     `gh repo fork ${UPSTREAM} --clone --default-branch-only`,
     'gh auth login',
     'npm run check',
-    'npm run setup --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
-    'npm run setup -- --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
-    'npm run setup --test mcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
-    'npm run submit',
-    'npm run cleanup',
     '30분',
     '20분',
   ]) {
     assert.ok(readme.includes(s), `README 에 ${s} 가 없습니다`);
   }
+  for (const s of [
+    'npm run setup --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
+    'npm run setup -- --test nomcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
+    'npm run setup --test mcp --id {id} --tool {Claude-Code|Codex|Antigravity|Cursor|GitHub-Copilot|Cline}',
+    'npm run submit',
+    '30분',
+    '20분',
+  ]) {
+    assert.ok(practice.includes(s), `docs/practice.md 에 ${s} 가 없습니다`);
+  }
+  // README 는 사전 준비만 담고, 운영체제별 설치 문서와 교육 당일에 읽을 문서로 이어지는 링크를 둔다.
+  for (const doc of ['install', 'task', 'practice', 'rules', 'troubleshooting', 'after-practice']) {
+    assert.ok(readme.includes(`](docs/${doc}.md)`), `README 에 docs/${doc}.md 링크가 없습니다`);
+  }
+  // README 의 설치 확인은 PATH 에 있어야 하는 명령과 확인 명령을 알리고, 설치 방법은 docs/install.md 에 둔다.
+  for (const s of ['### 1.1 설치 확인', 'PATH', '`npm --version`', 'JAVA_HOME', '](docs/install.md)']) {
+    assert.ok(readme.includes(s), `README 의 설치 확인에 ${s} 가 없습니다`);
+  }
+  const install = read('docs/install.md');
+  for (const s of ['winget install --id Microsoft.OpenJDK.17', 'nvm install 22', 'brew install openjdk@17 maven git gh', 'apache-maven-3.9.9']) {
+    assert.ok(install.includes(s), `docs/install.md 에 ${s} 가 없습니다`);
+  }
+  assert.ok(read('docs/after-practice.md').includes('npm run cleanup'), 'docs/after-practice.md 에 npm run cleanup 이 없습니다');
   assert.deepEqual(Object.keys(FIRST_PROMPTS), ['nomcp', 'mcp'], 'scripts/setup.mjs 에서 실습별 첫 프롬프트를 찾지 못했습니다');
   for (const [t, prompt] of Object.entries(FIRST_PROMPTS)) {
-    assert.ok(readme.includes(prompt), `README 의 ${t} 첫 프롬프트가 setup 안내와 다릅니다`);
+    assert.ok(practice.includes(prompt), `docs/practice.md 의 ${t} 첫 프롬프트가 setup 안내와 다릅니다`);
   }
   // mcp 실습의 첫 프롬프트는 codegen MCP 서버를 쓰라고 하고, nomcp 의 첫 프롬프트는 MCP 를 말하지 않는다.
   assert.ok(FIRST_PROMPTS.mcp.includes('egovframe-mcp-codegen'));
   assert.ok(!FIRST_PROMPTS.nomcp.includes('MCP'));
-  assert.ok(readme.includes('.mcp-servers/egovframe-mcp-codegen/package/build/index.js'), 'README 에 codegen MCP 서버의 실행 파일 경로가 없습니다');
-  assert.ok(!/\bnpx\b/.test(readme), 'README 에 npx 안내가 남아 있습니다');
+  assert.ok(practice.includes('.mcp-servers/egovframe-mcp-codegen/package/build/index.js'), 'docs/practice.md 에 codegen MCP 서버의 실행 파일 경로가 없습니다');
+  for (const file of docFiles()) assert.ok(!/\bnpx\b/.test(read(file)), `${file} 에 npx 안내가 남아 있습니다`);
   // gh 로그인은 토큰(read:org, repo 권한의 classic 토큰)으로 한다.
   for (const s of ['https://github.com/settings/tokens', 'Generate new token (classic)', '`repo`', '`read:org`', 'Paste an authentication token']) {
     assert.ok(readme.includes(s), `README 의 gh 로그인 안내에 ${s} 가 없습니다`);
   }
 });
 
-test('task section matches TASK.md', () => {
+test('task doc matches TASK.md', () => {
   const lf = (s) => s.replace(/\r\n/g, '\n');
-  const readme = lf(read('README.md'));
+  const task = lf(read('docs/task.md'));
   const ddl = lf(read('task/TASK.md')).match(/```sql\n[\s\S]*?```/)?.[0];
   assert.ok(ddl, 'task/TASK.md 에서 DDL 을 찾지 못했습니다');
-  assert.ok(readme.includes(ddl), 'README 의 DDL 이 task/TASK.md 와 다릅니다');
-  assert.ok(readme.includes('](task/TASK.md)'), 'README 에 task/TASK.md 링크가 없습니다');
-  assert.ok(readme.includes('전자정부 표준프레임워크(eGovFrame) 5.0 Boot 기반 게시판 프로젝트'));
+  assert.ok(task.includes(ddl), 'docs/task.md 의 DDL 이 task/TASK.md 와 다릅니다');
+  assert.ok(task.includes('](../task/TASK.md)'), 'docs/task.md 에 task/TASK.md 링크가 없습니다');
+  assert.ok(task.includes('전자정부 표준프레임워크(eGovFrame) 5.0 Boot 기반 게시판 프로젝트'));
 });
 
 test('tool docs cover each step', () => {
@@ -278,7 +298,7 @@ test('tool docs cover each step', () => {
     for (const s of DOC_SECTIONS) {
       assert.ok(hs.some((h) => h.includes(s)), `${row.doc} 에 '${s}' 절이 없습니다`);
     }
-    for (const s of [`--tool ${row.tool}`, TOOLS[row.tool].instruction, 'egovframe-codegen', ...MCP_TOOLS, FIRST_PROMPTS.nomcp, FIRST_PROMPTS.mcp, 'nomcp', '](../README.md']) {
+    for (const s of [`--tool ${row.tool}`, TOOLS[row.tool].instruction, 'egovframe-codegen', ...MCP_TOOLS, FIRST_PROMPTS.nomcp, FIRST_PROMPTS.mcp, 'nomcp', '](practice.md)', '](troubleshooting.md)']) {
       assert.ok(md.includes(s), `${row.doc} 에 ${s} 가 없습니다`);
     }
     // MCP 연결 설정은 .mcp-servers/ 에 푼 codegen 패키지를 node 로 바로 실행한다 (npx 로 tgz 를 실행하지 않는다).

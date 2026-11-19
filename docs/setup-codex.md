@@ -1,6 +1,6 @@
 # Codex 설정
 
-Codex 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Codex` 를 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 Codex 에서 할 일을 설명합니다. 이 문서는 터미널에서 실행하는 Codex CLI 를 기준으로 합니다.
+Codex 로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool Codex` 를 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 Codex 에서 할 일을 설명합니다. 이 문서는 터미널에서 실행하는 Codex CLI 를 기준으로 합니다.
 
 설치와 로그인은 [Codex CLI 공식 안내](https://learn.chatgpt.com/docs/codex/cli)를 따릅니다. Windows 에서는 Codex 를 WSL 이 아닌 PowerShell 에서 실행합니다. WSL 안에서 Codex 를 실행하면 setup 명령이 MCP 연결 설정에 적어 둔 Windows 경로를 쓸 수 없어 MCP 가 연결되지 않습니다. Windows on Arm 에서는 npm 으로 설치하는 방법(`npm install -g @openai/codex`)을 쓸 수 있으며, 이 패키지에는 Windows ARM64 용 실행 파일이 들어 있습니다. PowerShell 이 `codex.ps1` 파일을 로드할 수 없다고 하면 `codex` 대신 `codex.cmd` 를 입력합니다.
 
@@ -90,4 +90,4 @@ nomcp 실습에서는 `/mcp` 에 `egovframe-codegen` 서버가 없어야 합니�
 **nomcp 실습인데 `/mcp` 에 `egovframe-codegen` 서버가 보입니다.**
 작업을 멈추고 진행자에게 알립니다. 전역 설정 `~/.codex/config.toml` 에 같은 서버가 남아 있는 경우이므로 `codex mcp remove egovframe-codegen` 으로 지운 뒤 nomcp setup 명령을 다시 실행합니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

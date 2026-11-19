@@ -1,6 +1,6 @@
 # GitHub Copilot 설정
 
-VS Code 의 GitHub Copilot 으로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool GitHub-Copilot` 을 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 VS Code 와 Copilot 에서 할 일을 설명합니다.
+VS Code 의 GitHub Copilot 으로 실습하는 교육생을 위한 안내입니다. `npm run setup` 명령에는 `--tool GitHub-Copilot` 을 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 VS Code 와 Copilot 에서 할 일을 설명합니다.
 
 VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/download)에서 설치하고, Copilot 로그인은 [VS Code 의 Copilot 설정 안내](https://code.visualstudio.com/docs/copilot/setup)를 따릅니다. 실습 전에 VS Code 를 최신 버전으로 업데이트합니다. 화면 표기는 버전에 따라 다를 수 있습니다.
 
@@ -81,4 +81,4 @@ nomcp 실습에서는 `egovframe-codegen` 서버가 없어야 합니다.
 **모델 목록에 Claude Sonnet 5.5 가 없습니다.**
 VS Code 와 Copilot 확장이 최신 버전인지 확인합니다. 요금제가 Pro 이상인지, Business 나 Enterprise 라면 조직 관리자가 모델을 허용했는지도 확인합니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

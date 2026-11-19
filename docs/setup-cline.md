@@ -1,6 +1,6 @@
 # Cline 설정
 
-상용 AI 를 쓸 수 없는 교육생을 위한 안내입니다. VS Code 의 확장 Cline 과 OpenRouter 를 씁니다. `npm run setup` 명령에는 `--tool Cline` 을 넣습니다. 전체 절차는 [README 의 실습 절차](../README.md#3-실습-절차)를 따르고, 이 문서는 VS Code 와 Cline 에서 할 일을 설명합니다.
+상용 AI 를 쓸 수 없는 교육생을 위한 안내입니다. VS Code 의 확장 Cline 과 OpenRouter 를 씁니다. `npm run setup` 명령에는 `--tool Cline` 을 넣습니다. 전체 절차는 [실습 절차](practice.md)를 따르고, 이 문서는 VS Code 와 Cline 에서 할 일을 설명합니다.
 
 VS Code 는 [공식 다운로드 페이지](https://code.visualstudio.com/download)에서 설치합니다. 그다음 확장 Cline(`saoudrizwan.claude-dev`)을 [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=saoudrizwan.claude-dev)나 VS Code 의 확장 화면에서 설치합니다. 자세한 사용법은 [Cline 공식 문서](https://docs.cline.bot)에 있습니다. 화면 표기는 버전에 따라 다를 수 있습니다.
 
@@ -94,4 +94,4 @@ setup 명령이 전역 설정 파일을 읽지 못해 멈춘 경우입니다. �
 **nomcp 실습인데 `egovframe-codegen` 서버가 켜져 있습니다.**
 작업을 멈추고 진행자에게 알립니다. MCP Servers 화면에서 서버를 끄거나, 저장소 폴더에서 nomcp setup 명령을 다시 실행해 서버를 끕니다.
 
-공통 문제는 [README 의 문제 해결](../README.md#5-문제-해결)에 있습니다.
+공통 문제는 [문제 해결](troubleshooting.md)에 있습니다.

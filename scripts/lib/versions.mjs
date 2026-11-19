@@ -43,10 +43,10 @@ export function parseMaven(stdout) {
   return { found: true, version: m[1], major, minor, ok, line: firstLine(text), ...java };
 }
 
-// Maven 버전이 기준에 맞지 않을 때의 안내. Maven 4 이상은 올리라고 하지 않고 쓰지 않는다고 알린다 (README 1.1).
+// Maven 버전이 기준에 맞지 않을 때의 안내. Maven 4 이상은 올리라고 하지 않고 쓰지 않는다고 알린다 (docs/install.md).
 export function mavenAdvice(m) {
   if (m.major > MAVEN_MIN[0]) {
-    return `교육 기준은 Maven ${MAVEN_MIN.join('.')}.x 입니다. Maven ${m.major} 는 쓰지 않습니다. README 의 1.1 절에 따라 Maven 3.9.9 를 설치해 주세요.`;
+    return `교육 기준은 Maven ${MAVEN_MIN.join('.')}.x 입니다. Maven ${m.major} 는 쓰지 않습니다. docs/install.md 에 따라 Maven 3.9.9 를 설치해 주세요.`;
   }
   return `Maven ${MAVEN_MIN.join('.')} 이상으로 올려 주세요.`;
 }
